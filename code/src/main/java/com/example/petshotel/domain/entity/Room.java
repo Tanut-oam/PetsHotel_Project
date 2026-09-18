@@ -11,6 +11,9 @@ import lombok.*;
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+
 @Table(name = "rooms")
 public class Room {
     @Id
@@ -26,7 +29,7 @@ public class Room {
     private String description;
 
     @Column(nullable = false)
-    private String capacity;
+    private Integer capacity;
 
     @Column(nullable = false,precision = 10,scale = 2)  //เลข 10  หลัก ทศนิยม 2 หลัก
     private BigDecimal pricePerPetPerNight;
