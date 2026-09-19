@@ -10,6 +10,7 @@ import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.RoomService;
@@ -20,10 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoomServiceImpl implements RoomService {
     
     private final RoomRepository roomRepository;
+    private final RoomMapper roomMapper;
 
-
-    public RoomServiceImpl(RoomRepository roomRepository){
+    public RoomServiceImpl(RoomRepository roomRepository,RoomMapper roomMapper){
         this.roomRepository = roomRepository;
+        this.roomMapper = roomMapper;
     }
 
     @Transactional
@@ -42,38 +44,22 @@ public class RoomServiceImpl implements RoomService {
 
         Room saved = roomRepository.save(room);
 
-        return new RoomResponse(
-            saved.getId(),
-            saved.getRoomNumber(),
-            saved.getName(),
-            saved.getDescription(),
-            saved.getCapacity(),
-            saved.getPricePerPetPerNight(),
-            saved.getStatus()
-        );
+        return roomMapper.toResponse(saved);
 
     };
 
     @Transactional(readOnly = true)
     public  RoomResponse getRoomById(Long id){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
-        return new RoomResponse(room.getId(),room.getRoomNumber(),room.getName(),room.getDescription(),room.getCapacity(),room.getPricePerPetPerNight(),room.getStatus());
-    };
+        return roomMapper.toResponse(room);
+    }
 
     @Transactional(readOnly  = true)
     public List<RoomResponse> getAllRooms(){
         List<RoomResponse> AllRoom = new ArrayList<>();
         for(Room room:roomRepository.findAll()){
             
-            RoomResponse response = new RoomResponse(
-                room.getId(),
-                room.getRoomNumber(),
-                room.getName(),
-                room.getDescription(),
-                room.getCapacity(),
-                room.getPricePerPetPerNight(),
-                room.getStatus()
-            );
+            RoomResponse response = roomMapper.toResponse(room);
             AllRoom.add(response);
         }
         
@@ -86,15 +72,7 @@ public class RoomServiceImpl implements RoomService {
         room.setStatus(RoomStatus.INACTIVE);
         roomRepository.save(room);
 
-        return new RoomResponse(
-            room.getId(),
-            room.getRoomNumber(),
-            room.getName(),
-            room.getDescription(),
-            room.getCapacity(),
-            room.getPricePerPetPerNight(),
-            room.getStatus()
-        );
+        return roomMapper.toResponse(room);
     }
 
     @Transactional
@@ -104,15 +82,7 @@ public class RoomServiceImpl implements RoomService {
         roomRepository.save(room);
 
 
-        return new RoomResponse(
-            room.getId(),
-            room.getRoomNumber(),
-            room.getName(),
-            room.getDescription(),
-            room.getCapacity(),
-            room.getPricePerPetPerNight(),
-            room.getStatus()
-        );
+        return roomMapper.toResponse(room);
     }
 
     @Transactional
@@ -132,15 +102,7 @@ public class RoomServiceImpl implements RoomService {
 
         roomRepository.save(room);
 
-        return new RoomResponse(
-            room.getId(),
-            room.getRoomNumber(),
-            room.getName(),
-            room.getDescription(),
-            room.getCapacity(),
-            room.getPricePerPetPerNight(),
-            room.getStatus()
-        );
+        return roomMapper.toResponse(room);
 
     };
 }
