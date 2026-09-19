@@ -10,6 +10,7 @@ import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.RoomService;
 
@@ -80,16 +81,26 @@ public class RoomServiceImpl implements RoomService {
     };
 
     @Transactional
-    public void deactivateRoom(Long id){
+    public RoomResponse deactivateRoom(Long id){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
         room.setStatus(RoomStatus.INACTIVE);
         roomRepository.save(room);
+
+        return new RoomResponse(
+            room.getId(),
+            room.getRoomNumber(),
+            room.getName(),
+            room.getDescription(),
+            room.getCapacity(),
+            room.getPricePerPetPerNight(),
+            room.getStatus()
+        );
     }
 
     @Transactional
-    public RoomResponse setRoomStatus(Long id, RoomStatus status){
+    public RoomResponse setRoomStatus(Long id,UpdateStatusRequest request){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
-        room.setStatus(status);
+        room.setStatus(request.status());
         roomRepository.save(room);
 
 
