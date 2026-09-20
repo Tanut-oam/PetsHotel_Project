@@ -1,5 +1,9 @@
 package com.example.petshotel.domain.enums;
 
-public class BookingStatus {
-    
+public enum BookingStatus {
+    PENDING,
+    CONFIRMED,
+    CHECKED_IN,
+    CHECKED_OUT,
+    CANCELLED
 }
