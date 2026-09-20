@@ -23,4 +23,4 @@ public record UpdatePetRequest(
     String feedingInstruction,
     String specialNote
 ) {
-} 
+}
