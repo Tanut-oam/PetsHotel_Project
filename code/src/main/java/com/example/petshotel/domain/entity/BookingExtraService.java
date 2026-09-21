@@ -26,10 +26,10 @@ public class BookingExtraService {
     @Column(nullable = false)
     private Integer quantity;
 
-    @Column(nullable = false)
+    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(nullable = false)
+    @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
 }
