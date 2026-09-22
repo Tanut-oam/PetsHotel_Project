@@ -34,4 +34,6 @@ public class Pet {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
+    @Column(nullable = false)
+    private Boolean active;
 }
