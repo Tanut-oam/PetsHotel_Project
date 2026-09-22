@@ -44,6 +44,7 @@ public class PetServiceImpl implements PetService {
         pet.setMedicalNote(request.medicalNote());
         pet.setFeedingInstruction(request.feedingInstruction());
         pet.setSpecialNote(request.specialNote());
+        pet.setActive(true);
         pet.setOwner(owner);
 
         Pet savedPet = petRepository.save(pet);
@@ -59,7 +60,7 @@ public class PetServiceImpl implements PetService {
             );
         }
 
-        List<Pet> pets = petRepository.findByOwner_Id(ownerId);
+        List<Pet> pets = petRepository.findByOwner_IdAndActiveTrue(ownerId);
         List<PetResponse> responses = new  ArrayList<>();
 
         for (Pet pet: pets){
@@ -100,5 +101,17 @@ public class PetServiceImpl implements PetService {
         pet.setSpecialNote(request.specialNote());
         Pet savedPet = petRepository.save(pet);
         return petMapper.toResponse(savedPet);
+    }
+
+    @Override 
+    @Transactional 
+    public void deactivatePet(Long petId, Long ownerId){
+        Pet pet = petRepository.findById(petId)
+            .orElseThrow(() -> new IllegalArgumentException("Pet not found: " + petId));
+        if (!pet.getOwner().getId().equals(ownerId)) {
+            throw new IllegalArgumentException("Pet not found: " +petId);
+        }
+        pet.setActive(false);
+        petRepository.save(pet);    
     }
 }

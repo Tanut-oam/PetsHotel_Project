@@ -92,6 +92,8 @@ class PetServiceTest {
             response.feedingInstruction()
         );
         assertEquals(request.specialNote(), response.specialNote());
+        assertTrue(savedPet.getActive());
+        assertTrue(response.active());
     }
 
     @Test
@@ -180,15 +182,17 @@ class PetServiceTest {
     firstPet.setId(10L);
     firstPet.setName("โมจิ");
     firstPet.setOwner(owner);
+    firstPet.setActive(true);
 
     Pet secondPet = new Pet();
     secondPet.setId(11L);
     secondPet.setName("โกโก้");
     secondPet.setOwner(owner);
+    secondPet.setActive(true);
 
     when(userRepository.existsById(1L)).thenReturn(true);
 
-    when(petRepository.findByOwner_Id(1L))
+    when(petRepository.findByOwner_IdAndActiveTrue(1L))
         .thenReturn(List.of(firstPet, secondPet));
 
     List<PetResponse> responses = petService.getPetsByOwner(1L);
@@ -199,7 +203,7 @@ class PetServiceTest {
     assertEquals(Long.valueOf(1L), responses.get(0).ownerId());
     assertEquals(Long.valueOf(1L), responses.get(1).ownerId());
 
-    verify(petRepository).findByOwner_Id(1L);
+    verify(petRepository).findByOwner_IdAndActiveTrue(1L);
     }
     @Test
     void getPetsByOwnerShouldReturnEmptyListWhenOwnerHasNoPets() {
@@ -221,7 +225,7 @@ class PetServiceTest {
         () -> petService.getPetsByOwner(99L)
     );
 
-    verify(petRepository, never()).findByOwner_Id(any());
+    verify(petRepository, never()).findByOwner_IdAndActiveTrue(any());
     }
     @Test
     void updatePetShouldUpdatePetForItsOwner() {
@@ -327,6 +331,69 @@ class PetServiceTest {
         () -> petService.updatePet(99L, 1L, request)
     );
 
+    verify(petRepository, never()).save(any(Pet.class));
+    }
+
+    @Test
+    void deactivatePetShouldSetActiveToFalseForItsOwner() {
+    User owner = new User();
+    owner.setId(1L);
+
+    Pet pet = new Pet();
+    pet.setId(10L);
+    pet.setActive(true);
+    pet.setOwner(owner);
+
+    when(petRepository.findById(10L))
+        .thenReturn(Optional.of(pet));
+
+    when(petRepository.save(any(Pet.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    petService.deactivatePet(10L, 1L);
+
+    ArgumentCaptor<Pet> captor =
+        ArgumentCaptor.forClass(Pet.class);
+
+    verify(petRepository).save(captor.capture());
+
+    Pet savedPet = captor.getValue();
+
+    assertFalse(savedPet.getActive());
+    assertEquals(Long.valueOf(10L), savedPet.getId());
+    assertSame(owner, savedPet.getOwner());
+    }
+    @Test
+    void deactivatePetShouldFailWhenPetDoesNotExist() {
+    when(petRepository.findById(99L))
+        .thenReturn(Optional.empty());
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> petService.deactivatePet(99L, 1L)
+    );
+
+    verify(petRepository, never()).save(any(Pet.class));
+    }
+    @Test
+void deactivatePetShouldRejectDifferentOwner() {
+    User owner = new User();
+    owner.setId(1L);
+
+    Pet pet = new Pet();
+    pet.setId(10L);
+    pet.setActive(true);
+    pet.setOwner(owner);
+
+    when(petRepository.findById(10L))
+        .thenReturn(Optional.of(pet));
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> petService.deactivatePet(10L, 2L)
+    );
+
+    assertTrue(pet.getActive());
     verify(petRepository, never()).save(any(Pet.class));
     }
 }

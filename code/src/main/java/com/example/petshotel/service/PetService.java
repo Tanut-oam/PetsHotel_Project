@@ -9,4 +9,5 @@ public interface PetService {
     List<PetResponse> getPetsByOwner(Long ownerId);
     PetResponse getPetById(Long petId, Long ownerId);
     PetResponse updatePet(Long petId,Long ownerId,UpdatePetRequest request);
+    void deactivatePet(Long petId, Long ownerId);
 } 

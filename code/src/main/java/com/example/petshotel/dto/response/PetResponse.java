@@ -13,5 +13,6 @@ public record PetResponse(
     String medicalNote,
     String feedingInstruction,
     String specialNote,
-    Long ownerId
+    Long ownerId,
+    Boolean active
 ) {}

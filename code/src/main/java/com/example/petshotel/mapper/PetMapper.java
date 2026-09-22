@@ -17,7 +17,9 @@ public class PetMapper {
             pet.getMedicalNote(),
             pet.getFeedingInstruction(),
             pet.getSpecialNote(),
-            pet.getOwner().getId()
+            pet.getOwner().getId(),
+            pet.getActive()
         );
     }
+    
 }
