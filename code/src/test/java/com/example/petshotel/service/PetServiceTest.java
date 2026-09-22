@@ -14,6 +14,7 @@ import com.example.petshotel.domain.entity.Pet;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.PetType;
 import com.example.petshotel.dto.request.CreatePetRequest;
+import com.example.petshotel.dto.request.UpdatePetRequest;
 import com.example.petshotel.dto.response.PetResponse;
 import com.example.petshotel.mapper.PetMapper;
 import com.example.petshotel.repository.PetRepository;
@@ -221,5 +222,111 @@ class PetServiceTest {
     );
 
     verify(petRepository, never()).findByOwner_Id(any());
+    }
+    @Test
+    void updatePetShouldUpdatePetForItsOwner() {
+    User owner = new User();
+    owner.setId(1L);
+
+    Pet pet = new Pet();
+    pet.setId(10L);
+    pet.setName("ชื่อเดิม");
+    pet.setType(PetType.DOG);
+    pet.setOwner(owner);
+
+    UpdatePetRequest request = new UpdatePetRequest(
+        "โมจิ",
+        PetType.DOG,
+        "ชิบะ",
+        4,
+        9.5,
+        "MALE",
+        "แพ้ไก่",
+        "อาหารเช้าและเย็น",
+        "กลัวเสียงดัง"
+    );
+
+    when(petRepository.findById(10L))
+        .thenReturn(Optional.of(pet));
+
+    when(petRepository.save(any(Pet.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    PetResponse response =
+        petService.updatePet(10L, 1L, request);
+
+    ArgumentCaptor<Pet> captor =
+        ArgumentCaptor.forClass(Pet.class);
+
+    verify(petRepository).save(captor.capture());
+
+    Pet savedPet = captor.getValue();
+
+    assertEquals(Long.valueOf(10L), savedPet.getId());
+    assertSame(owner, savedPet.getOwner());
+    assertEquals("โมจิ", savedPet.getName());
+    assertEquals("ชิบะ", savedPet.getBreed());
+    assertEquals(Integer.valueOf(4), savedPet.getAge());
+    assertEquals(Double.valueOf(9.5), savedPet.getWeight());
+    assertEquals("แพ้ไก่", savedPet.getMedicalNote());
+
+    assertEquals(Long.valueOf(10L), response.id());
+    assertEquals(Long.valueOf(1L), response.ownerId());
+    assertEquals("โมจิ", response.name());
+    }
+    @Test
+    void updatePetShouldRejectDifferentOwner() {
+    User owner = new User();
+    owner.setId(1L);
+
+    Pet pet = new Pet();
+    pet.setId(10L);
+    pet.setOwner(owner);
+
+    UpdatePetRequest request = new UpdatePetRequest(
+        "โมจิ",
+        PetType.DOG,
+        null,
+        4,
+        9.5,
+        null,
+        null,
+        null,
+        null
+    );
+
+    when(petRepository.findById(10L))
+        .thenReturn(Optional.of(pet));
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> petService.updatePet(10L, 2L, request)
+    );
+
+    verify(petRepository, never()).save(any(Pet.class));
+    }
+    @Test
+    void updatePetShouldFailWhenPetDoesNotExist() {
+    UpdatePetRequest request = new UpdatePetRequest(
+        "โมจิ",
+        PetType.DOG,
+        null,
+        4,
+        9.5,
+        null,
+        null,
+        null,
+        null
+    );
+
+    when(petRepository.findById(99L))
+        .thenReturn(Optional.empty());
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> petService.updatePet(99L, 1L, request)
+    );
+
+    verify(petRepository, never()).save(any(Pet.class));
     }
 }

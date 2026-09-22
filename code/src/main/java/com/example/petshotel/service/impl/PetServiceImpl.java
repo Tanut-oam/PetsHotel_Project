@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.petshotel.domain.entity.Pet;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.request.CreatePetRequest;
+import com.example.petshotel.dto.request.UpdatePetRequest;
 import com.example.petshotel.dto.response.PetResponse;
 import com.example.petshotel.mapper.PetMapper;
 import com.example.petshotel.repository.PetRepository;
@@ -77,5 +78,27 @@ public class PetServiceImpl implements PetService {
             throw new IllegalArgumentException("Pet not found: " + petId);
         }
         return petMapper.toResponse(pet);
+    }
+    
+    @Override 
+    @Transactional 
+    public PetResponse updatePet(Long petId,Long ownerId,UpdatePetRequest request){
+        Pet pet = petRepository.findById(petId)
+            .orElseThrow(() -> new IllegalArgumentException("Pet not found: " + petId));
+        
+        if (!pet.getOwner().getId().equals(ownerId)) {
+            throw new IllegalArgumentException("Pet not found: " +petId);
+        }
+        pet.setName(request.name());
+        pet.setType(request.type());
+        pet.setBreed(request.breed());
+        pet.setAge(request.age());
+        pet.setWeight(request.weight());
+        pet.setGender(request.gender());
+        pet.setMedicalNote(request.medicalNote());
+        pet.setFeedingInstruction(request.feedingInstruction());
+        pet.setSpecialNote(request.specialNote());
+        Pet savedPet = petRepository.save(pet);
+        return petMapper.toResponse(savedPet);
     }
 }
