@@ -44,17 +44,17 @@ public class PetRestController {
 
     @GetMapping("/{petId}")
     public PetResponse getPetById(@PathVariable Long ownerId,@PathVariable Long petId){
-        return  petService.getPetById(ownerId, petId);
+        return  petService.getPetById(petId, ownerId);
     }
 
     @PutMapping("/{petId}")
     public  PetResponse updatePet(@PathVariable Long ownerId,@PathVariable Long petId,@Valid @RequestBody UpdatePetRequest request){
-        return petService.updatePet(ownerId,petId, request);
+        return petService.updatePet(petId, ownerId, request);
     }
 
     @DeleteMapping("/{petId}")
     public ResponseEntity<Void> deactivatePet(@PathVariable Long ownerId,@PathVariable Long petId){
-        petService.deactivatePet(ownerId,petId);
+        petService.deactivatePet(petId, ownerId);;
         return ResponseEntity.noContent().build();
     }
     
