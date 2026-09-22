@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.petshotel.domain.entity.Receipt;
 
-@Repository 
+
 public interface ReceiptRepository extends JpaRepository<Receipt, Long>{
     Optional<Receipt> findByBookingId(Long bookingId);
     Optional<Receipt> findByReceiptNumber(String receiptNumber);
