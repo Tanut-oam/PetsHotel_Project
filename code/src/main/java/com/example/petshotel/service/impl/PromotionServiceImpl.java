@@ -11,7 +11,6 @@ import com.example.petshotel.repository.PromotionRepository;
 import com.example.petshotel.service.PromotionService;
 
 @Service 
-@Transactional
 public class PromotionServiceImpl implements PromotionService{
     
     private final PromotionRepository promotionRepository;
@@ -39,11 +38,13 @@ public class PromotionServiceImpl implements PromotionService{
     }
 
     @Override 
+    @Transactional 
     public Promotion createPromotion(Promotion promotion){
         return promotionRepository.save(promotion);
     }
 
     @Override 
+    @Transactional
     public Promotion updatePromotion(Long id, Promotion promotionDetails){
         return promotionRepository.findById(id)
                 .map(existingPromotion->{
@@ -61,6 +62,7 @@ public class PromotionServiceImpl implements PromotionService{
     }
 
     @Override 
+    @Transactional
     public void deletePromotion(Long id){
         promotionRepository.deleteById(id);
     }
