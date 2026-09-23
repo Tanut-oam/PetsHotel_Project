@@ -1,5 +1,14 @@
 package com.example.petshotel.state;
 
-public class BookingState {
-    
+import com.example.petshotel.domain.entity.Booking;
+
+public interface BookingState {
+
+    void confirm(Booking booking);
+
+    void checkIn(Booking booking);
+
+    void checkOut(Booking booking);
+
+    void cancel(Booking booking);
 }
