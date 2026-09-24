@@ -9,5 +9,5 @@ import com.example.petshotel.domain.entity.DailyCareReport;
 
 public interface DailyCareReportRepository extends JpaRepository<DailyCareReport, Long> {
     boolean existsByBookingPet_IdAndReportDate(Long bookingPetId,LocalDate reportDate);
-    List<DailyCareReport> findByBookPet_IdOrderByReportDateDesc(Long bookingPetId);
+    List<DailyCareReport> findByBookingPet_IdOrderByReportDateDesc(Long bookingPetId);
 }
