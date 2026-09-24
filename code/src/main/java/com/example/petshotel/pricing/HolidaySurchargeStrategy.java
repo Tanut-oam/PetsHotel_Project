@@ -5,13 +5,14 @@ import java.time.LocalDate;
 import java.time.Month;
 
 import org.springframework.stereotype.Component;
+import com.example.petshotel.domain.enums.PricingCategory;
 
 @Component 
 public class HolidaySurchargeStrategy implements PricingStrategy{
     private static final BigDecimal SURCHARGE_RATE = new BigDecimal("0.30");
 
     @Override 
-    public BigDecimal calculate(PricingContext context){
+    public BigDecimal calculate(PricingContext context, BigDecimal subtotal){
         if (context.getRoom() == null || 
             context.getRoom().getPricePerPetPerNight() == null ||
             context.getCheckIn() == null ||
@@ -51,5 +52,10 @@ public class HolidaySurchargeStrategy implements PricingStrategy{
         if(month == Month.DECEMBER && day == 31) return true;
 
         return false;
+    }
+
+    @Override
+    public PricingCategory category() {
+        return PricingCategory.HOLIDAY_SURCHARGE;
     }
 }

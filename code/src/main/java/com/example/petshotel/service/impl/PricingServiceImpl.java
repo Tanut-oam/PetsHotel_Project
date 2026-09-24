@@ -1,57 +1,87 @@
 package com.example.petshotel.service.impl;
 
 import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
-
-import com.example.petshotel.pricing.BaseRoomPriceStrategy;
-import com.example.petshotel.pricing.ExtraServicePricingStrategy;
-import com.example.petshotel.pricing.HolidaySurchargeStrategy;
-import com.example.petshotel.pricing.LongStayDiscountStrategy;
+import com.example.petshotel.domain.enums.PricingCategory;
+import com.example.petshotel.dto.response.BookingPriceResponse;
 import com.example.petshotel.pricing.PricingContext;
-import com.example.petshotel.pricing.PromotionDiscountStrategy;
+import com.example.petshotel.pricing.PricingStrategy;
 import com.example.petshotel.service.PricingService;
 
-@Service 
-public class PricingServiceImpl implements PricingService{
-    private final BaseRoomPriceStrategy baseRoomPriceStrategy;
-    private final HolidaySurchargeStrategy holidaySurchargeStrategy;
-    private final ExtraServicePricingStrategy extraServicePricingStrategy;
-    private final LongStayDiscountStrategy longStayDiscountStrategy;
-    private final PromotionDiscountStrategy promotionDiscountStrategy;
+@Service
+public class PricingServiceImpl implements PricingService {
 
-    public PricingServiceImpl(
-            BaseRoomPriceStrategy baseRoomPriceStrategy,
-            HolidaySurchargeStrategy holidaySurchargeStrategy,
-            ExtraServicePricingStrategy extraServicePricingStrategy,
-            LongStayDiscountStrategy longStayDiscountStrategy,
-            PromotionDiscountStrategy promotionDiscountStrategy) {
-        this.baseRoomPriceStrategy = baseRoomPriceStrategy;
-        this.holidaySurchargeStrategy = holidaySurchargeStrategy;
-        this.extraServicePricingStrategy = extraServicePricingStrategy;
-        this.longStayDiscountStrategy = longStayDiscountStrategy;
-        this.promotionDiscountStrategy = promotionDiscountStrategy;
+    private final List<PricingStrategy> strategies;
+
+    public PricingServiceImpl(List<PricingStrategy> strategies) {
+        this.strategies = strategies;
     }
 
-    @Override 
-    public BigDecimal calculateTotalPrice(PricingContext context){
-        if (context == null) {
-            return BigDecimal.ZERO;
+    @Override
+    public BookingPriceResponse calculate(PricingContext input) {
+        if (input == null
+            || input.getRoom() == null
+            || input.getCheckIn() == null
+            || input.getCheckOut() == null
+            || input.getPetCount() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                "Invalid pricing data"
+            );
         }
 
-        BigDecimal basePrice = baseRoomPriceStrategy.calculate(context);
-        BigDecimal holidaySurcharge = holidaySurchargeStrategy.calculate(context);
-        BigDecimal extraServices = extraServicePricingStrategy.calculate(context);
+        long nights = ChronoUnit.DAYS.between(input.getCheckIn(), input.getCheckOut());
+        if (nights <= 0 || nights > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                "Check-out must be after check-in"
+            );
+        }
 
-        BigDecimal subTotal = basePrice.add(holidaySurcharge).add(extraServices);
+        PricingContext context = new PricingContext();
+        context.setRoom(input.getRoom());
+        context.setPetCount(input.getPetCount());
+        context.setNights(Math.toIntExact(nights));
+        context.setCheckIn(input.getCheckIn());
+        context.setCheckOut(input.getCheckOut());
+        context.setExtraServices(input.getExtraServices());
+        context.setPromotion(input.getPromotion());
 
-        BigDecimal longStayDiscount = longStayDiscountStrategy.calculate(context);
-        BigDecimal promotionDiscount = promotionDiscountStrategy.calculate(context);
+        EnumMap<PricingCategory, BigDecimal> amounts = new EnumMap<>(PricingCategory.class);
 
-        BigDecimal totalDiscount = longStayDiscount.add(promotionDiscount);
+        for(PricingStrategy strategy : strategies){
+            if (strategy.category() != PricingCategory.DISCOUNT) {
+                BigDecimal amount = strategy.calculate(context, BigDecimal.ZERO);
+                amounts.merge(strategy.category(), amount, BigDecimal::add);
+            }
+        }
 
-        BigDecimal grandTotal = subTotal.subtract(totalDiscount);
+        BigDecimal room = amounts.getOrDefault(
+                PricingCategory.ROOM, BigDecimal.ZERO);
+        BigDecimal extra = amounts.getOrDefault(
+                PricingCategory.EXTRA_SERVICE, BigDecimal.ZERO);
+        BigDecimal holiday = amounts.getOrDefault(
+                PricingCategory.HOLIDAY_SURCHARGE, BigDecimal.ZERO);
+        
+        BigDecimal subtotal = room.add(extra).add(holiday);
 
-        return grandTotal.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : grandTotal;
+        BigDecimal discount = BigDecimal.ZERO;
+        for(PricingStrategy strategy : strategies){
+            if (strategy.category() == PricingCategory.DISCOUNT) {
+                discount = discount.max(strategy.calculate(context, subtotal));
+            }
+        }
+
+        discount = discount.min(subtotal);
+        BigDecimal total = subtotal.subtract(discount);
+
+        return new BookingPriceResponse(
+            room, extra, holiday, discount, total
+        );
+
     }
+
 }

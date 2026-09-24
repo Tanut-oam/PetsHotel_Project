@@ -1,8 +1,8 @@
 package com.example.petshotel.service;
 
-import java.math.BigDecimal;
+import com.example.petshotel.dto.response.BookingPriceResponse;
 import com.example.petshotel.pricing.PricingContext;
 
 public interface PricingService {
-    BigDecimal calculateTotalPrice(PricingContext context);
+    BookingPriceResponse calculate(PricingContext input);
 }
