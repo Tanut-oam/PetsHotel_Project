@@ -1,54 +1,96 @@
-<h1>รายการจองของฉัน</h1>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel</a>
 
-<div class="toolbar">
-  <label class="field">
-    สถานะการจอง
-    <select>
-      <option>ทั้งหมด</option>
-      <option>รอยืนยัน</option>
-      <option>ยืนยันแล้ว</option>
-      <option>เข้าพัก</option>
-      <option>เสร็จสิ้น</option>
-      <option>ยกเลิก</option>
-    </select>
-  </label>
-</div>
+    <nav class="topnav">
+      <a href="index.html">หน้าแรก</a>
+      <a href="rooms.html">ห้องพัก</a>
+      <a href="pets.html">สัตว์เลี้ยง</a>
+      <a href="my-bookings.html">การจอง</a>
+    </nav>
 
-<div class="panel table-scroll">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>เลขที่</th>
-        <th>สัตว์เลี้ยง</th>
-        <th>ห้องพัก</th>
-        <th>วันที่เข้าพัก</th>
-        <th>สถานะ</th>
-        <th>รายละเอียด</th>
-      </tr>
-    </thead>
+    <div class="top-actions">
+      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
+      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
+    </div>
+  </header>
 
-    <tbody>
-      <tr>
-        <td>#1025</td>
-        <td>Mochi</td>
-        <td>Deluxe Room 101</td>
-        <td>10–15 ต.ค. 2026</td>
-        <td><span class="badge">ยืนยันแล้ว</span></td>
-        <td>
-          <a class="btn btn-small" href="booking-detail.html">ดูรายละเอียด</a>
-        </td>
-      </tr>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">⌂ หน้าแรก</a>
+      <a href="rooms.html">▣ ห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
+      <a href="my-bookings.html">▤ การจองของฉัน</a>
+      <a href="reports.html">♡ รายงานการดูแล</a>
+      <a href="profile.html">♙ บัญชีของฉัน</a>
+    </aside>
 
-      <tr>
-        <td>#1024</td>
-        <td>Lily</td>
-        <td>Standard Room 201</td>
-        <td>8–10 ต.ค. 2026</td>
-        <td><span class="badge badge-warning">รอยืนยัน</span></td>
-        <td>
-          <a class="btn btn-small" href="booking-detail.html">ดูรายละเอียด</a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+    <main class="content">
+    <h1>รายการจองของฉัน</h1>
+
+        <div class="toolbar">
+        <label class="field">
+            สถานะการจอง
+            <select>
+            <option>ทั้งหมด</option>
+            <option>รอยืนยัน</option>
+            <option>ยืนยันแล้ว</option>
+            <option>เข้าพัก</option>
+            <option>เสร็จสิ้น</option>
+            <option>ยกเลิก</option>
+            </select>
+        </label>
+        </div>
+
+        <div class="panel table-scroll">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>เลขที่</th>
+                <th>สัตว์เลี้ยง</th>
+                <th>ห้องพัก</th>
+                <th>วันที่เข้าพัก</th>
+                <th>สถานะ</th>
+                <th>รายละเอียด</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>#1025</td>
+                <td>Mochi</td>
+                <td>Deluxe Room 101</td>
+                <td>10–15 ต.ค. 2026</td>
+                <td><span class="badge">ยืนยันแล้ว</span></td>
+                <td>
+                <a class="btn btn-small" href="booking-detail.html">ดูรายละเอียด</a>
+                </td>
+            </tr>
+
+            <tr>
+                <td>#1024</td>
+                <td>Lily</td>
+                <td>Standard Room 201</td>
+                <td>8–10 ต.ค. 2026</td>
+                <td><span class="badge badge-warning">รอยืนยัน</span></td>
+                <td>
+                <a class="btn btn-small" href="booking-detail.html">ดูรายละเอียด</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
+    </main>
+  </div>
+
+  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
+</body>
+</html>

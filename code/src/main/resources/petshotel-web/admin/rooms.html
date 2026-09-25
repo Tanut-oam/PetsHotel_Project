@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel Admin</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="admin">
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
+    <div class="top-actions">
+      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
+      <span>ผู้ดูแลระบบ</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">▦ ภาพรวม</a>
+      <a href="bookings.html">▤ จัดการการจอง</a>
+      <a href="rooms.html">▣ จัดการห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยง</a>
+      <a href="services.html">✿ บริการเสริม</a>
+      <a href="promotions.html">◇ โปรโมชัน</a>
+      <a href="reports.html">▤ รายงานการดูแล</a>
+      <a href="users.html">♙ สมาชิก</a>
+      <a href="settings.html">⚙ ตั้งค่า</a>
+    </aside>
+
+    <main class="content">
+        <div class="section-title">
+            <h1>จัดการห้องพัก</h1>
+            <button class="btn btn-primary" type="button">+ เพิ่มห้อง</button>
+            </div>
+
+            <div class="panel table-scroll">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>หมายเลข</th>
+                    <th>ประเภท</th>
+                    <th>ราคา/คืน</th>
+                    <th>รองรับ</th>
+                    <th>สถานะ</th>
+                    <th>จัดการ</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr>
+                    <td>101</td>
+                    <td>Deluxe Room</td>
+                    <td>฿500</td>
+                    <td>3 ตัว</td>
+                    <td><span class="badge">เปิดให้จอง</span></td>
+                    <td>
+                    <button class="btn btn-small">แก้ไข</button>
+                    <button class="btn btn-small">ปิดห้อง</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>302</td>
+                    <td>Family Room</td>
+                    <td>฿700</td>
+                    <td>4 ตัว</td>
+                    <td><span class="badge badge-danger">ปิดซ่อม</span></td>
+                    <td>
+                    <button class="btn btn-small">แก้ไข</button>
+                    <button class="btn btn-small">เปิดห้อง</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <div class="section-title">
+            <h2>ฟอร์มเพิ่ม/แก้ไขห้อง</h2>
+            </div>
+
+            <form class="panel grid cols-2">
+            <label class="field">หมายเลขห้อง<input name="roomNumber" required></label>
+            <label class="field">ชื่อห้อง<input name="roomName" required></label>
+
+            <label class="field">
+                ประเภท
+                <select name="roomType">
+                <option value="DELUXE">Deluxe</option>
+                <option value="STANDARD">Standard</option>
+                <option value="FAMILY">Family</option>
+                </select>
+            </label>
+
+            <label class="field">ราคา/คืน<input type="number" name="price" min="0"></label>
+            <label class="field">รองรับสัตว์เลี้ยง<input type="number" name="capacity" min="1"></label>
+            <label class="field">รูปห้อง<input type="file" name="image" accept="image/*"></label>
+
+            <button class="btn btn-primary" type="submit">บันทึกห้องพัก</button>
+            </form>
+    </main>
+  </div>
+</body>
+</html>

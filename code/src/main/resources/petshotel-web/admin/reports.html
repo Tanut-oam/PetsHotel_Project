@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel Admin</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="admin">
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
+    <div class="top-actions">
+      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
+      <span>ผู้ดูแลระบบ</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">▦ ภาพรวม</a>
+      <a href="bookings.html">▤ จัดการการจอง</a>
+      <a href="rooms.html">▣ จัดการห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยง</a>
+      <a href="services.html">✿ บริการเสริม</a>
+      <a href="promotions.html">◇ โปรโมชัน</a>
+      <a href="reports.html">▤ รายงานการดูแล</a>
+      <a href="users.html">♙ สมาชิก</a>
+      <a href="settings.html">⚙ ตั้งค่า</a>
+    </aside>
+
+    <main class="content">
+        <div class="section-title">
+        <h1>รายงานการดูแล</h1>
+        <button class="btn btn-primary" type="button">+ เขียนรายงาน</button>
+        </div>
+
+        <div class="panel table-scroll">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>วันที่</th>
+                <th>การจอง</th>
+                <th>สัตว์เลี้ยง</th>
+                <th>อาหาร</th>
+                <th>กิจกรรม</th>
+                <th>สุขภาพ</th>
+                <th>จัดการ</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr>
+                <td>14 ต.ค. 2026</td>
+                <td>#1025</td>
+                <td>Mochi</td>
+                <td>กินครบ</td>
+                <td>เดินเล่น 20 นาที</td>
+                <td>ปกติ</td>
+                <td><button class="btn btn-small">แก้ไข</button></td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
+
+        <div class="section-title">
+        <h2>ฟอร์มรายงานประจำวัน</h2>
+        </div>
+
+        <form class="panel grid cols-2">
+        <label class="field">
+            การจอง
+            <select name="bookingId">
+            <option value="1025">#1025 · Deluxe Room</option>
+            </select>
+        </label>
+
+        <label class="field">
+            สัตว์เลี้ยง
+            <select name="petId">
+            <option value="1">Mochi</option>
+            </select>
+        </label>
+
+        <label class="field">วันที่<input type="date" name="reportDate" required></label>
+        <label class="field">อาหาร<input name="meals" required></label>
+        <label class="field">กิจกรรม<input name="activity" required></label>
+        <label class="field">สุขภาพ<input name="health" required></label>
+
+        <label class="field">
+            หมายเหตุ
+            <textarea name="notes"></textarea>
+        </label>
+
+        <label class="field">
+            รูปภาพประจำวัน
+            <input type="file" name="photos" accept="image/*" multiple>
+        </label>
+
+        <button class="btn btn-primary" type="submit">บันทึกรายงาน</button>
+        </form>
+    </main>
+  </div>
+</body>
+</html>
