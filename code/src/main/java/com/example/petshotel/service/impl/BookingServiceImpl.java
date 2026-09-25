@@ -168,7 +168,15 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        // คำนวณราคาโดยส่ง selectedServices เข้าไปใน PricingContext
+        // --- เพิ่มโค้ดค้นหา Promotion ตรงนี้ ---
+        Promotion promotion = null;
+        if (request.getPromotionId() != null) {
+            promotion = promotionRepository.findById(request.getPromotionId())
+                    .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + request.getPromotionId()));
+        }
+        // ------------------------------------
+
+        // คำนวณราคาโดยส่ง selectedServices และ promotion เข้าไปใน PricingContext
         PricingContext pricingContext = new PricingContext(
                 room,
                 pets.size(),
@@ -176,7 +184,7 @@ public class BookingServiceImpl implements BookingService {
                 request.getCheckInDate(),
                 request.getCheckOutDate(),
                 selectedServices,
-                null // หากมีระบบโปรโมชั่นใน request สามารถดึงค่ามาใส่ตรงนี้ได้
+                promotion // <-- เปลี่ยนจาก null เป็น promotion ตัวที่เราเพิ่งค้นหามา
         );
 
         BigDecimal totalPrice =
@@ -190,6 +198,7 @@ public class BookingServiceImpl implements BookingService {
                 .checkOutDate(request.getCheckOutDate())
                 .status(BookingStatus.PENDING)
                 .totalPrice(totalPrice)
+                .promotion(promotion) // <-- เพิ่มโปรโมชั่นเข้าไปผูกกับ Booking ด้วย
                 .build();
 
         // สร้าง BookingPet เพื่อเชื่อม booking กับสัตว์แต่ละตัว
@@ -202,7 +211,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.getBookingPets().addAll(bookingPets);
 
-        // ผูก BookingExtraService กับ Booking หลัก (ถ้า entity ของคุณทำ cascade type เอาไว้)
+        // ผูก BookingExtraService กับ Booking หลัก
         if (!selectedServices.isEmpty()) {
             selectedServices.forEach(service -> service.setBooking(booking));
             booking.getExtraServices().addAll(selectedServices);
