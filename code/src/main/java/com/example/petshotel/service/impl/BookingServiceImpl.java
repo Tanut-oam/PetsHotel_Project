@@ -1,8 +1,11 @@
 package com.example.petshotel.service.impl;
 
 import com.example.petshotel.domain.entity.Booking;
+import com.example.petshotel.domain.entity.BookingExtraService;
 import com.example.petshotel.domain.entity.BookingPet;
+import com.example.petshotel.domain.entity.ExtraService;
 import com.example.petshotel.domain.entity.Pet;
+import com.example.petshotel.domain.entity.Promotion;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.entity.User;
 
@@ -14,8 +17,11 @@ import com.example.petshotel.dto.response.BookingResponse;
 
 import com.example.petshotel.pricing.PricingContext;
 
+import com.example.petshotel.repository.BookingExtraServiceRepository;
 import com.example.petshotel.repository.BookingRepository;
+import com.example.petshotel.repository.ExtraServiceRepository;
 import com.example.petshotel.repository.PetRepository;
+import com.example.petshotel.repository.PromotionRepository;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.repository.UserRepository;
 
@@ -36,8 +42,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +57,11 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
     private final PricingService pricingService;
+    
+    // Dependencies ที่เพิ่มเข้ามาใหม่
+    private final ExtraServiceRepository extraServiceRepository;
+    private final BookingExtraServiceRepository bookingExtraServiceRepository;
+    private final PromotionRepository promotionRepository;
 
     // =========================================================
     // CREATE BOOKING
@@ -112,32 +125,58 @@ public class BookingServiceImpl implements BookingService {
         }
 
         // จำนวนคืน
-        int nights = (int) ChronoUnit.DAYS.between(
+        int nights = Math.toIntExact(ChronoUnit.DAYS.between(
                 request.getCheckInDate(),
                 request.getCheckOutDate()
-        );
+        ));
 
-        /*
-         * PricingContext ปัจจุบันต้องการ
-         * Room
-         * petCount
-         * nights
-         * checkIn
-         * checkOut
-         * extraServices
-         * promotion
-         *
-         * ตอน CreateBookingRequest ของเรายังไม่มี extra service
-         * และ promotion จึงใช้ empty list และ null ไปก่อน
-         */
+        List<BookingExtraService> selectedServices = new ArrayList<>();
+
+        if (request.getExtraServiceQuantities() != null) {
+            for (Map.Entry<Long, Integer> entry
+                    : request.getExtraServiceQuantities().entrySet()) {
+
+                Long serviceId = entry.getKey();
+                Integer quantity = entry.getValue();
+
+                if (serviceId == null || quantity == null || quantity <= 0) {
+                    throw new IllegalArgumentException(
+                            "Extra service ID and positive quantity are required");
+                }
+
+                ExtraService extraService = extraServiceRepository.findById(serviceId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Extra service not found: " + serviceId));
+
+                if (!Boolean.TRUE.equals(extraService.getActive())
+                        || extraService.getPrice() == null
+                        || extraService.getPrice().signum() < 0) {
+                    throw new IllegalArgumentException(
+                            "Extra service is unavailable: " + serviceId);
+                }
+
+                BookingExtraService selected = new BookingExtraService();
+                selected.setExtraService(extraService);
+                selected.setQuantity(quantity);
+                selected.setUnitPrice(extraService.getPrice());
+                selected.setTotalPrice(
+                        extraService.getPrice()
+                                .multiply(BigDecimal.valueOf(quantity))
+                );
+
+                selectedServices.add(selected);
+            }
+        }
+
+        // คำนวณราคาโดยส่ง selectedServices เข้าไปใน PricingContext
         PricingContext pricingContext = new PricingContext(
                 room,
                 pets.size(),
                 nights,
                 request.getCheckInDate(),
                 request.getCheckOutDate(),
-                Collections.emptyList(),
-                null
+                selectedServices,
+                null // หากมีระบบโปรโมชั่นใน request สามารถดึงค่ามาใส่ตรงนี้ได้
         );
 
         BigDecimal totalPrice =
@@ -162,6 +201,12 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
 
         booking.getBookingPets().addAll(bookingPets);
+
+        // ผูก BookingExtraService กับ Booking หลัก (ถ้า entity ของคุณทำ cascade type เอาไว้)
+        if (!selectedServices.isEmpty()) {
+            selectedServices.forEach(service -> service.setBooking(booking));
+            booking.getExtraServices().addAll(selectedServices);
+        }
 
         Booking savedBooking = bookingRepository.save(booking);
 
