@@ -26,8 +26,8 @@ public class DailyCareReport {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "booking_pet_id",nullable = false)
-    private Booking booking;
+    @JoinColumn(name = "booking_pet_id", nullable = false)
+    private BookingPet bookingPet;
 
     @ManyToOne(fetch = FetchType.LAZY,optional = false)
     @JoinColumn (name = "recorded_by_id",nullable = false)
