@@ -54,6 +54,14 @@ public class Booking {
     @Builder.Default
     private List<BookingPet> bookingPets = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "booking",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<BookingExtraService> extraServices = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         if (status == null) {
@@ -64,4 +72,10 @@ public class Booking {
             createdAt = LocalDateTime.now();
         }
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id")
+    private Promotion promotion;
+
+    
 }
