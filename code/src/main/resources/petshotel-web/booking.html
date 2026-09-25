@@ -1,0 +1,106 @@
+<a href="room-detail.html">← กลับไปหน้าห้อง</a>
+<h1>จอง Deluxe Room · ห้อง 101</h1>
+
+<div class="steps">
+  <div class="step done">1. วันเข้าพัก</div>
+  <div class="step active">2. สัตว์เลี้ยง</div>
+  <div class="step">3. บริการเสริม</div>
+  <div class="step">4. ยืนยัน</div>
+</div>
+
+<div class="detail-layout">
+  <form class="panel">
+    <section id="step-dates">
+      <h2>วันเข้าพัก</h2>
+
+      <div class="grid cols-2">
+        <label class="field">
+          เช็กอิน
+          <input type="date" name="checkIn" required>
+        </label>
+
+        <label class="field">
+          เช็กเอาต์
+          <input type="date" name="checkOut" required>
+        </label>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section id="step-pets">
+      <h2>เลือกสัตว์เลี้ยง</h2>
+
+      <label class="choice">
+        <input type="checkbox" name="petIds" value="1">
+        <img class="pet-photo" src="assets/dog.jpg" alt="Mochi">
+        <span class="choice-text">
+          <strong>Mochi</strong><br>
+          <small>สุนัข · ชิบะอินุ</small>
+        </span>
+      </label>
+
+      <label class="choice">
+        <input type="checkbox" name="petIds" value="2">
+        <img class="pet-photo" src="assets/cat.jpg" alt="Lily">
+        <span class="choice-text">
+          <strong>Lily</strong><br>
+          <small>แมว · บริติชช็อตแฮร์</small>
+        </span>
+      </label>
+
+      <a class="btn btn-small" href="pets.html">+ เพิ่มสัตว์เลี้ยง</a>
+    </section>
+
+    <hr class="divider">
+
+    <section id="step-services">
+      <h2>บริการเสริม</h2>
+
+      <label class="choice">
+        <input type="checkbox" name="serviceIds" value="FOOD">
+        <span class="choice-text">อาหารเสริม</span>
+        <strong>฿50 / วัน</strong>
+      </label>
+
+      <label class="choice">
+        <input type="checkbox" name="serviceIds" value="BATH">
+        <span class="choice-text">อาบน้ำ</span>
+        <strong>฿300 / ครั้ง</strong>
+      </label>
+
+      <label class="choice">
+        <input type="checkbox" name="serviceIds" value="WALK">
+        <span class="choice-text">พาเดินเล่น</span>
+        <strong>฿100 / วัน</strong>
+      </label>
+    </section>
+
+    <hr class="divider">
+
+    <section id="step-confirm">
+      <h2>ตรวจสอบและยืนยัน</h2>
+
+      <label class="field">
+        โค้ดส่วนลด
+        <input name="promotionCode" placeholder="เช่น WELCOME10">
+      </label>
+
+      <p>ผู้ติดต่อ: ตัวอย่างผู้ใช้ · 081-234-5678</p>
+      <p>วิธีชำระเงิน: ชำระ ณ ที่พัก</p>
+    </section>
+
+    <div class="row">
+      <button class="btn" type="button">ย้อนกลับ</button>
+      <button class="btn btn-primary" type="submit">ยืนยันการจอง</button>
+    </div>
+  </form>
+
+  <aside class="panel">
+    <h3>สรุปราคา</h3>
+    <div class="summary-line"><span>ค่าห้อง 2 คืน</span><span>฿1,000</span></div>
+    <div class="summary-line"><span>บริการเสริม</span><span>฿100</span></div>
+    <div class="summary-line"><span>ส่วนลด</span><span>−฿100</span></div>
+    <div class="summary-line total"><span>รวม</span><span>฿1,000</span></div>
+  </aside>
+</div>
