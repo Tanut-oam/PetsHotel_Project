@@ -9,7 +9,7 @@ public record CreateDailyCareReportRequest(
     @NotNull(message = "Report date is required")
     LocalDate reportDate,
 
-    String feedingMoString,
+    String feedingMorning,
     String feedingEvening,
     
     @PositiveOrZero(message = "Walking minutes must be zero or greater")
