@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel Admin</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="admin">
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
+    <div class="top-actions">
+      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
+      <span>ผู้ดูแลระบบ</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">▦ ภาพรวม</a>
+      <a href="bookings.html">▤ จัดการการจอง</a>
+      <a href="rooms.html">▣ จัดการห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยง</a>
+      <a href="services.html">✿ บริการเสริม</a>
+      <a href="promotions.html">◇ โปรโมชัน</a>
+      <a href="reports.html">▤ รายงานการดูแล</a>
+      <a href="users.html">♙ สมาชิก</a>
+      <a href="settings.html">⚙ ตั้งค่า</a>
+    </aside>
+
+    <main class="content">
+        <div class="section-title">
+            <h1>บริการเสริม</h1>
+            <button class="btn btn-primary" type="button">+ เพิ่มบริการ</button>
+            </div>
+
+            <div class="panel table-scroll">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ชื่อบริการ</th>
+                    <th>ราคา</th>
+                    <th>หน่วย</th>
+                    <th>สถานะ</th>
+                    <th>จัดการ</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr>
+                    <td>อาหารเสริม</td>
+                    <td>฿50</td>
+                    <td>วัน</td>
+                    <td><span class="badge">เปิดใช้</span></td>
+                    <td>
+                    <button class="btn btn-small">แก้ไข</button>
+                    <button class="btn btn-small">ปิดใช้</button>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>อาบน้ำ</td>
+                    <td>฿300</td>
+                    <td>ครั้ง</td>
+                    <td><span class="badge">เปิดใช้</span></td>
+                    <td>
+                    <button class="btn btn-small">แก้ไข</button>
+                    <button class="btn btn-small">ปิดใช้</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <div class="section-title">
+            <h2>ฟอร์มบริการเสริม</h2>
+            </div>
+
+            <form class="panel grid cols-2">
+            <label class="field">ชื่อบริการ<input name="name" required></label>
+            <label class="field">ราคา<input type="number" name="price" min="0" required></label>
+
+            <label class="field">
+                คิดราคาแบบ
+                <select name="unit">
+                <option value="DAY">ต่อวัน</option>
+                <option value="ONCE">ต่อครั้ง</option>
+                </select>
+            </label>
+
+            <button class="btn btn-primary" type="submit">บันทึกบริการ</button>
+            </form>
+    </main>
+  </div>
+</body>
+</html>

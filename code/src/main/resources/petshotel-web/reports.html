@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel</a>
+
+    <nav class="topnav">
+      <a href="index.html">หน้าแรก</a>
+      <a href="rooms.html">ห้องพัก</a>
+      <a href="pets.html">สัตว์เลี้ยง</a>
+      <a href="my-bookings.html">การจอง</a>
+    </nav>
+
+    <div class="top-actions">
+      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
+      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">⌂ หน้าแรก</a>
+      <a href="rooms.html">▣ ห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
+      <a href="my-bookings.html">▤ การจองของฉัน</a>
+      <a href="reports.html">♡ รายงานการดูแล</a>
+      <a href="profile.html">♙ บัญชีของฉัน</a>
+    </aside>
+
+    <main class="content">
+        <h1>รายงานการดูแลรายวัน</h1>
+            <div class="panel" style="margin-bottom: 20px;">
+            <div class="grid cols-2">
+                <label class="field">
+                เลือกการจอง
+                <select name="bookingId">
+                    <option value="1025">#1025 · Deluxe Room · Mochi</option>
+                    <option value="1024">#1024 · Standard Room · Lily</option>
+                </select>
+                </label>
+
+                <label class="field">
+                เลือกวันที่
+                <input type="date" name="reportDate">
+                </label>
+            </div>
+            </div>
+
+            <article class="panel report">
+            <div class="row">
+                <h2>14 ตุลาคม 2026</h2>
+                <span class="badge">Mochi</span>
+            </div>
+
+            <div class="grid cols-3">
+                <div>
+                <h3>🍽 อาหาร</h3>
+                <p>กินอาหารครบทุกมื้อ</p>
+                </div>
+
+                <div>
+                <h3>🦮 กิจกรรม</h3>
+                <p>เดินเล่น 20 นาที และเล่นของเล่น</p>
+                </div>
+
+                <div>
+                <h3>♡ สุขภาพ</h3>
+                <p>ปกติ ร่าเริง</p>
+                </div>
+            </div>
+
+            <p><strong>หมายเหตุ:</strong> วันนี้ Mochi พักผ่อนได้ดี</p>
+            </article>
+
+            <article class="panel report">
+            <div class="row">
+                <h2>13 ตุลาคม 2026</h2>
+                <span class="badge">Mochi</span>
+            </div>
+
+            <p>🍽 กินอาหารครบ · 🦮 เดินเล่น 15 นาที · ♡ สุขภาพปกติ</p>
+            </article>
+    </main>
+  </div>
+
+  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
+</body>
+</html>

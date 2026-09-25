@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel Admin</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body class="admin">
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
+    <div class="top-actions">
+      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
+      <span>ผู้ดูแลระบบ</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">▦ ภาพรวม</a>
+      <a href="bookings.html">▤ จัดการการจอง</a>
+      <a href="rooms.html">▣ จัดการห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยง</a>
+      <a href="services.html">✿ บริการเสริม</a>
+      <a href="promotions.html">◇ โปรโมชัน</a>
+      <a href="reports.html">▤ รายงานการดูแล</a>
+      <a href="users.html">♙ สมาชิก</a>
+      <a href="settings.html">⚙ ตั้งค่า</a>
+    </aside>
+
+    <main class="content">
+        <h1>ตั้งค่ากิจการ</h1>
+        <form class="panel" style="max-width: 700px;">
+        <div class="grid">
+            <label class="field">
+            ชื่อกิจการ
+            <input name="hotelName" value="PetsHotel" required>
+            </label>
+
+            <label class="field">
+            เบอร์โทร
+            <input name="phone" value="043-123-456" required>
+            </label>
+
+            <label class="field">
+            ที่อยู่
+            <textarea name="address">ขอนแก่น</textarea>
+            </label>
+
+            <div class="grid cols-2">
+            <label class="field">
+                เวลาเช็กอิน
+                <input type="time" name="checkInTime" value="14:00">
+            </label>
+
+            <label class="field">
+                เวลาเช็กเอาต์
+                <input type="time" name="checkOutTime" value="12:00">
+            </label>
+            </div>
+
+            <div>
+            <button class="btn btn-primary" type="submit">บันทึกการตั้งค่า</button>
+            </div>
+        </div>
+        </form>
+    </main>
+  </div>
+</body>
+</html>

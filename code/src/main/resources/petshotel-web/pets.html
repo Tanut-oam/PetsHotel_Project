@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel</a>
+
+    <nav class="topnav">
+      <a href="index.html">หน้าแรก</a>
+      <a href="rooms.html">ห้องพัก</a>
+      <a href="pets.html">สัตว์เลี้ยง</a>
+      <a href="my-bookings.html">การจอง</a>
+    </nav>
+
+    <div class="top-actions">
+      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
+      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">⌂ หน้าแรก</a>
+      <a href="rooms.html">▣ ห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
+      <a href="my-bookings.html">▤ การจองของฉัน</a>
+      <a href="reports.html">♡ รายงานการดูแล</a>
+      <a href="profile.html">♙ บัญชีของฉัน</a>
+    </aside>
+
+    <main class="content">
+        <div class="section-title">
+    <h1>สัตว์เลี้ยงของฉัน</h1>
+    <button class="btn btn-primary" type="button">+ เพิ่มสัตว์เลี้ยง</button>
+    </div>
+
+    <div class="grid cols-2">
+    <article class="panel">
+        <div class="pet-row">
+        <img class="pet-photo" src="assets/dog.jpg" alt="Mochi">
+        <div>
+            <h3>Mochi</h3>
+            <p class="muted">สุนัข · ชิบะอินุ · อายุ 2 ปี · 12.5 กก.</p>
+        </div>
+        </div>
+
+        <p>ข้อควรระวัง: แพ้อาหารทะเล</p>
+
+        <div class="row">
+        <button class="btn btn-small" type="button">แก้ไข</button>
+        <button class="btn btn-small btn-danger" type="button">ลบ</button>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="pet-row">
+        <img class="pet-photo" src="assets/cat.jpg" alt="Lily">
+        <div>
+            <h3>Lily</h3>
+            <p class="muted">แมว · บริติชช็อตแฮร์ · อายุ 4 ปี · 4.2 กก.</p>
+        </div>
+        </div>
+
+        <p>ข้อควรระวัง: ไม่มี</p>
+
+        <div class="row">
+        <button class="btn btn-small" type="button">แก้ไข</button>
+        <button class="btn btn-small btn-danger" type="button">ลบ</button>
+        </div>
+    </article>
+    </div>
+
+    <div class="section-title">
+    <h2>ฟอร์มเพิ่ม/แก้ไขสัตว์เลี้ยง</h2>
+    </div>
+
+    <form class="panel grid cols-2">
+    <label class="field">ชื่อ<input name="name" required></label>
+
+    <label class="field">
+        ประเภท
+        <select name="type">
+        <option value="DOG">สุนัข</option>
+        <option value="CAT">แมว</option>
+        </select>
+    </label>
+
+    <label class="field">สายพันธุ์<input name="breed" required></label>
+    <label class="field">อายุ (ปี)<input type="number" name="age" min="0"></label>
+    <label class="field">น้ำหนัก (กก.)<input type="number" name="weight" step="0.1"></label>
+    <label class="field">รูปภาพ<input type="file" name="photo" accept="image/*"></label>
+
+    <label class="field">
+        ข้อควรระวัง/โรคประจำตัว
+        <textarea name="notes"></textarea>
+    </label>
+
+    <div>
+        <button class="btn btn-primary" type="submit">บันทึกข้อมูล</button>
+    </div>
+    </form>
+    </main>
+  </div>
+
+  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
+</body>
+</html>

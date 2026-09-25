@@ -1,90 +1,132 @@
-<h1>ห้องพักทั้งหมด</h1>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PetsHotel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html">🐾 PetsHotel</a>
 
-<section class="panel">
-  <form class="form-grid">
-    <label class="field">
-      เช็กอิน
-      <input type="date" name="checkIn" required>
-    </label>
+    <nav class="topnav">
+      <a href="index.html">หน้าแรก</a>
+      <a href="rooms.html">ห้องพัก</a>
+      <a href="pets.html">สัตว์เลี้ยง</a>
+      <a href="my-bookings.html">การจอง</a>
+    </nav>
 
-    <label class="field">
-      เช็กเอาต์
-      <input type="date" name="checkOut" required>
-    </label>
-
-    <label class="field">
-      ประเภทห้อง
-      <select name="type">
-        <option value="">ทุกประเภท</option>
-        <option value="deluxe">Deluxe</option>
-        <option value="standard">Standard</option>
-        <option value="family">Family</option>
-      </select>
-    </label>
-
-    <button class="btn btn-primary">ค้นหา</button>
-  </form>
-</section>
-
-<div class="toolbar">
-  <label class="field">
-    ค้นหาห้อง
-    <input type="search" placeholder="ชื่อหรือหมายเลขห้อง">
-  </label>
-
-  <label class="field">
-    สถานะ
-    <select>
-      <option>ทั้งหมด</option>
-      <option>ว่าง</option>
-      <option>ไม่ว่าง</option>
-    </select>
-  </label>
-</div>
-
-<div class="grid cols-3">
-  <article class="card">
-    <img class="room-image" src="assets/room-deluxe.jpg" alt="Deluxe Room">
-    <div class="card-body">
-      <div class="row">
-        <h3>Deluxe Room</h3>
-        <span class="badge">ว่าง</span>
-      </div>
-      <p>ห้อง 101 · รองรับ 3 ตัว</p>
-      <div class="row">
-        <span class="price">฿500 / คืน</span>
-        <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
-      </div>
+    <div class="top-actions">
+      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
+      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
     </div>
-  </article>
+  </header>
 
-  <article class="card">
-    <img class="room-image" src="assets/room-standard.jpg" alt="Standard Room">
-    <div class="card-body">
-      <div class="row">
-        <h3>Standard Room</h3>
-        <span class="badge">ว่าง</span>
-      </div>
-      <p>ห้อง 201 · รองรับ 2 ตัว</p>
-      <div class="row">
-        <span class="price">฿400 / คืน</span>
-        <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
-      </div>
-    </div>
-  </article>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html">⌂ หน้าแรก</a>
+      <a href="rooms.html">▣ ห้องพัก</a>
+      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
+      <a href="my-bookings.html">▤ การจองของฉัน</a>
+      <a href="reports.html">♡ รายงานการดูแล</a>
+      <a href="profile.html">♙ บัญชีของฉัน</a>
+    </aside>
 
-  <article class="card">
-    <img class="room-image" src="assets/room-family.jpg" alt="Family Room">
-    <div class="card-body">
-      <div class="row">
-        <h3>Family Room</h3>
-        <span class="badge badge-warning">ไม่ว่าง</span>
-      </div>
-      <p>ห้อง 301 · รองรับ 4 ตัว</p>
-      <div class="row">
-        <span class="price">฿700 / คืน</span>
-        <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
-      </div>
-    </div>
-  </article>
-</div>
+    <main class="content">
+      <h1>ห้องพักทั้งหมด</h1>
+
+        <section class="panel">
+        <form class="form-grid">
+            <label class="field">
+            เช็กอิน
+            <input type="date" name="checkIn" required>
+            </label>
+
+            <label class="field">
+            เช็กเอาต์
+            <input type="date" name="checkOut" required>
+            </label>
+
+            <label class="field">
+            ประเภทห้อง
+            <select name="type">
+                <option value="">ทุกประเภท</option>
+                <option value="deluxe">Deluxe</option>
+                <option value="standard">Standard</option>
+                <option value="family">Family</option>
+            </select>
+            </label>
+
+            <button class="btn btn-primary">ค้นหา</button>
+        </form>
+        </section>
+
+        <div class="toolbar">
+        <label class="field">
+            ค้นหาห้อง
+            <input type="search" placeholder="ชื่อหรือหมายเลขห้อง">
+        </label>
+
+        <label class="field">
+            สถานะ
+            <select>
+            <option>ทั้งหมด</option>
+            <option>ว่าง</option>
+            <option>ไม่ว่าง</option>
+            </select>
+        </label>
+        </div>
+
+        <div class="grid cols-3">
+        <article class="card">
+            <img class="room-image" src="assets/room-deluxe.jpg" alt="Deluxe Room">
+            <div class="card-body">
+            <div class="row">
+                <h3>Deluxe Room</h3>
+                <span class="badge">ว่าง</span>
+            </div>
+            <p>ห้อง 101 · รองรับ 3 ตัว</p>
+            <div class="row">
+                <span class="price">฿500 / คืน</span>
+                <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
+            </div>
+            </div>
+        </article>
+
+        <article class="card">
+            <img class="room-image" src="assets/room-standard.jpg" alt="Standard Room">
+            <div class="card-body">
+            <div class="row">
+                <h3>Standard Room</h3>
+                <span class="badge">ว่าง</span>
+            </div>
+            <p>ห้อง 201 · รองรับ 2 ตัว</p>
+            <div class="row">
+                <span class="price">฿400 / คืน</span>
+                <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
+            </div>
+            </div>
+        </article>
+
+        <article class="card">
+            <img class="room-image" src="assets/room-family.jpg" alt="Family Room">
+            <div class="card-body">
+            <div class="row">
+                <h3>Family Room</h3>
+                <span class="badge badge-warning">ไม่ว่าง</span>
+            </div>
+            <p>ห้อง 301 · รองรับ 4 ตัว</p>
+            <div class="row">
+                <span class="price">฿700 / คืน</span>
+                <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
+            </div>
+            </div>
+        </article>
+        </div>
+    </main>
+  </div>
+
+  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
+</body>
+</html>
