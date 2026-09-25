@@ -141,7 +141,7 @@ public class BookingServiceImpl implements BookingService {
         );
 
         BigDecimal totalPrice =
-                pricingService.calculateTotalPrice(pricingContext);
+                pricingService.calculate(pricingContext).totalPrice();
 
         // สร้าง Booking หลัก
         Booking booking = Booking.builder()
