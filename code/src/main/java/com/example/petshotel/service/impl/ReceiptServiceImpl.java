@@ -10,69 +10,52 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
-import com.example.petshotel.dto.response.BookingPriceResponse;
-import com.example.petshotel.pricing.PricingContext;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
-import com.example.petshotel.service.PricingService;
 import com.example.petshotel.service.ReceiptService;
-import com.example.petshotel.repository.BookingExtraServiceRepository;
 
 @Service 
 public class ReceiptServiceImpl implements ReceiptService{
     
     private final ReceiptRepository receiptRepository;
     private final BookingRepository bookingRepository;
-    private final BookingExtraServiceRepository bookingExtraServiceRepository;
-    private final PricingService pricingService;
 
     public ReceiptServiceImpl(
             ReceiptRepository receiptRepository,
-            BookingRepository bookingRepository,
-            BookingExtraServiceRepository bookingExtraServiceRepository,
-            PricingService pricingService) {
+            BookingRepository bookingRepository) {
         this.receiptRepository = receiptRepository;
         this.bookingRepository = bookingRepository;
-        this.bookingExtraServiceRepository = bookingExtraServiceRepository;
-        this.pricingService = pricingService;
     }
 
     @Override 
     @Transactional 
     public Receipt createReceipt(Long bookingId){
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with id: " + bookingId));
 
         Optional<Receipt> existingReceipt = receiptRepository.findByBookingId(bookingId);
             if (existingReceipt.isPresent()) {
             return existingReceipt.get();
         }
 
-        int petCount = booking.getBookingPets().size();
-        if (petCount <= 0) {
-            throw new IllegalArgumentException(
-                "Booking must have at least one pet"
-            );
+        if (booking.getRoomAmount() == null
+                || booking.getServiceAmount() == null
+                || booking.getSurchargeAmount() == null
+                || booking.getDiscountAmount() == null
+                || booking.getTotalPrice() == null) {
+            throw new IllegalStateException(
+                    "Booking has no complete price snapshot: " + bookingId);
         }
-
-        PricingContext context = new PricingContext();
-        context.setPetCount(petCount);
-        context.setRoom(booking.getRoom());
-        context.setCheckIn(booking.getCheckInDate());
-        context.setCheckOut(booking.getCheckOutDate());
-        context.setExtraServices(bookingExtraServiceRepository.findByBookingId(bookingId));
-
-        BookingPriceResponse price = pricingService.calculate(context);
 
         Receipt receipt = new Receipt();
         receipt.setBooking(booking);
         receipt.setReceiptNumber("REC-" + UUID.randomUUID());
         receipt.setIssuedAt(LocalDateTime.now());
-        receipt.setRoomAmount(price.basePrice());
-        receipt.setServiceAmount(price.extraServicesPrice());
-        receipt.setSurchargeAmount(price.holidaySurcharge());
-        receipt.setDiscountAmount(price.discountAmount());
-        receipt.setTotalAmount(price.totalPrice());
+        receipt.setRoomAmount(booking.getRoomAmount());
+        receipt.setServiceAmount(booking.getServiceAmount());
+        receipt.setSurchargeAmount(booking.getSurchargeAmount());
+        receipt.setDiscountAmount(booking.getDiscountAmount());
+        receipt.setTotalAmount(booking.getTotalPrice());
 
         return receiptRepository.save(receipt);
 
