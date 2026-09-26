@@ -79,31 +79,67 @@
     <h2>ฟอร์มเพิ่ม/แก้ไขสัตว์เลี้ยง</h2>
     </div>
 
-    <form class="panel grid cols-2">
-    <label class="field">ชื่อ<input name="name" required></label>
+    <form class="panel grid cols-2" id="pet-form">
+  <label class="field">
+    ชื่อ
+    <input name="name" required>
+  </label>
 
-    <label class="field">
-        ประเภท
-        <select name="type">
-        <option value="DOG">สุนัข</option>
-        <option value="CAT">แมว</option>
-        </select>
-    </label>
+  <label class="field">
+    ประเภท
+    <select name="type" required>
+      <option value="DOG">สุนัข</option>
+      <option value="CAT">แมว</option>
+      <option value="OTHER">สัตว์ชนิดอื่น</option>
+    </select>
+  </label>
 
-    <label class="field">สายพันธุ์<input name="breed" required></label>
-    <label class="field">อายุ (ปี)<input type="number" name="age" min="0"></label>
-    <label class="field">น้ำหนัก (กก.)<input type="number" name="weight" step="0.1"></label>
-    <label class="field">รูปภาพ<input type="file" name="photo" accept="image/*"></label>
+  <label class="field">
+    สายพันธุ์
+    <input name="breed">
+  </label>
 
-    <label class="field">
-        ข้อควรระวัง/โรคประจำตัว
-        <textarea name="notes"></textarea>
-    </label>
+  <label class="field">
+    อายุ (ปี)
+    <input type="number" name="age" min="0">
+  </label>
 
-    <div>
-        <button class="btn btn-primary" type="submit">บันทึกข้อมูล</button>
-    </div>
-    </form>
+  <label class="field">
+    น้ำหนัก (กก.)
+    <input type="number" name="weight" min="0.01" step="any">
+  </label>
+  <label class="field">
+    รูปภาพ
+    <input type="file" name="photo" accept="image/*">
+  </label>
+  <label class="field">
+    เพศ
+    <select name="gender">
+      <option value="">ไม่ระบุ</option>
+      <option value="MALE">เพศผู้</option>
+      <option value="FEMALE">เพศเมีย</option>
+    </select>
+  </label>
+
+  <label class="field">
+    ข้อควรระวัง/โรคประจำตัว
+    <textarea name="medicalNote"></textarea>
+  </label>
+
+  <label class="field">
+    คำแนะนำการให้อาหาร
+    <textarea name="feedingInstruction"></textarea>
+  </label>
+
+  <label class="field">
+    หมายเหตุเพิ่มเติม
+    <textarea name="specialNote"></textarea>
+  </label>
+
+  <div>
+    <button class="btn btn-primary" type="submit">บันทึกข้อมูล</button>
+  </div>
+</form>
     </main>
   </div>
 
