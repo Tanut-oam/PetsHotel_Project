@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.exception.RoomNotAvailableException;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.AvailabilityService;
@@ -50,6 +51,13 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         }
         return availableRooms;
     } 
+
+    @Transactional(readOnly = true)
+    public void checkRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut, int petCount) {
+        if (!isRoomAvailable(roomId, checkIn, checkOut, petCount)) {
+            throw new RoomNotAvailableException(roomId, checkIn, checkOut);
+        }
+    }
 
     private boolean hasSpace(Room room, LocalDate checkIn, LocalDate checkOut, int petCount) {
         if (room.getStatus() != RoomStatus.ACTIVE) {
