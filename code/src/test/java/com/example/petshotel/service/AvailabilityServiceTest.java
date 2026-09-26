@@ -127,27 +127,24 @@ class AvailabilityServiceTest {
     void shouldThrowWhenCheckOutEqualsCheckIn() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(1L, checkIn, checkIn, 1));
-        assertEquals("Check-out date must be after check-in date", ex.getMessage());
+                assertEquals("วันที่ Check-out ต้องอยู่หลังวันที่ Check-in", ex.getMessage());
     }
 
     @Test
     void shouldThrowWhenCheckOutBeforeCheckIn() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.findAvailableRooms(checkOut, checkIn, 1));
-        assertEquals("Check-out date must be after check-in date", ex.getMessage());
-    }
+        assertEquals("วันที่ Check-out ต้องอยู่หลังวันที่ Check-in", ex.getMessage());    }
 
     @Test
     void shouldThrowWhenPetCountIsZero() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(1L, checkIn, checkOut, 0));
-        assertEquals("Pet count must be at least 1", ex.getMessage());
-    }
+        assertEquals("จำนวนสัตว์เลี้ยงต้องอย่างน้อย 1 ตัว", ex.getMessage());    }
 
     @Test
     void shouldThrowWhenDateIsNull() {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(1L, null, checkOut, 1));
-        assertEquals("Check-in and check-out dates are required", ex.getMessage());
-    }
+        assertEquals("วันที่ Check-in และ Check-out ต้องระบุ", ex.getMessage());    }
 }
