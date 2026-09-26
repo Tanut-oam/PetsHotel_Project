@@ -32,16 +32,17 @@
         <h1>สัตว์เลี้ยงในระบบ</h1>
             <div class="toolbar">
             <label class="field">
-                ค้นหาสัตว์เลี้ยง
-                <input type="search" placeholder="ชื่อสัตว์เลี้ยง">
+                ค้นหาสัตว์เลี้ยงหรือเจ้าของ
+                <input type="search" id="pet-search" placeholder="ค้นหาสัตว์เลี้ยงหรือเจ้าของ">
             </label>
 
             <label class="field">
                 ประเภท
-                <select>
-                <option>ทั้งหมด</option>
-                <option>สุนัข</option>
-                <option>แมว</option>
+                <select id="pet-type-filter">
+                  <option value="ALL">ทั้งหมด</option>
+                  <option value="DOG">สุนัข</option>
+                  <option value="CAT">แมว</option>
+                  <option value="OTHER">สัตว์ชนิดอื่น</option>
                 </select>
             </label>
             </div>
@@ -51,6 +52,7 @@
                 <thead>
                 <tr>
                     <th>ชื่อ</th>
+                    <th>เจ้าของ</th>
                     <th>ประเภท</th>
                     <th>สายพันธุ์</th>
                     <th>อายุ</th>
@@ -62,6 +64,7 @@
                 <tbody>
                 <tr>
                     <td>Mochi</td>
+                    <td>คุณกานต์</td>
                     <td>สุนัข</td>
                     <td>ชิบะอินุ</td>
                     <td>2 ปี</td>
@@ -71,6 +74,7 @@
 
                 <tr>
                     <td>Lily</td>
+                    <td>คุณเมย์</td>
                     <td>แมว</td>
                     <td>บริติชช็อตแฮร์</td>
                     <td>4 ปี</td>
