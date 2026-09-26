@@ -34,6 +34,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     @Transactional(readOnly = true)
+    @Override
     public boolean isRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut, int petCount) {
         validate(checkIn, checkOut, petCount);
         Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
@@ -41,6 +42,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     @Transactional(readOnly = true)
+    @Override
     public List<Room> findAvailableRooms(LocalDate checkIn, LocalDate checkOut, int petCount) {
         validate(checkIn, checkOut, petCount);
         List<Room> availableRooms = new ArrayList<>();
@@ -53,6 +55,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     } 
 
     @Transactional(readOnly = true)
+    @Override
     public void checkRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut, int petCount) {
         if (!isRoomAvailable(roomId, checkIn, checkOut, petCount)) {
             throw new RoomNotAvailableException(roomId, checkIn, checkOut);

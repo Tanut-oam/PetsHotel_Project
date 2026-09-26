@@ -82,21 +82,23 @@ class AvailabilityServiceTest {
         verify(bookingPetRepository, never()).countPetsInOverlappingBookings(any(), any(), any(), anyCollection());
     }
 
-    @Test
+        @Test
     void checkRoomAvailableShouldThrowWhenRoomIsFull() {
         when(roomRepository.findById(1L)).thenReturn(Optional.of(room(1L, 2, RoomStatus.ACTIVE)));
         occupied(1L, 2);
 
-        assertThrows(RoomNotAvailableException.class,
+        RoomNotAvailableException ex = assertThrows(RoomNotAvailableException.class,
             () -> availabilityService.checkRoomAvailable(1L, checkIn, checkOut, 1));
+        assertTrue(ex.getMessage().contains("Room 1 is not available"));
     }
 
     @Test
     void shouldThrowWhenRoomNotFound() {
         when(roomRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(99L, checkIn, checkOut, 1));
+        assertEquals("Room not found: 99", ex.getMessage());
     }
 
     @Test
@@ -123,25 +125,29 @@ class AvailabilityServiceTest {
     
     @Test
     void shouldThrowWhenCheckOutEqualsCheckIn() {
-        assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(1L, checkIn, checkIn, 1));
+        assertEquals("Check-out date must be after check-in date", ex.getMessage());
     }
 
     @Test
     void shouldThrowWhenCheckOutBeforeCheckIn() {
-        assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.findAvailableRooms(checkOut, checkIn, 1));
+        assertEquals("Check-out date must be after check-in date", ex.getMessage());
     }
 
     @Test
     void shouldThrowWhenPetCountIsZero() {
-        assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(1L, checkIn, checkOut, 0));
+        assertEquals("Pet count must be at least 1", ex.getMessage());
     }
 
     @Test
     void shouldThrowWhenDateIsNull() {
-        assertThrows(IllegalArgumentException.class,
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(1L, null, checkOut, 1));
+        assertEquals("Check-in and check-out dates are required", ex.getMessage());
     }
 }
