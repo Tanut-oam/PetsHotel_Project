@@ -2,8 +2,10 @@ package com.example.petshotel.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -95,5 +97,51 @@ class AvailabilityServiceTest {
 
         assertThrows(IllegalArgumentException.class,
             () -> availabilityService.isRoomAvailable(99L, checkIn, checkOut, 1));
+    }
+
+    @Test
+    void findAvailableRoomsShouldReturnOnlyRoomsWithSpace() {
+        Room free = room(1L, 2, RoomStatus.ACTIVE);
+        Room full = room(2L, 2, RoomStatus.ACTIVE);
+        when(roomRepository.findByStatus(RoomStatus.ACTIVE)).thenReturn(List.of(free, full));
+        occupied(1L, 0);
+        occupied(2L, 2);
+
+        List<Room> result = availabilityService.findAvailableRooms(checkIn, checkOut, 1);
+
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getId());
+    }
+
+    @Test
+    void findAvailableRoomsShouldReturnEmptyWhenAllRoomsFull() {
+        when(roomRepository.findByStatus(RoomStatus.ACTIVE)).thenReturn(List.of(room(1L, 1, RoomStatus.ACTIVE)));
+        occupied(1L, 1);
+
+        assertTrue(availabilityService.findAvailableRooms(checkIn, checkOut, 1).isEmpty());
+    }
+    
+    @Test
+    void shouldThrowWhenCheckOutEqualsCheckIn() {
+        assertThrows(IllegalArgumentException.class,
+            () -> availabilityService.isRoomAvailable(1L, checkIn, checkIn, 1));
+    }
+
+    @Test
+    void shouldThrowWhenCheckOutBeforeCheckIn() {
+        assertThrows(IllegalArgumentException.class,
+            () -> availabilityService.findAvailableRooms(checkOut, checkIn, 1));
+    }
+
+    @Test
+    void shouldThrowWhenPetCountIsZero() {
+        assertThrows(IllegalArgumentException.class,
+            () -> availabilityService.isRoomAvailable(1L, checkIn, checkOut, 0));
+    }
+
+    @Test
+    void shouldThrowWhenDateIsNull() {
+        assertThrows(IllegalArgumentException.class,
+            () -> availabilityService.isRoomAvailable(1L, null, checkOut, 1));
     }
 }
