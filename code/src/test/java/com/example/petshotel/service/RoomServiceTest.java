@@ -69,6 +69,18 @@ public class RoomServiceTest {
         verify(roomRepository).save(any(Room.class));
     }
 
+    @Test
+    void createRoom_ควรโยน_exception_เมื่อเลขห้องซ้ำ() {
+
+        CreateRoomRequest request = new CreateRoomRequest("101", "Deluxe", "ห้องมาตรฐาน",
+                3, new BigDecimal("500"));
+        when(roomRepository.existsByRoomNumber("101")).thenReturn(true);
+
+
+        assertThrows(IllegalArgumentException.class, () -> roomService.createRoom(request));
+        verify(roomRepository, never()).save(any(Room.class));
+    }
+
     
     @Test
     void getRoomById(){
@@ -110,15 +122,15 @@ public class RoomServiceTest {
     }
 
     @Test
-    void updateRoom_exception() {
-        UpdateRoomRequest request = new UpdateRoomRequest("999", "Deluxe V2", "อัปเดตแล้ว",
-                4, new BigDecimal("600"));
-        when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
-        when(roomRepository.existsByRoomNumber("999")).thenReturn(true);
+    void updateRoom_notFound() {
+        UpdateRoomRequest request = new UpdateRoomRequest("102", "Deluxe V2", "อัปเดตแล้ว",
+            4, new BigDecimal("600"));
+        when(roomRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> roomService.updateRoom(1L, request));
+        assertThrows(IllegalArgumentException.class, () -> roomService.updateRoom(99L, request));
         verify(roomRepository, never()).save(any(Room.class));
-    }
+}
+
 
     @Test
     void setRoomStatus() {
@@ -133,13 +145,33 @@ public class RoomServiceTest {
     }
 
     @Test
+    void setRoomStatus_exception() {
+        UpdateStatusRequest request = new UpdateStatusRequest(RoomStatus.MAINTENANCE);
+        when(roomRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> roomService.setRoomStatus(99L, request));
+        verify(roomRepository, never()).save(any(Room.class));
+    }
+
+    @Test
     void deactivateRoom() {
         when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
         when(roomMapper.toResponse(room)).thenReturn(roomResponse);
+        
 
         roomService.deactivateRoom(1L);
 
         assertEquals(RoomStatus.INACTIVE, room.getStatus());
         verify(roomRepository).save(room);
     }
+
+    @Test
+    void deactivateRoom_exception() {
+        when(roomRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> roomService.deactivateRoom(99L));
+        verify(roomRepository, never()).save(any(Room.class));
+    }
+
+
 }
