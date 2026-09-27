@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.RoomRepository;
@@ -37,7 +38,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     @Override
     public boolean isRoomAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut, int petCount) {
         validate(checkIn, checkOut, petCount);
-        Room room = roomRepository.findById(roomId).orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+        Room room = roomRepository.findById(roomId).orElseThrow(() -> new ResourceNotFoundException("Room", roomId));
         return hasSpace(room, checkIn, checkOut, petCount);
     }
 
