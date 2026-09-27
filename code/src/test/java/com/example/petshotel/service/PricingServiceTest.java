@@ -145,5 +145,53 @@ public class PricingServiceTest {
 
     }
 
+    @Test 
+    void appliesLongStayDiscountWithoutPromotion(){
+        PricingContext context = context(
+            "500.00", 2,
+            LocalDate.of(2026, 2, 1),
+            LocalDate.of(2026, 2, 6));
+
+        BookingExtraService extraService = new BookingExtraService();
+        extraService.setUnitPrice(new BigDecimal("200.00"));
+        extraService.setQuantity(1);
+        context.setExtraServices(List.of(extraService));
+
+        BookingPriceResponse price = pricingService.calculate(context);
+
+        assertEquals(new BigDecimal("5000.00"), price.basePrice());
+        assertEquals(new BigDecimal("200.00"), price.extraServicesPrice());
+        assertEquals(new BigDecimal("520.00"), price.discountAmount());
+        assertEquals(new BigDecimal("4680.00"), price.totalPrice());
+    }
+
+    @Test 
+    void appliesFixedAmountDiscountToSubtotal(){
+        PricingContext context = context(
+            "500.00", 1,
+            LocalDate.of(2026, 2, 1),
+            LocalDate.of(2026, 2, 2));
+
+        BookingExtraService extraService = new BookingExtraService();
+        extraService.setUnitPrice(new BigDecimal("200.00"));
+        extraService.setQuantity(2);
+        context.setExtraServices(List.of(extraService));
+
+        Promotion promotion = new Promotion();
+        promotion.setType(PromotionType.FIXED_AMOUNT);
+        promotion.setValue(new BigDecimal("700.00"));
+        promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 1, 1));
+        promotion.setEndDate(LocalDate.of(2026, 12, 31));
+        context.setPromotion(promotion);
+
+        BookingPriceResponse price = pricingService.calculate(context);
+
+        assertEquals(new BigDecimal("500.00"), price.basePrice());
+        assertEquals(new BigDecimal("400.00"), price.extraServicesPrice());
+        assertEquals(new BigDecimal("700.00"), price.discountAmount());
+        assertEquals(new BigDecimal("200.00"), price.totalPrice());
+    }
+
 
 }
