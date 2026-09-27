@@ -19,6 +19,7 @@ import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.DailyCareReportRepository;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.DailyCareReportService;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 @Service
 public class DailyCareReportServiceImpl implements DailyCareReportService {
@@ -113,7 +114,7 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
                     "The selected pet must be in the original booking"
             );
         }
-        
+
         requireDateWithinStay(request.reportDate(), originalBooking);
 
         if (reportRepository.existsByBookingPet_IdAndReportDateAndIdNot(
@@ -134,16 +135,19 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         return mapper.toResponse(reportRepository.save(report));
     }
     
-    private User findUser(Long userId){
-        return userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("User not found: " +userId));
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     private BookingPet findBookingPet(Long bookingPetId) {
-        return bookingPetRepository.findById(bookingPetId).orElseThrow(() ->new IllegalArgumentException("Booking pet not found: " + bookingPetId));
+        return bookingPetRepository.findById(bookingPetId)
+            .orElseThrow(() -> new ResourceNotFoundException("Booking pet", bookingPetId));
     }
 
-    private DailyCareReport findReport(Long reportId){
-        return reportRepository.findById(reportId).orElseThrow(() -> new IllegalArgumentException("Report not found: " + reportId));
+    private DailyCareReport findReport(Long reportId) {
+        return reportRepository.findById(reportId)
+            .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
     }
 
     private  void requireStaffOrAdmin(User user){

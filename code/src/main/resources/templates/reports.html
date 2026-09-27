@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
   <header class="topbar">
@@ -13,7 +13,7 @@
     <nav class="topnav">
       <a href="index.html">หน้าแรก</a>
       <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
+      <a th:href="@{/pets}">สัตว์เลี้ยง</a>
       <a href="my-bookings.html">การจอง</a>
     </nav>
 
@@ -27,9 +27,9 @@
     <aside class="sidebar">
       <a href="index.html">⌂ หน้าแรก</a>
       <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
+      <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
       <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
+      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
       <a href="profile.html">♙ บัญชีของฉัน</a>
     </aside>
 
