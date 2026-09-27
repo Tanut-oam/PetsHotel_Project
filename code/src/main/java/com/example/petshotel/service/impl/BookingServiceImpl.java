@@ -14,12 +14,10 @@ import com.example.petshotel.domain.enums.RoomStatus;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
-// import com.example.petshotel.exception.ResourceNotFoundException;
-import com.example.petshotel.notification.BookingConfirmedEvent;
-import com.example.petshotel.dto.response.BookingPriceResponse;
 
 import com.example.petshotel.pricing.PricingContext;
 
+import com.example.petshotel.repository.BookingExtraServiceRepository;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ExtraServiceRepository;
 import com.example.petshotel.repository.PetRepository;
@@ -39,13 +37,13 @@ import com.example.petshotel.state.PendingState;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -59,9 +57,11 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
     private final PricingService pricingService;
+    
+    // Dependencies ที่เพิ่มเข้ามาใหม่
     private final ExtraServiceRepository extraServiceRepository;
+    private final BookingExtraServiceRepository bookingExtraServiceRepository;
     private final PromotionRepository promotionRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     // =========================================================
     // CREATE BOOKING
@@ -69,6 +69,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse createBooking(CreateBookingRequest request) {
+
+        validateCreateRequest(request);
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() ->
@@ -185,7 +187,8 @@ public class BookingServiceImpl implements BookingService {
                 promotion // <-- เปลี่ยนจาก null เป็น promotion ตัวที่เราเพิ่งค้นหามา
         );
 
-        BookingPriceResponse price = pricingService.calculate(pricingContext);
+        BigDecimal totalPrice =
+                pricingService.calculate(pricingContext).totalPrice();
 
         // สร้าง Booking หลัก
         Booking booking = Booking.builder()
@@ -194,11 +197,7 @@ public class BookingServiceImpl implements BookingService {
                 .checkInDate(request.getCheckInDate())
                 .checkOutDate(request.getCheckOutDate())
                 .status(BookingStatus.PENDING)
-                .roomAmount(price.basePrice())
-                .serviceAmount(price.extraServicesPrice())
-                .surchargeAmount(price.holidaySurcharge())
-                .discountAmount(price.discountAmount())
-                .totalPrice(price.totalPrice())
+                .totalPrice(totalPrice)
                 .promotion(promotion) // <-- เพิ่มโปรโมชั่นเข้าไปผูกกับ Booking ด้วย
                 .build();
 
@@ -261,7 +260,6 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        eventPublisher.publishEvent(new BookingConfirmedEvent(this, savedBooking));
         return toResponse(savedBooking);
     }
 
