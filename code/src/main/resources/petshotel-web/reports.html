@@ -37,54 +37,65 @@
         <h1>รายงานการดูแลรายวัน</h1>
             <div class="panel" style="margin-bottom: 20px;">
             <div class="grid cols-2">
-                <label class="field">
-                เลือกการจอง
-                <select name="bookingId">
-                    <option value="1025">#1025 · Deluxe Room · Mochi</option>
-                    <option value="1024">#1024 · Standard Room · Lily</option>
+              <label class="field">
+                การจองของฉัน
+                <select name="bookingId" id="customer-booking">
+                  <option value="">เลือกการจอง</option>
+                  <option value="1025">#1025 · Deluxe Room (ข้อมูลตัวอย่าง)</option>
                 </select>
-                </label>
+              </label>
 
-                <label class="field">
-                เลือกวันที่
+              <label class="field">
+                สัตว์ในการจอง
+                <select name="bookingPetId" id="customer-booking-pet">
+                  <option value="">เลือกสัตว์เลี้ยง</option>
+                  <option value="1">Mochi (ข้อมูลตัวอย่าง)</option>
+                </select>
+              </label>
+
+              <label class="field">
+                วันที่รายงาน
                 <input type="date" name="reportDate">
-                </label>
+              </label>
             </div>
             </div>
 
             <article class="panel report">
-            <div class="row">
-                <h2>14 ตุลาคม 2026</h2>
-                <span class="badge">Mochi</span>
-            </div>
+              <div class="row">
+                <h2>25 กันยายน 2569</h2>
+                <span class="badge">Mochi · การจอง #1025</span>
+              </div>
 
-            <div class="grid cols-3">
+              <div class="grid cols-3">
                 <div>
-                <h3>🍽 อาหาร</h3>
-                <p>กินอาหารครบทุกมื้อ</p>
+                  <h3>🍽 อาหาร</h3>
+                  <p>เช้า: กินหมด</p>
+                  <p>เย็น: ยังไม่บันทึก</p>
                 </div>
 
                 <div>
-                <h3>🦮 กิจกรรม</h3>
-                <p>เดินเล่น 20 นาที และเล่นของเล่น</p>
+                  <h3>🦮 กิจกรรม</h3>
+                  <p>เดินเล่นรวม 15 นาที</p>
+                  <p>แปรงขนแล้ว</p>
                 </div>
 
                 <div>
-                <h3>♡ สุขภาพ</h3>
-                <p>ปกติ ร่าเริง</p>
+                  <h3>♡ สุขภาพ</h3>
+                  <p>อารมณ์: ร่าเริง</p>
+                  <p>สุขภาพ: ปกติ</p>
                 </div>
-            </div>
+              </div>
 
-            <p><strong>หมายเหตุ:</strong> วันนี้ Mochi พักผ่อนได้ดี</p>
+              <p><strong>หมายเหตุ:</strong> วันนี้ Mochi พักผ่อนได้ดี</p>
             </article>
 
             <article class="panel report">
-            <div class="row">
-                <h2>13 ตุลาคม 2026</h2>
-                <span class="badge">Mochi</span>
-            </div>
+              <div class="row">
+                <h2>24 กันยายน 2569</h2>
+                <span class="badge">Mochi · การจอง #1025</span>
+              </div>
 
-            <p>🍽 กินอาหารครบ · 🦮 เดินเล่น 15 นาที · ♡ สุขภาพปกติ</p>
+              <p>🍽 เช้า: กินหมด / เย็น: กินหมด · 🦮 เดินเล่นรวม 20 นาที · ♡ สุขภาพปกติ</p>
             </article>
     </main>
   </div>

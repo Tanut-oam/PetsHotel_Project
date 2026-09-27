@@ -38,25 +38,27 @@
         <table class="table">
             <thead>
             <tr>
-                <th>วันที่</th>
-                <th>การจอง</th>
-                <th>สัตว์เลี้ยง</th>
-                <th>อาหาร</th>
-                <th>กิจกรรม</th>
-                <th>สุขภาพ</th>
-                <th>จัดการ</th>
+              <th>วันที่</th>
+              <th>การจอง</th>
+              <th>เจ้าของ</th>
+              <th>สัตว์เลี้ยง</th>
+              <th>อาหาร</th>
+              <th>กิจกรรม</th>
+              <th>สุขภาพ</th>
+              <th>จัดการ</th>
             </tr>
             </thead>
 
             <tbody>
             <tr>
-                <td>14 ต.ค. 2026</td>
-                <td>#1025</td>
-                <td>Mochi</td>
-                <td>กินครบ</td>
-                <td>เดินเล่น 20 นาที</td>
-                <td>ปกติ</td>
-                <td><button class="btn btn-small">แก้ไข</button></td>
+              <td>25 ก.ย. 2569</td>
+              <td>#1025</td>
+              <td>คุณกานต์</td>
+              <td>Mochi</td>
+              <td>เช้า: กินหมด / เย็น: ยังไม่บันทึก</td>
+              <td>เดินรวม 15 นาที</td>
+              <td>ปกติ</td>
+              <td><button class="btn btn-small" type="button">แก้ไข</button></td>
             </tr>
             </tbody>
         </table>
@@ -66,37 +68,71 @@
         <h2>ฟอร์มรายงานประจำวัน</h2>
         </div>
 
-        <form class="panel grid cols-2">
-        <label class="field">
-            การจอง
-            <select name="bookingId">
-            <option value="1025">#1025 · Deluxe Room</option>
+        <form class="panel grid cols-2" id="care-report-form">
+          <label class="field">
+            การจองที่กำลังเข้าพัก
+            <select name="bookingId" required>
+              <option value="">เลือกการจอง</option>
+              <option value="1025">#1025 · คุณกานต์ (ข้อมูลตัวอย่าง)</option>
             </select>
-        </label>
+          </label>
 
-        <label class="field">
-            สัตว์เลี้ยง
-            <select name="petId">
-            <option value="1">Mochi</option>
+          <label class="field">
+            สัตว์ในการจอง
+            <select name="bookingPetId" required>
+              <option value="">เลือกสัตว์เลี้ยง</option>
+              <option value="1">Mochi (ข้อมูลตัวอย่าง)</option>
             </select>
-        </label>
+          </label>
 
-        <label class="field">วันที่<input type="date" name="reportDate" required></label>
-        <label class="field">อาหาร<input name="meals" required></label>
-        <label class="field">กิจกรรม<input name="activity" required></label>
-        <label class="field">สุขภาพ<input name="health" required></label>
+          <label class="field">
+            วันที่รายงาน
+            <input type="date" name="reportDate" required>
+          </label>
 
-        <label class="field">
-            หมายเหตุ
-            <textarea name="notes"></textarea>
-        </label>
+          <label class="field">
+            อาหารเช้า
+            <input name="feedingMorning">
+          </label>
 
-        <label class="field">
+          <label class="field">
+            อาหารเย็น
+            <input name="feedingEvening">
+          </label>
+
+          <label class="field">
+            เวลาเดินเล่นรวม (นาที)
+            <input type="number" name="walkingMinutes" min="0">
+          </label>
+
+          <label class="field">
+            การอาบน้ำ/ดูแลความสะอาด
+            <input name="grooming">
+          </label>
+
+          <label class="field">
+            อารมณ์
+            <input name="mood">
+          </label>
+
+          <label class="field">
+            สุขภาพ
+            <textarea name="healthNote"></textarea>
+          </label>
+
+          <label class="field">
+            หมายเหตุเพิ่มเติม
+            <textarea name="generalNote"></textarea>
+          </label>
+
+          <label class="field">
             รูปภาพประจำวัน
             <input type="file" name="photos" accept="image/*" multiple>
-        </label>
+          </label>
 
-        <button class="btn btn-primary" type="submit">บันทึกรายงาน</button>
+          <div>
+            <button class="btn btn-primary" type="submit">บันทึกรายงาน</button>
+          </div>
         </form>
     </main>
   </div>
