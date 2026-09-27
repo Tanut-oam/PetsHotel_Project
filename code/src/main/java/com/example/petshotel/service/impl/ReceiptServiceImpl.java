@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
+import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.ReceiptService;
@@ -28,22 +29,39 @@ public class ReceiptServiceImpl implements ReceiptService{
         this.bookingRepository = bookingRepository;
     }
 
-    @Override 
-    @Transactional 
-    public Receipt createReceipt(Long bookingId){
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
+    @Override
+    @Transactional
+    public Receipt createReceipt(Long bookingId) {
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Booking", bookingId));
 
-        Optional<Receipt> existingReceipt = receiptRepository.findByBookingId(bookingId);
-            if (existingReceipt.isPresent()) {
+        if (booking.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException(
+                    "Payment must be confirmed before issuing a receipt");
+        }
+
+        if (booking.getPaidAt() == null
+                || booking.getPaidAmount() == null
+                || booking.getTotalPrice() == null
+                || booking.getPaidAmount().signum() < 0
+                || booking.getPaidAmount()
+                        .compareTo(booking.getTotalPrice()) != 0) {
+            throw new IllegalStateException(
+                    "Booking has incomplete or inconsistent payment data");
+        }
+
+        Optional<Receipt> existingReceipt =
+                receiptRepository.findByBookingId(bookingId);
+
+        if (existingReceipt.isPresent()) {
             return existingReceipt.get();
         }
 
         if (booking.getRoomAmount() == null
                 || booking.getServiceAmount() == null
                 || booking.getSurchargeAmount() == null
-                || booking.getDiscountAmount() == null
-                || booking.getTotalPrice() == null) {
+                || booking.getDiscountAmount() == null) {
             throw new IllegalStateException(
                     "Booking has no complete price snapshot: " + bookingId);
         }
@@ -56,11 +74,11 @@ public class ReceiptServiceImpl implements ReceiptService{
         receipt.setServiceAmount(booking.getServiceAmount());
         receipt.setSurchargeAmount(booking.getSurchargeAmount());
         receipt.setDiscountAmount(booking.getDiscountAmount());
-        receipt.setTotalAmount(booking.getTotalPrice());
+        receipt.setTotalAmount(booking.getPaidAmount());
 
         return receiptRepository.save(receipt);
-
     }
+
 
     @Override 
     @Transactional(readOnly = true)
