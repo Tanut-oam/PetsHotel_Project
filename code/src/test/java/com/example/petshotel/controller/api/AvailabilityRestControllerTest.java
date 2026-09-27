@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.mapper.AvailabilityMapper;
 import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.service.AvailabilityService;
@@ -35,6 +38,7 @@ class AvailabilityRestControllerTest {
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
@@ -80,5 +84,30 @@ class AvailabilityRestControllerTest {
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(availabilityService);
+    }
+
+    @Test
+    void shouldReturnFieldErrorWhenPetCountIsZero() throws Exception {
+        mockMvc.perform(get("/api/room/available")
+                .param("checkIn", "2026-10-01")
+                .param("checkOut", "2026-10-03")
+                .param("petCount", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.petCount").exists());
+    }
+
+    @Test
+    void shouldReturn400WhenServiceRejectsDates() throws Exception {
+        when(availabilityService.findAvailableRooms(any(), any(), anyInt()))
+                .thenThrow(new IllegalArgumentException("วันที่ Check-out ต้องอยู่หลังวันที่ Check-in"));
+
+        mockMvc.perform(get("/api/room/available")
+                .param("checkIn", "2026-10-03")
+                .param("checkOut", "2026-10-01")
+                .param("petCount", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.path").value("/api/room/available"));
     }
 }
