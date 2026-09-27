@@ -89,5 +89,7 @@ public class Booking {
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
+    @Column(name = "promotion_name", updatable = false)
+    private String promotionName;
     
 }

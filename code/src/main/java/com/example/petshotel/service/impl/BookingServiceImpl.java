@@ -209,6 +209,7 @@ public class BookingServiceImpl implements BookingService {
                 .surchargeAmount(price.holidaySurcharge())
                 .discountAmount(price.discountAmount())
                 .totalPrice(price.totalPrice())
+                .promotionName(promotion != null ? promotion.getName() : null)
                 .promotion(promotion) 
                 .build();
 
