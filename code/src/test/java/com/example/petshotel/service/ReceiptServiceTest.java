@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
+import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.ReceiptServiceImpl;
@@ -47,6 +49,10 @@ public class ReceiptServiceTest  {
         booking.setSurchargeAmount(new BigDecimal("900.00"));
         booking.setDiscountAmount(new BigDecimal("610.00"));
         booking.setTotalPrice(new BigDecimal("5490.00"));
+        booking.setPaymentStatus(PaymentStatus.PAID);
+        booking.setPaidAmount(new BigDecimal("5490.00"));
+        booking.setPaidAt(LocalDateTime.of(2026, 10, 1, 10, 0));
+
         return booking;
     }
 
@@ -128,5 +134,23 @@ public class ReceiptServiceTest  {
         verify(receiptRepository, never()).save(any(Receipt.class));
         
     }
+
+    @Test
+    void rejectsUnpaidBooking() {
+        Booking booking = bookingWithPrices();
+        booking.setPaymentStatus(PaymentStatus.UNPAID);
+        booking.setPaidAmount(null);
+        booking.setPaidAt(null);
+
+        when(bookingRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(booking));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> receiptService.createReceipt(1L));
+
+        verify(receiptRepository, never()).save(any(Receipt.class));
+    }
+
 
 }
