@@ -14,6 +14,7 @@ import com.example.petshotel.domain.enums.RoomStatus;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.notification.BookingConfirmedEvent;
 import com.example.petshotel.dto.response.BookingPriceResponse;
 
@@ -68,8 +69,6 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse createBooking(CreateBookingRequest request) {
-
-        validateCreateRequest(request);
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() ->
