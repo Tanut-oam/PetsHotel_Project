@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PetsHotel Admin</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body class="admin">
   <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
+    <a class="brand" th:href="@{/admin}">🐾 PetsHotel Admin</a>
     <div class="top-actions">
       <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
       <span>ผู้ดูแลระบบ</span>
@@ -17,7 +17,7 @@
 
   <div class="layout">
     <aside class="sidebar">
-      <a href="index.html">▦ ภาพรวม</a>
+      <a class="active" th:href="@{/admin}">▦ ภาพรวม</a>
       <a href="bookings.html">▤ จัดการการจอง</a>
       <a href="rooms.html">▣ จัดการห้องพัก</a>
       <a href="pets.html">♧ สัตว์เลี้ยง</a>
@@ -32,25 +32,28 @@
         <h1>ภาพรวม</h1>
             <div class="stats">
             <div class="stat">
-                <span>รายได้จากการจอง</span>
-                <strong>฿25,600</strong>
+              <span>ยอดรวมจากใบเสร็จ</span>
+              <strong
+                th:text="|฿${#numbers.formatDecimal(dashboard.totalRevenue, 1, 'COMMA', 2, 'POINT')}|">
+                ฿0.00
+              </strong>
             </div>
 
             <div class="stat">
-                <span>การจองทั้งหมด</span>
-                <strong>32</strong>
+              <span>การจองทั้งหมด</span>
+              <strong th:text="${dashboard.totalBookings}">0</strong>
             </div>
 
             <div class="stat">
-                <span>ห้องที่ว่าง</span>
-                <strong>8</strong>
+              <span>ห้องว่างคืนนี้</span>
+              <strong th:text="${dashboard.availableRoomCountToday}">0</strong>
             </div>
 
             <div class="stat">
-                <span>สัตว์เลี้ยงในระบบ</span>
-                <strong>56</strong>
+              <span>สัตว์เลี้ยงในระบบ</span>
+              <strong th:text="${dashboard.totalPets}">0</strong>
             </div>
-            </div>
+          </div>
 
             <div class="section-title">
             <h2>การจองล่าสุด</h2>
@@ -70,21 +73,40 @@
                 </thead>
 
                 <tbody>
-                <tr>
-                    <td>#1025</td>
-                    <td>ตัวอย่างผู้ใช้</td>
-                    <td>Mochi</td>
-                    <td>Deluxe 101</td>
-                    <td><span class="badge">ยืนยันแล้ว</span></td>
-                </tr>
+                  <tr th:if="${#lists.isEmpty(dashboard.recentBookings)}">
+                    <td colspan="5">ยังไม่มีรายการจอง</td>
+                  </tr>
 
-                <tr>
-                    <td>#1024</td>
-                    <td>ตัวอย่างผู้ใช้</td>
-                    <td>Lily</td>
-                    <td>Standard 201</td>
-                    <td><span class="badge badge-warning">รอยืนยัน</span></td>
-                </tr>
+                  <tr th:each="booking : ${dashboard.recentBookings}">
+                    <td th:text="|#${booking.id}|">#0</td>
+
+                    <td th:text="${booking.customerName}">ชื่อลูกค้า</td>
+
+                    <td th:text="${#strings.listJoin(booking.petNames, ', ')}">
+                      ชื่อสัตว์เลี้ยง
+                    </td>
+
+                    <td th:text="${booking.roomNumber}">หมายเลขห้อง</td>
+
+                    <td th:switch="${booking.status.name()}">
+                      <span th:case="'PENDING'" class="badge badge-warning">
+                        รอยืนยัน
+                      </span>
+                      <span th:case="'CONFIRMED'" class="badge">
+                        ยืนยันแล้ว
+                      </span>
+                      <span th:case="'CHECKED_IN'" class="badge">
+                        เข้าพักแล้ว
+                      </span>
+                      <span th:case="'CHECKED_OUT'" class="badge">
+                        เช็กเอาต์แล้ว
+                      </span>
+                      <span th:case="'CANCELLED'" class="badge badge-danger">
+                        ยกเลิกแล้ว
+                      </span>
+                      <span th:case="*" class="badge">ไม่ทราบสถานะ</span>
+                    </td>
+                  </tr>
                 </tbody>
             </table>
             </div>

@@ -139,7 +139,8 @@ public class DashboardServiceImpl implements DashboardService{
     @Transactional(readOnly = true)
     public List<RecentBookingResponse> getRecentBookings(){
         PageRequest pageRequest = PageRequest.of(
-            0, 5, Sort.by(Sort.Direction.DESC, Booking::getCreatedAt, Booking::getId));
+            0, 5, Sort.by(Sort.Order.desc("createdAt"),
+                Sort.Order.desc("id")));
         List<Booking> bookings = bookingRepository.findAll(pageRequest).getContent();
         List<RecentBookingResponse> responses = new ArrayList<>();
         for(Booking booking : bookings){
