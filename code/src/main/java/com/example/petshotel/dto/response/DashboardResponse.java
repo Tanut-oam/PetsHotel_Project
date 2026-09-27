@@ -1,10 +1,15 @@
 package com.example.petshotel.dto.response;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record DashboardResponse(
     BigDecimal totalRevenue,
     long bookingsThisMonth,
     long checkedInPets,
-    String topRoom
+    String topRoom,
+    long totalBookings,
+    long availableRoomCountToday,
+    long totalPets,
+    List<RecentBookingResponse> recentBookings
 ) {}
