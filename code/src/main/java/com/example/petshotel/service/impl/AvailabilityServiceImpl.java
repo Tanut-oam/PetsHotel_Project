@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
@@ -27,11 +28,11 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     );
 
     private final RoomRepository roomRepository;
-    private final BookingPetRepository bookingPetRepository;
+    private final BookingRepository bookingRepository;
 
-    public AvailabilityServiceImpl(RoomRepository roomRepository, BookingPetRepository bookingPetRepository) {
+    public AvailabilityServiceImpl(RoomRepository roomRepository, BookingRepository bookingRepository) {
         this.roomRepository = roomRepository;
-        this.bookingPetRepository = bookingPetRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     @Transactional(readOnly = true)
@@ -63,12 +64,15 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         }
     }
 
+    // 1 ห้อง = 1 การจอง: ห้องต้องเปิดใช้งาน รับจำนวนสัตว์ได้ และไม่มีการจองทับช่วงวัน
     private boolean hasSpace(Room room, LocalDate checkIn, LocalDate checkOut, int petCount) {
         if (room.getStatus() != RoomStatus.ACTIVE) {
             return false;
         }
-        long occupied = bookingPetRepository.countPetsInOverlappingBookings(room.getId(), checkIn, checkOut, ACTIVE_STATUSES);
-        return occupied + petCount <= room.getCapacity();
+        if (petCount > room.getCapacity()) {
+            return false;
+        }
+        return !bookingRepository.existsOverlappingBooking(room.getId(), checkIn, checkOut, ACTIVE_STATUSES);
     }
 
     private void validate(LocalDate checkIn, LocalDate checkOut, int petCount) {
