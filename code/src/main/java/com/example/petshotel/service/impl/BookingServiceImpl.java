@@ -9,6 +9,7 @@ import com.example.petshotel.domain.entity.Promotion;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.entity.User;
 
+
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
 
@@ -27,6 +28,7 @@ import com.example.petshotel.repository.UserRepository;
 
 import com.example.petshotel.service.BookingService;
 import com.example.petshotel.service.PricingService;
+import com.example.petshotel.service.AvailabilityService;
 
 import com.example.petshotel.state.BookingState;
 import com.example.petshotel.state.CancelledState;
@@ -34,6 +36,9 @@ import com.example.petshotel.state.CheckedInState;
 import com.example.petshotel.state.CheckedOutState;
 import com.example.petshotel.state.ConfirmedState;
 import com.example.petshotel.state.PendingState;
+
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.exception.RoomNotAvailableException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +50,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -56,10 +65,9 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
     private final PricingService pricingService;
-    
-    // Dependencies ที่เพิ่มเข้ามาใหม่
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
+    private final AvailabilityService availabilityService;
 
     // =========================================================
     // CREATE BOOKING
@@ -72,35 +80,40 @@ public class BookingServiceImpl implements BookingService {
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "User not found: " + request.getUserId()
+                        new ResourceNotFoundException(
+                                "User" , request.getUserId()
                         )
                 );
 
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Room not found: " + request.getRoomId()
+                        new ResourceNotFoundException(
+                                "Room" , request.getRoomId()
                         )
                 );
 
         // ห้องต้องเปิดใช้งาน
         if (room.getStatus() != RoomStatus.ACTIVE) {
-            throw new IllegalStateException(
-                    "Room is not available for booking"
+            throw new RoomNotAvailableException(
+                    room.getId(),
+                        request.getCheckInDate(),
+                        request.getCheckOutDate()
             );
         }
 
         // ดึงสัตว์ทั้งหมดจาก petIds
-        List<Pet> pets = request.getPetIds()
-                .stream()
-                .map(petId -> petRepository.findById(petId)
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "Pet not found: " + petId
-                                )
-                        ))
-                .toList();
+        List<Pet> pets = petRepository.findAllById(request.getPetIds());
+
+        // เก็บรหัสที่ค้นพบ เพื่อตรวจว่ามีรหัสใดหายไป
+        Set<Long> foundPetIds = pets.stream()
+                .map(pet -> pet.getId())
+                .collect(Collectors.toSet());
+
+        for (Long petId : request.getPetIds()) {
+                if (!foundPetIds.contains(petId)) {
+                        throw new ResourceNotFoundException("Pet", petId);
+                }
+        }
 
         validatePets(user, pets);
 
@@ -112,15 +125,12 @@ public class BookingServiceImpl implements BookingService {
         }
 
         // ตรวจว่าห้องถูกจองทับช่วงเวลานี้หรือไม่
-        if (!isRoomAvailable(
+        availabilityService.checkRoomAvailable(
                 room.getId(),
                 request.getCheckInDate(),
-                request.getCheckOutDate())) {
-
-            throw new IllegalStateException(
-                    "Room is not available for selected dates"
-            );
-        }
+                request.getCheckOutDate(),
+                pets.size()
+        );
 
         // จำนวนคืน
         int nights = Math.toIntExact(ChronoUnit.DAYS.between(
@@ -356,6 +366,20 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
+        if (request.getPetIds().contains(null)) {
+                throw new IllegalArgumentException(
+                        "Pet ID must not be null"
+                );
+        }
+
+        Set<Long> uniquePetIds = new HashSet<>(request.getPetIds());
+
+        if (uniquePetIds.size() != request.getPetIds().size()) {
+                throw new IllegalArgumentException(
+                        "Duplicate pet IDs are not allowed"
+                );
+        }
+
         if (!request.getCheckOutDate()
                 .isAfter(request.getCheckInDate())) {
 
@@ -377,7 +401,7 @@ public class BookingServiceImpl implements BookingService {
 
             // สัตว์ที่นำมาจองต้องเป็นของ user คนนี้
             if (pet.getOwner() == null
-                    || !pet.getOwner().getId().equals(user.getId())) {
+                    || !Objects.equals(pet.getOwner().getId(), user.getId())) {
 
                 throw new IllegalArgumentException(
                         "Pet " + pet.getId()
@@ -388,26 +412,6 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    private boolean isRoomAvailable(
-            Long roomId,
-            java.time.LocalDate checkIn,
-            java.time.LocalDate checkOut) {
-
-        List<Booking> roomBookings =
-                bookingRepository.findByRoomId(roomId);
-
-        return roomBookings.stream()
-                .filter(booking ->
-                        booking.getStatus() != BookingStatus.CANCELLED
-                                && booking.getStatus()
-                                != BookingStatus.CHECKED_OUT
-                )
-                .noneMatch(booking ->
-                        checkIn.isBefore(booking.getCheckOutDate())
-                                &&
-                        checkOut.isAfter(booking.getCheckInDate())
-                );
-    }
 
     private BookingState getState(BookingStatus status) {
 
