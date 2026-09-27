@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ค้นหาห้องว่าง | PetStay</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <main class="content">
+    <h1>ค้นหาห้องว่าง</h1>
+
+    <section class="panel">
+      <form class="form-grid" th:action="@{/rooms/available}" method="get">
+        <label class="field">
+          เช็กอิน
+          <input type="date" name="checkIn" th:value="${search.checkIn}" required>
+        </label>
+        <label class="field">
+          เช็กเอาต์
+          <input type="date" name="checkOut" th:value="${search.checkOut}" required>
+        </label>
+        <label class="field">
+          จำนวนสัตว์เลี้ยง
+          <input type="number" name="petCount" min="1" th:value="${search.petCount}" required>
+        </label>
+        <button class="btn btn-primary" type="submit">ค้นหา</button>
+      </form>
+    </section>
+
+    <p class="error" th:if="${error}" th:text="${error}"></p>
+
+    <section class="panel" th:if="${result != null}">
+      <h2>
+        ห้องว่าง
+        <span th:text="${#temporals.format(result.checkIn, 'dd/MM/yyyy')}"></span> –
+        <span th:text="${#temporals.format(result.checkOut, 'dd/MM/yyyy')}"></span>
+        (<span th:text="${result.petCount}"></span> ตัว)
+      </h2>
+
+      <p th:if="${#lists.isEmpty(result.availableRooms)}">ไม่มีห้องว่างในช่วงวันที่เลือก</p>
+
+      <table th:unless="${#lists.isEmpty(result.availableRooms)}">
+        <thead>
+          <tr>
+            <th>หมายเลขห้อง</th>
+            <th>ชื่อห้อง</th>
+            <th>รับได้ (ตัว)</th>
+            <th>ราคา/ตัว/คืน</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="room : ${result.availableRooms}">
+            <td th:text="${room.roomNumber}">A101</td>
+            <td th:text="${room.name}">Deluxe</td>
+            <td th:text="${room.capacity}">3</td>
+            <td th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')} + ' บาท'">500.00 บาท</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
