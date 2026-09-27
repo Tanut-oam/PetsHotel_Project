@@ -56,7 +56,18 @@ public class PricingServiceImpl implements PricingService {
         for(PricingStrategy strategy : strategies){
             if (strategy.category() != PricingCategory.DISCOUNT) {
                 BigDecimal amount = strategy.calculate(context, BigDecimal.ZERO);
-                amounts.merge(strategy.category(), amount, BigDecimal::add);
+                if (amount == null) {
+                    throw new IllegalStateException("Pricing strategy returned no amount");
+                }
+
+                PricingCategory category = strategy.category();
+                BigDecimal previous = amounts.get(category);
+
+                if (previous == null) {
+                    amounts.put(category, amount);
+                } else {
+                    amounts.put(category, previous.add(amount));
+                }
             }
         }
 
