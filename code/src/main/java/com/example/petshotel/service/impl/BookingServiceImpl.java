@@ -28,6 +28,7 @@ import com.example.petshotel.repository.UserRepository;
 
 import com.example.petshotel.service.BookingService;
 import com.example.petshotel.service.PricingService;
+import com.example.petshotel.service.AvailabilityService;
 
 import com.example.petshotel.state.BookingState;
 import com.example.petshotel.state.CancelledState;
@@ -66,6 +67,7 @@ public class BookingServiceImpl implements BookingService {
     private final PricingService pricingService;
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
+    private final AvailabilityService availabilityService;
 
     // =========================================================
     // CREATE BOOKING
@@ -123,15 +125,12 @@ public class BookingServiceImpl implements BookingService {
         }
 
         // ตรวจว่าห้องถูกจองทับช่วงเวลานี้หรือไม่
-        if (!isRoomAvailable(
+        availabilityService.checkRoomAvailable(
                 room.getId(),
                 request.getCheckInDate(),
-                request.getCheckOutDate())) {
-
-            throw new IllegalStateException(
-                    "Room is not available for selected dates"
-            );
-        }
+                request.getCheckOutDate(),
+                pets.size()
+        );
 
         // จำนวนคืน
         int nights = Math.toIntExact(ChronoUnit.DAYS.between(
@@ -413,26 +412,6 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    private boolean isRoomAvailable(
-            Long roomId,
-            java.time.LocalDate checkIn,
-            java.time.LocalDate checkOut) {
-
-        List<Booking> roomBookings =
-                bookingRepository.findByRoomId(roomId);
-
-        return roomBookings.stream()
-                .filter(booking ->
-                        booking.getStatus() != BookingStatus.CANCELLED
-                                && booking.getStatus()
-                                != BookingStatus.CHECKED_OUT
-                )
-                .noneMatch(booking ->
-                        checkIn.isBefore(booking.getCheckOutDate())
-                                &&
-                        checkOut.isAfter(booking.getCheckInDate())
-                );
-    }
 
     private BookingState getState(BookingStatus status) {
 
