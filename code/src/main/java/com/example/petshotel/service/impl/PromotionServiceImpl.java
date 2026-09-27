@@ -52,7 +52,7 @@ public class PromotionServiceImpl implements PromotionService {
     public Promotion createPromotion(CreatePromotionRequest request) {
         validateDiscount(request);
         Promotion promotion = new Promotion();
-        promotion.setName(request.name());
+        promotion.setName(request.name().trim());
         promotion.setType(request.type());
         promotion.setValue(request.discountValue());
         promotion.setStartDate(request.startDate());
@@ -69,7 +69,7 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
 
-        promotion.setName(request.name());
+        promotion.setName(request.name().trim());
         promotion.setType(request.type());
         promotion.setValue(request.discountValue());
         promotion.setStartDate(request.startDate());
@@ -97,12 +97,30 @@ public class PromotionServiceImpl implements PromotionService {
             || request.discountValue().signum() <= 0){
                 throw new IllegalArgumentException("Invalid promotion discount");
             }
+
         if (request.type() == PromotionType.PERCENTAGE && 
                  request.discountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
             throw new IllegalArgumentException(
                 "Percentage discount must not exceed 100"
             );
-        }   
+        } 
+        
+        if (request.startDate() == null || request.endDate() == null) {
+            throw new IllegalArgumentException(
+                "Promotion start date and end date are required"
+            );
+        }
+
+        if (request.endDate().isBefore(request.startDate())) {
+            throw new IllegalArgumentException(
+                "Promotion end date must not be before start date"
+            );
+        }
+
+        if (request.name() == null || request.name().isBlank()) {
+            throw new IllegalArgumentException("Promotion name is required");
+        }
+        
     }
 
 }

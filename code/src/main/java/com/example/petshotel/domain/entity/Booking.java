@@ -43,6 +43,18 @@ public class Booking {
 
     private BigDecimal totalPrice;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal roomAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal serviceAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal surchargeAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discountAmount;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
