@@ -14,8 +14,6 @@ import com.example.petshotel.domain.enums.RoomStatus;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
-// import com.example.petshotel.exception.ResourceNotFoundException;
-import com.example.petshotel.notification.BookingConfirmedEvent;
 import com.example.petshotel.dto.response.BookingPriceResponse;
 
 import com.example.petshotel.pricing.PricingContext;
@@ -39,7 +37,6 @@ import com.example.petshotel.state.PendingState;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,9 +56,10 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
     private final PricingService pricingService;
+    
+    // Dependencies ที่เพิ่มเข้ามาใหม่
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     // =========================================================
     // CREATE BOOKING
@@ -69,6 +67,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse createBooking(CreateBookingRequest request) {
+
+        validateCreateRequest(request);
 
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() ->
@@ -261,7 +261,6 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        eventPublisher.publishEvent(new BookingConfirmedEvent(this, savedBooking));
         return toResponse(savedBooking);
     }
 
