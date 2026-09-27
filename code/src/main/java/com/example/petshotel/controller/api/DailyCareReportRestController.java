@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
+import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
 import com.example.petshotel.service.DailyCareReportService;
-import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+
 import jakarta.validation.Valid;
 
 @RestController 
