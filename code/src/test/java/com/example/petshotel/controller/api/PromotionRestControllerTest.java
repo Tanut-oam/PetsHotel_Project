@@ -1,263 +1,255 @@
 package com.example.petshotel.controller.api;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import com.example.petshotel.domain.entity.Promotion;
-import com.example.petshotel.domain.enums.PromotionType;
-import com.example.petshotel.dto.request.CreatePromotionRequest;
+import com.example.petshotel.domain.entity.ExtraService;
 import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.exception.ResourceNotFoundException;
-import com.example.petshotel.mapper.PromotionMapper;
-import com.example.petshotel.service.PromotionService;
+import com.example.petshotel.mapper.ExtraServiceMapper;
+import com.example.petshotel.service.ExtraServiceService;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class PromotionRestControllerTest {
+class ExtraServiceRestControllerTest {
 
-    private PromotionService promotionService;
+    private ExtraServiceService extraServiceService;
     private MockMvc mockMvc;
-    private Promotion promotion;
-    private CreatePromotionRequest validRequest;
+    private ExtraService extraService;
 
     private static final String VALID_JSON = """
             {
-                "name": "Save 10%",
-                "type": "PERCENTAGE",
-                "discountValue": 10,
-                "startDate": "2026-10-01",
-                "endDate": "2026-10-31",
+                "name": "Bath",
+                "description": "Bath and dry",
+                "price": 200.00,
                 "active": true
             }
             """;
 
     @BeforeEach
     void setUp() {
-        promotionService = mock(PromotionService.class);
+        extraServiceService = mock(ExtraServiceService.class);
 
-        PromotionRestController controller =
-                new PromotionRestController(
-                        promotionService,
-                        new PromotionMapper());
+        ExtraServiceRestController controller =
+                new ExtraServiceRestController(
+                        extraServiceService,
+                        new ExtraServiceMapper());
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
-        promotion = new Promotion();
-        promotion.setId(1L);
-        promotion.setName("Save 10%");
-        promotion.setType(PromotionType.PERCENTAGE);
-        promotion.setValue(new BigDecimal("10"));
-        promotion.setStartDate(LocalDate.of(2026, 10, 1));
-        promotion.setEndDate(LocalDate.of(2026, 10, 31));
-        promotion.setActive(true);
-
-        validRequest = new CreatePromotionRequest(
-                "Save 10%",
-                PromotionType.PERCENTAGE,
-                new BigDecimal("10"),
-                LocalDate.of(2026, 10, 1),
-                LocalDate.of(2026, 10, 31),
-                true);
+        extraService = new ExtraService();
+        extraService.setId(1L);
+        extraService.setName("Bath");
+        extraService.setDescription("Bath and dry");
+        extraService.setPrice(new BigDecimal("200.00"));
+        extraService.setActive(true);
     }
 
     @Test
-    void getAllPromotionsShouldReturnResponses() throws Exception {
-        when(promotionService.getAllPromotions())
-                .thenReturn(List.of(promotion));
+    void getAllExtraServicesShouldReturnResponses() throws Exception {
+        when(extraServiceService.getAllExtraServices())
+                .thenReturn(List.of(extraService));
 
-        mockMvc.perform(get("/api/promotions"))
+        mockMvc.perform(get("/api/extra-services"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].name").value("Save 10%"))
-                .andExpect(jsonPath("$[0].type").value("PERCENTAGE"))
-                .andExpect(jsonPath("$[0].value").value(10));
+                .andExpect(jsonPath("$[0].name").value("Bath"))
+                .andExpect(jsonPath("$[0].price").value(200));
 
-        verify(promotionService).getAllPromotions();
+        verify(extraServiceService).getAllExtraServices();
     }
 
     @Test
-    void getActivePromotionsShouldUseActiveServiceMethod()
-            throws Exception {
+    void getExtraServiceByIdShouldReturnResponse() throws Exception {
+        when(extraServiceService.getExtraServiceById(1L))
+                .thenReturn(extraService);
 
-        when(promotionService.getActivePromotions())
-                .thenReturn(List.of(promotion));
-
-        mockMvc.perform(get("/api/promotions/active"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].active").value(true));
-
-        verify(promotionService).getActivePromotions();
-    }
-
-    @Test
-    void getPromotionByIdShouldReturnResponse() throws Exception {
-        when(promotionService.getPromotionById(1L))
-                .thenReturn(promotion);
-
-        mockMvc.perform(get("/api/promotions/1"))
+        mockMvc.perform(get("/api/extra-services/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Save 10%"))
-                .andExpect(jsonPath("$.startDate").value("2026-10-01"))
-                .andExpect(jsonPath("$.endDate").value("2026-10-31"));
+                .andExpect(jsonPath("$.name").value("Bath"))
+                .andExpect(jsonPath("$.description").value("Bath and dry"))
+                .andExpect(jsonPath("$.price").value(200))
+                .andExpect(jsonPath("$.active").value(true));
 
-        verify(promotionService).getPromotionById(1L);
+        verify(extraServiceService).getExtraServiceById(1L);
     }
 
     @Test
-    void createPromotionShouldReturnCreated() throws Exception {
-        when(promotionService.createPromotion(validRequest))
-                .thenReturn(promotion);
+    void createExtraServiceShouldMapRequestAndReturnCreated()
+            throws Exception {
 
-        mockMvc.perform(post("/api/promotions")
+        when(extraServiceService.createExtraService(any(ExtraService.class)))
+                .thenReturn(extraService);
+
+        mockMvc.perform(post("/api/extra-services")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(VALID_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Save 10%"))
-                .andExpect(jsonPath("$.value").value(10));
+                .andExpect(jsonPath("$.name").value("Bath"))
+                .andExpect(jsonPath("$.price").value(200));
 
-        verify(promotionService).createPromotion(validRequest);
+        ArgumentCaptor<ExtraService> captor =
+                ArgumentCaptor.forClass(ExtraService.class);
+
+        verify(extraServiceService).createExtraService(captor.capture());
+
+        ExtraService submitted = captor.getValue();
+
+        assertNull(submitted.getId());
+        assertEquals("Bath", submitted.getName());
+        assertEquals("Bath and dry", submitted.getDescription());
+        assertEquals(
+                0,
+                new BigDecimal("200.00").compareTo(submitted.getPrice()));
+        assertEquals(Boolean.TRUE, submitted.getActive());
     }
 
     @Test
-    void updatePromotionShouldReturnUpdatedResponse() throws Exception {
+    void updateExtraServiceShouldMapRequestAndReturnUpdatedResponse()
+            throws Exception {
+
         String updateJson = """
                 {
-                    "name": "Save 20%",
-                    "type": "PERCENTAGE",
-                    "discountValue": 20,
-                    "startDate": "2026-10-01",
-                    "endDate": "2026-10-31",
-                    "active": true
+                    "name": "Bath Premium",
+                    "description": "Bath and grooming",
+                    "price": 350.00,
+                    "active": false
                 }
                 """;
 
-        CreatePromotionRequest updateRequest =
-                new CreatePromotionRequest(
-                        "Save 20%",
-                        PromotionType.PERCENTAGE,
-                        new BigDecimal("20"),
-                        LocalDate.of(2026, 10, 1),
-                        LocalDate.of(2026, 10, 31),
-                        true);
+        extraService.setName("Bath Premium");
+        extraService.setDescription("Bath and grooming");
+        extraService.setPrice(new BigDecimal("350.00"));
+        extraService.setActive(false);
 
-        promotion.setName("Save 20%");
-        promotion.setValue(new BigDecimal("20"));
+        when(extraServiceService.updateExtraService(
+                eq(1L), any(ExtraService.class)))
+                .thenReturn(extraService);
 
-        when(promotionService.updatePromotion(1L, updateRequest))
-                .thenReturn(promotion);
-
-        mockMvc.perform(put("/api/promotions/1")
+        mockMvc.perform(put("/api/extra-services/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Save 20%"))
-                .andExpect(jsonPath("$.value").value(20));
+                .andExpect(jsonPath("$.name").value("Bath Premium"))
+                .andExpect(jsonPath("$.price").value(350))
+                .andExpect(jsonPath("$.active").value(false));
 
-        verify(promotionService).updatePromotion(1L, updateRequest);
+        ArgumentCaptor<ExtraService> captor =
+                ArgumentCaptor.forClass(ExtraService.class);
+
+        verify(extraServiceService)
+                .updateExtraService(eq(1L), captor.capture());
+
+        ExtraService submitted = captor.getValue();
+
+        assertEquals("Bath Premium", submitted.getName());
+        assertEquals("Bath and grooming", submitted.getDescription());
+        assertEquals(
+                0,
+                new BigDecimal("350.00").compareTo(submitted.getPrice()));
+        assertEquals(Boolean.FALSE, submitted.getActive());
     }
 
     @Test
-    void deactivatePromotionShouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/api/promotions/1"))
+    void deleteExtraServiceShouldReturnNoContent() throws Exception {
+        mockMvc.perform(delete("/api/extra-services/1"))
                 .andExpect(status().isNoContent())
                 .andExpect(content().string(""));
 
-        verify(promotionService).deactivatePromotion(1L);
+        verify(extraServiceService).deleteExtraService(1L);
     }
 
     @Test
-    void getMissingPromotionShouldReturnNotFound() throws Exception {
-        when(promotionService.getPromotionById(99L))
-                .thenThrow(new ResourceNotFoundException("Promotion", 99L));
+    void getMissingExtraServiceShouldReturnNotFound() throws Exception {
+        when(extraServiceService.getExtraServiceById(99L))
+                .thenThrow(
+                        new ResourceNotFoundException("ExtraService", 99L));
 
-        mockMvc.perform(get("/api/promotions/99"))
+        mockMvc.perform(get("/api/extra-services/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.path").value("/api/promotions/99"));
+                .andExpect(jsonPath("$.path").value("/api/extra-services/99"));
     }
 
     @Test
-    void createPromotionWithBlankNameShouldReturnBadRequest()
+    void createExtraServiceWithBlankNameShouldReturnBadRequest()
             throws Exception {
 
         String invalidJson = """
                 {
                     "name": "",
-                    "type": "PERCENTAGE",
-                    "discountValue": 10,
-                    "startDate": "2026-10-01",
-                    "endDate": "2026-10-31",
+                    "description": "Bath and dry",
+                    "price": 200.00,
                     "active": true
                 }
                 """;
 
-        mockMvc.perform(post("/api/promotions")
+        mockMvc.perform(post("/api/extra-services")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidJson))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.fieldErrors.name").exists());
 
-        verifyNoInteractions(promotionService);
+        verifyNoInteractions(extraServiceService);
     }
 
     @Test
-    void createPromotionShouldReturnBadRequestWhenServiceRejectsValue()
+    void createExtraServiceWithNegativePriceShouldReturnBadRequest()
             throws Exception {
 
         String invalidJson = """
                 {
-                    "name": "Invalid discount",
-                    "type": "PERCENTAGE",
-                    "discountValue": 150,
-                    "startDate": "2026-10-01",
-                    "endDate": "2026-10-31",
+                    "name": "Bath",
+                    "price": -1.00,
                     "active": true
                 }
                 """;
 
-        CreatePromotionRequest invalidRequest =
-                new CreatePromotionRequest(
-                        "Invalid discount",
-                        PromotionType.PERCENTAGE,
-                        new BigDecimal("150"),
-                        LocalDate.of(2026, 10, 1),
-                        LocalDate.of(2026, 10, 31),
-                        true);
-
-        when(promotionService.createPromotion(invalidRequest))
-                .thenThrow(new IllegalArgumentException(
-                        "Percentage discount must not exceed 100"));
-
-        mockMvc.perform(post("/api/promotions")
+        mockMvc.perform(post("/api/extra-services")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidJson))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(
-                        "Percentage discount must not exceed 100"));
+                .andExpect(jsonPath("$.fieldErrors.price").exists());
 
-        verify(promotionService).createPromotion(invalidRequest);
+        verifyNoInteractions(extraServiceService);
+    }
+
+    @Test
+    void updateExtraServiceWithTooManyDecimalPlacesShouldReturnBadRequest()
+            throws Exception {
+
+        String invalidJson = """
+                {
+                    "name": "Bath",
+                    "price": 200.123,
+                    "active": true
+                }
+                """;
+
+        mockMvc.perform(put("/api/extra-services/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.price").exists());
+
+        verifyNoInteractions(extraServiceService);
     }
 }
