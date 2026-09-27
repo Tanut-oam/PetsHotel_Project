@@ -26,6 +26,7 @@ import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.impl.DailyCareReportServiceImpl;
 import java.time.LocalDateTime;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 public class DailyCareReportServiceTest {
     private DailyCareReportRepository reportRepository;
@@ -538,5 +539,41 @@ public class DailyCareReportServiceTest {
 
     verify(reportRepository, never())
             .save(any(DailyCareReport.class));
+    }
+
+    @Test
+    void createReportShouldFailWhenUserDoesNotExist() {
+    when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> reportService.createReport(21L, 99L, request)
+    );
+
+    verify(reportRepository, never()).save(any(DailyCareReport.class));
+    }
+
+    @Test
+    void createReportShouldFailWhenBookingPetDoesNotExist() {
+    when(userRepository.findById(5L)).thenReturn(Optional.of(staff));
+    when(bookingPetRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> reportService.createReport(99L, 5L, request)
+    );
+
+    verify(reportRepository, never()).save(any(DailyCareReport.class));
+    }
+
+    @Test
+    void getReportByIdShouldFailWhenReportDoesNotExist() {
+    when(userRepository.findById(5L)).thenReturn(Optional.of(staff));
+    when(reportRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> reportService.getReportById(99L, 5L)
+    );
     }
 }
