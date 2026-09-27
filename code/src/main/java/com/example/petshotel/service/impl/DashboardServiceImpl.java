@@ -74,7 +74,13 @@ public class DashboardServiceImpl implements DashboardService{
             if (booking.getStatus() != BookingStatus.CANCELLED
                 && booking.getRoom() != null) {
                 String roomNumber = booking.getRoom().getRoomNumber();
-                roomBooking.merge(roomNumber, 1L, Long::sum);
+                Long previousCount = roomBooking.get(roomNumber);
+
+                if (previousCount == null) {
+                    roomBooking.put(roomNumber, 1L);
+                } else {
+                    roomBooking.put(roomNumber, previousCount + 1L);
+                }
             }
         }
 
