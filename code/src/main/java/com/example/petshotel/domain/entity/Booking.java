@@ -1,6 +1,7 @@
 package com.example.petshotel.domain.entity;
 
 import com.example.petshotel.domain.enums.BookingStatus;
+import com.example.petshotel.domain.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -80,6 +81,10 @@ public class Booking {
             status = BookingStatus.PENDING;
         }
 
+        if (paymentStatus == null) {
+            paymentStatus = PaymentStatus.UNPAID;
+        }
+
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
@@ -89,5 +94,17 @@ public class Booking {
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
+    @Column(name = "promotion_name", updatable = false)
+    private String promotionName;
     
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    private LocalDateTime paidAt;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal paidAmount;
+
 }

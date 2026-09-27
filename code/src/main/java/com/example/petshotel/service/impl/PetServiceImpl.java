@@ -15,6 +15,7 @@ import com.example.petshotel.mapper.PetMapper;
 import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.PetService;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 @Service 
 public class PetServiceImpl implements PetService {
@@ -32,7 +33,7 @@ public class PetServiceImpl implements PetService {
     @Transactional 
     public PetResponse createPet(Long ownerId, CreatePetRequest request){
         User owner = userRepository.findById(ownerId)
-            .orElseThrow(() -> new IllegalArgumentException("Owner not found: " + ownerId));
+            .orElseThrow(() -> new ResourceNotFoundException("Owner", ownerId));
 
         Pet pet = new  Pet();
         pet.setName(request.name());
@@ -55,9 +56,7 @@ public class PetServiceImpl implements PetService {
     @Transactional(readOnly = true)
     public List<PetResponse> getPetsByOwner(Long ownerId){
         if (!userRepository.existsById(ownerId)) {
-            throw new IllegalArgumentException(
-                "Owner not found: " + ownerId
-            );
+            throw new ResourceNotFoundException("Owner", ownerId);
         }
 
         List<Pet> pets = petRepository.findByOwner_IdAndActiveTrue(ownerId);
@@ -73,7 +72,7 @@ public class PetServiceImpl implements PetService {
     @Transactional(readOnly = true)
     public PetResponse getPetById(Long petId, Long ownerId){
         Pet pet = petRepository.findById(petId)
-            .orElseThrow(() -> new IllegalArgumentException("Pet not found" + petId));
+            .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
 
         if (!pet.getOwner().getId().equals(ownerId)) {
             throw new IllegalArgumentException("Pet not found: " + petId);
@@ -85,7 +84,7 @@ public class PetServiceImpl implements PetService {
     @Transactional 
     public PetResponse updatePet(Long petId,Long ownerId,UpdatePetRequest request){
         Pet pet = petRepository.findById(petId)
-            .orElseThrow(() -> new IllegalArgumentException("Pet not found: " + petId));
+            .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
         
         if (!pet.getOwner().getId().equals(ownerId)) {
             throw new IllegalArgumentException("Pet not found: " +petId);
@@ -107,7 +106,7 @@ public class PetServiceImpl implements PetService {
     @Transactional 
     public void deactivatePet(Long petId, Long ownerId){
         Pet pet = petRepository.findById(petId)
-            .orElseThrow(() -> new IllegalArgumentException("Pet not found: " + petId));
+            .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
         if (!pet.getOwner().getId().equals(ownerId)) {
             throw new IllegalArgumentException("Pet not found: " +petId);
         }
