@@ -14,10 +14,10 @@ import com.example.petshotel.domain.enums.RoomStatus;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.BookingPriceResponse;
 
 import com.example.petshotel.pricing.PricingContext;
 
-import com.example.petshotel.repository.BookingExtraServiceRepository;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ExtraServiceRepository;
 import com.example.petshotel.repository.PetRepository;
@@ -43,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -60,7 +59,6 @@ public class BookingServiceImpl implements BookingService {
     
     // Dependencies ที่เพิ่มเข้ามาใหม่
     private final ExtraServiceRepository extraServiceRepository;
-    private final BookingExtraServiceRepository bookingExtraServiceRepository;
     private final PromotionRepository promotionRepository;
 
     // =========================================================
@@ -187,8 +185,7 @@ public class BookingServiceImpl implements BookingService {
                 promotion // <-- เปลี่ยนจาก null เป็น promotion ตัวที่เราเพิ่งค้นหามา
         );
 
-        BigDecimal totalPrice =
-                pricingService.calculate(pricingContext).totalPrice();
+        BookingPriceResponse price = pricingService.calculate(pricingContext);
 
         // สร้าง Booking หลัก
         Booking booking = Booking.builder()
@@ -197,7 +194,11 @@ public class BookingServiceImpl implements BookingService {
                 .checkInDate(request.getCheckInDate())
                 .checkOutDate(request.getCheckOutDate())
                 .status(BookingStatus.PENDING)
-                .totalPrice(totalPrice)
+                .roomAmount(price.basePrice())
+                .serviceAmount(price.extraServicesPrice())
+                .surchargeAmount(price.holidaySurcharge())
+                .discountAmount(price.discountAmount())
+                .totalPrice(price.totalPrice())
                 .promotion(promotion) // <-- เพิ่มโปรโมชั่นเข้าไปผูกกับ Booking ด้วย
                 .build();
 
