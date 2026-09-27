@@ -2,7 +2,6 @@ package com.example.petshotel.service.impl;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.BookingExtraService;
-import com.example.petshotel.domain.entity.BookingPet;
 import com.example.petshotel.domain.entity.ExtraService;
 import com.example.petshotel.domain.entity.Pet;
 import com.example.petshotel.domain.entity.Promotion;
@@ -214,20 +213,10 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         // สร้าง BookingPet เพื่อเชื่อม booking กับสัตว์แต่ละตัว
-        List<BookingPet> bookingPets = pets.stream()
-                .map(pet -> BookingPet.builder()
-                        .booking(booking)
-                        .pet(pet)
-                        .build())
-                .toList();
-
-        booking.getBookingPets().addAll(bookingPets);
+        pets.forEach(pet -> booking.addPet(pet));
 
         // ผูก BookingExtraService กับ Booking หลัก
-        if (!selectedServices.isEmpty()) {
-            selectedServices.forEach(service -> service.setBooking(booking));
-            booking.getExtraServices().addAll(selectedServices);
-        }
+        selectedServices.forEach(service -> booking.addExtraService(service));
 
         Booking savedBooking = bookingRepository.save(booking);
 
