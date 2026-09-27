@@ -58,8 +58,6 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
     private final PricingService pricingService;
-    
-    // Dependencies ที่เพิ่มเข้ามาใหม่
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
     private final ApplicationEventPublisher eventPublisher;
