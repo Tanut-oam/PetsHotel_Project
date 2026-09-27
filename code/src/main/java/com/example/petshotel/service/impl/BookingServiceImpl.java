@@ -9,6 +9,7 @@ import com.example.petshotel.domain.entity.Promotion;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.entity.User;
 
+
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
 
@@ -56,8 +57,6 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
     private final PricingService pricingService;
-    
-    // Dependencies ที่เพิ่มเข้ามาใหม่
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
 
