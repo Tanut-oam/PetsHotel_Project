@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.RoomRepository;
@@ -95,8 +96,7 @@ class AvailabilityServiceTest {
     @Test
     void shouldThrowWhenRoomNotFound() {
         when(roomRepository.findById(99L)).thenReturn(Optional.empty());
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
             () -> availabilityService.isRoomAvailable(99L, checkIn, checkOut, 1));
         assertEquals("Room not found: 99", ex.getMessage());
     }
