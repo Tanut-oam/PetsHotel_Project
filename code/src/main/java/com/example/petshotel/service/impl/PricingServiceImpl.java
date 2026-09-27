@@ -1,7 +1,6 @@
 package com.example.petshotel.service.impl;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumMap;
 import java.util.List;
@@ -56,32 +55,16 @@ public class PricingServiceImpl implements PricingService {
         for(PricingStrategy strategy : strategies){
             if (strategy.category() != PricingCategory.DISCOUNT) {
                 BigDecimal amount = strategy.calculate(context, BigDecimal.ZERO);
-                if (amount == null) {
-                    throw new IllegalStateException("Pricing strategy returned no amount");
-                }
-
-                PricingCategory category = strategy.category();
-                BigDecimal previous = amounts.get(category);
-
-                if (previous == null) {
-                    amounts.put(category, amount);
-                } else {
-                    amounts.put(category, previous.add(amount));
-                }
+                amounts.merge(strategy.category(), amount, BigDecimal::add);
             }
         }
 
         BigDecimal room = amounts.getOrDefault(
-                PricingCategory.ROOM, BigDecimal.ZERO)
-                .setScale(2, RoundingMode.HALF_UP);
-
+                PricingCategory.ROOM, BigDecimal.ZERO);
         BigDecimal extra = amounts.getOrDefault(
-                PricingCategory.EXTRA_SERVICE, BigDecimal.ZERO)
-                .setScale(2, RoundingMode.HALF_UP);
-
+                PricingCategory.EXTRA_SERVICE, BigDecimal.ZERO);
         BigDecimal holiday = amounts.getOrDefault(
-                PricingCategory.HOLIDAY_SURCHARGE, BigDecimal.ZERO)
-                .setScale(2, RoundingMode.HALF_UP);
+                PricingCategory.HOLIDAY_SURCHARGE, BigDecimal.ZERO);
         
         BigDecimal subtotal = room.add(extra).add(holiday);
 
@@ -92,7 +75,7 @@ public class PricingServiceImpl implements PricingService {
             }
         }
 
-        discount = discount.setScale(2, RoundingMode.HALF_UP).min(subtotal);
+        discount = discount.min(subtotal);
         BigDecimal total = subtotal.subtract(discount);
 
         return new BookingPriceResponse(
