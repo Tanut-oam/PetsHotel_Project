@@ -2,7 +2,11 @@ package com.example.petshotel.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -11,14 +15,24 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.BookingPet;
+import com.example.petshotel.domain.entity.Pet;
 import com.example.petshotel.domain.entity.Receipt;
 import com.example.petshotel.domain.entity.Room;
+import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.dto.response.DashboardResponse;
+import com.example.petshotel.dto.response.RecentBookingResponse;
+import com.example.petshotel.mapper.RecentBookingMapper;
 import com.example.petshotel.repository.BookingRepository;
+import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.DashboardServiceImpl;
 
@@ -26,19 +40,46 @@ public class DashboardServiceTest {
     private ReceiptRepository receiptRepository;
     private BookingRepository bookingRepository;
     private DashboardServiceImpl dashboardService;
+    private PetRepository petRepository;
+    private AvailabilityService availabilityService;
+    private RecentBookingMapper recentBookingMapper;
 
     @BeforeEach 
     void setUp(){
         receiptRepository = mock(ReceiptRepository.class);
         bookingRepository = mock(BookingRepository.class);
+        petRepository = mock(PetRepository.class);
+        availabilityService = mock(AvailabilityService.class);
+        recentBookingMapper = new RecentBookingMapper();
 
-        dashboardService = new DashboardServiceImpl(receiptRepository, bookingRepository);
+        dashboardService = new DashboardServiceImpl(receiptRepository, bookingRepository, petRepository, availabilityService, recentBookingMapper);
     }
 
     private Receipt receipt(String amount){
         Receipt receipt = new Receipt();
         receipt.setTotalAmount(new BigDecimal(amount));
         return receipt;
+    }
+
+    private Booking recentBooking(LocalDate createdDate){
+        Booking booking = booking(createdDate, BookingStatus.CHECKED_IN, "A101", 2);
+        booking.setId(25L);
+
+        User customer = new User();
+        customer.setFirstName("Nadia");
+        customer.setLastName("Test");
+        booking.setUser(customer);
+
+        Pet firsPet = new Pet();
+        firsPet.setName("Mochi");
+
+        Pet secondPet = new Pet();
+        secondPet.setName("Lily");
+
+        booking.getBookingPets().get(0).setPet(firsPet);
+        booking.getBookingPets().get(1).setPet(secondPet);
+
+        return booking;
     }
 
     private Booking booking(LocalDate createdDate, BookingStatus status, String roomNumber, int petCount){
@@ -61,6 +102,8 @@ public class DashboardServiceTest {
 
         return booking;
     }
+
+
 
     @Test 
     void sumsRevenueFromReceipts(){
@@ -136,6 +179,13 @@ public class DashboardServiceTest {
     void returnsEmptyDashboardWhenThereIsNoData(){
         when(receiptRepository.findAll()).thenReturn(List.of());
         when(bookingRepository.findAll()).thenReturn(List.of());
+        when(bookingRepository.count()).thenReturn(0L);
+        when(petRepository.count()).thenReturn(0L);
+        when(availabilityService.findAvailableRooms(
+            any(LocalDate.class), any(LocalDate.class), eq(1)))
+            .thenReturn(List.of());
+        when(bookingRepository.findAll(any(Pageable.class)))
+            .thenReturn(Page.<Booking>empty());
 
         DashboardResponse result = dashboardService.getDashboard();
 
@@ -143,14 +193,31 @@ public class DashboardServiceTest {
         assertEquals(0L, result.bookingsThisMonth());
         assertEquals(0L, result.checkedInPets());
         assertNull(result.topRoom());
+
+        assertEquals(0L, result.totalBookings());
+        assertEquals(0L, result.availableRoomCountToday());
+        assertEquals(0L, result.totalPets());
+        assertTrue(result.recentBookings().isEmpty());
     }
 
     @Test 
     void combinesResultsIntoDashboardResponse(){
         LocalDate today = LocalDate.now();
+        Booking latestBooking = recentBooking(today);
 
-        when(receiptRepository.findAll()).thenReturn(List.of(receipt("1500.00")));
-        when(bookingRepository.findAll()).thenReturn(List.of(booking(today, BookingStatus.CHECKED_IN, "A101", 2)));
+        when(receiptRepository.findAll())
+                .thenReturn(List.of(receipt("1500.00")));
+        when(bookingRepository.findAll())
+                .thenReturn(List.of(latestBooking));
+        when(bookingRepository.count()).thenReturn(1L);
+        when(petRepository.count()).thenReturn(8L);
+
+        when(availabilityService.findAvailableRooms(
+                any(LocalDate.class), any(LocalDate.class), eq(1)))
+                .thenReturn(List.of(new Room(), new Room()));
+
+        when(bookingRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(latestBooking)));
 
         DashboardResponse result = dashboardService.getDashboard();
 
@@ -158,5 +225,78 @@ public class DashboardServiceTest {
         assertEquals(1L, result.bookingsThisMonth());
         assertEquals(2L, result.checkedInPets());
         assertEquals("A101", result.topRoom());
+
+        assertEquals(1L, result.totalBookings());
+        assertEquals(2L, result.availableRoomCountToday());
+        assertEquals(8L, result.totalPets());
+
+        assertEquals(1, result.recentBookings().size());
+
+        RecentBookingResponse recent = result.recentBookings().get(0);
+        assertEquals(Long.valueOf(25L), recent.id());
+        assertEquals("Nadia Test", recent.customerName());
+        assertEquals(List.of("Mochi", "Lily"), recent.petNames());
+        assertEquals("A101", recent.roomNumber());
+        assertEquals(BookingStatus.CHECKED_IN, recent.status());
+
     }
+
+    @Test
+    void countsAvailableRoomsForTodayUntilTomorrow() {
+        LocalDate beforeCall = LocalDate.now();
+
+        when(availabilityService.findAvailableRooms(
+                any(LocalDate.class), any(LocalDate.class), eq(1)))
+                .thenReturn(List.of(new Room(), new Room()));
+
+        long result = dashboardService.getAvailableRoomCountToday();
+
+        LocalDate afterCall = LocalDate.now();
+
+        ArgumentCaptor<LocalDate> checkInCaptor =
+                ArgumentCaptor.forClass(LocalDate.class);
+        ArgumentCaptor<LocalDate> checkOutCaptor =
+                ArgumentCaptor.forClass(LocalDate.class);
+
+        verify(availabilityService).findAvailableRooms(
+                checkInCaptor.capture(),
+                checkOutCaptor.capture(),
+                eq(1));
+
+        LocalDate checkIn = checkInCaptor.getValue();
+
+        assertEquals(2L, result);
+        assertTrue(checkIn.equals(beforeCall) || checkIn.equals(afterCall));
+        assertEquals(checkIn.plusDays(1), checkOutCaptor.getValue());
+    }
+
+    @Test
+    void requestsFiveLatestBookingsOrderedByCreatedAtThenId() {
+        when(bookingRepository.findAll(any(Pageable.class)))
+                .thenReturn(Page.<Booking>empty());
+
+        dashboardService.getRecentBookings();
+
+        ArgumentCaptor<Pageable> captor =
+                ArgumentCaptor.forClass(Pageable.class);
+
+        verify(bookingRepository).findAll(captor.capture());
+
+        Pageable pageable = captor.getValue();
+
+        assertEquals(0, pageable.getPageNumber());
+        assertEquals(5, pageable.getPageSize());
+
+        List<Sort.Order> orders = pageable.getSort().toList();
+
+        assertEquals(2, orders.size());
+
+        assertEquals("createdAt", orders.get(0).getProperty());
+        assertEquals(Sort.Direction.DESC, orders.get(0).getDirection());
+
+        assertEquals("id", orders.get(1).getProperty());
+        assertEquals(Sort.Direction.DESC, orders.get(1).getDirection());
+    }
+
+
 }

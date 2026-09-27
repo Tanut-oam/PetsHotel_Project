@@ -13,6 +13,7 @@ import com.example.petshotel.domain.entity.Receipt;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.ReceiptService;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 @Service 
 public class ReceiptServiceImpl implements ReceiptService{
@@ -31,7 +32,7 @@ public class ReceiptServiceImpl implements ReceiptService{
     @Transactional 
     public Receipt createReceipt(Long bookingId){
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found with id: " + bookingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
 
         Optional<Receipt> existingReceipt = receiptRepository.findByBookingId(bookingId);
             if (existingReceipt.isPresent()) {
