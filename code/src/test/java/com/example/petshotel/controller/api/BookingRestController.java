@@ -1,5 +1,5 @@
 package com.example.petshotel.controller.api;
 
-public class BookingRestControllerTest {
+public class BookingRestController {
     
 }

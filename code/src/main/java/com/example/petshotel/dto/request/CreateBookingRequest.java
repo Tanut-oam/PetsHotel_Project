@@ -1,5 +1,4 @@
 package com.example.petshotel.dto.request;
-import jakarta.validation.constraints.NotNull;
 
 import lombok.*;
 import java.util.Map;
@@ -13,10 +12,8 @@ import java.util.List;
 @Builder
 public class CreateBookingRequest {
 
-    @NotNull(message = "User ID ต้องไม่เป็นค่าว่าง")
     private Long userId;
 
-    @NotNull(message = "Room ID ต้องไม่เป็นค่าว่าง")
     private Long roomId;
 
     private List<Long> petIds;
