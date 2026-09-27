@@ -20,7 +20,7 @@ import com.example.petshotel.mapper.PetMapper;
 import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.impl.PetServiceImpl;
-
+import com.example.petshotel.exception.ResourceNotFoundException;
 class PetServiceTest {
 
     private PetRepository petRepository;
@@ -114,7 +114,7 @@ class PetServiceTest {
             .thenReturn(Optional.empty());
 
         assertThrows(
-            IllegalArgumentException.class,
+            ResourceNotFoundException.class,
             () -> petService.createPet(99L, request)
         );
 
@@ -167,7 +167,7 @@ class PetServiceTest {
         .thenReturn(Optional.empty());
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.getPetById(99L, 1L)
     );
 
@@ -221,7 +221,7 @@ class PetServiceTest {
     when(userRepository.existsById(99L)).thenReturn(false);
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.getPetsByOwner(99L)
     );
 
@@ -327,7 +327,7 @@ class PetServiceTest {
         .thenReturn(Optional.empty());
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.updatePet(99L, 1L, request)
     );
 
@@ -369,7 +369,7 @@ class PetServiceTest {
         .thenReturn(Optional.empty());
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.deactivatePet(99L, 1L)
     );
 
