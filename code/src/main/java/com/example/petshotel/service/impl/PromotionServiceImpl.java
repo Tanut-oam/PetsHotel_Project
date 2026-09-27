@@ -12,6 +12,7 @@ import com.example.petshotel.repository.PromotionRepository;
 import com.example.petshotel.service.PromotionService;
 import java.math.BigDecimal;
 import com.example.petshotel.domain.enums.PromotionType;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 @Service
 public class PromotionServiceImpl implements PromotionService {
@@ -33,7 +34,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional(readOnly = true)
     public Promotion getPromotionById(Long id) {
         return promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", id));
     }
 
     @Override
@@ -67,7 +68,7 @@ public class PromotionServiceImpl implements PromotionService {
     public Promotion updatePromotion(Long id, CreatePromotionRequest request) {
         validateDiscount(request);
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", id));
 
         promotion.setName(request.name().trim());
         promotion.setType(request.type());
@@ -83,7 +84,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional
     public void deactivatePromotion(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", id));
 
         promotion.setActive(false);
         promotionRepository.save(promotion);
