@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import com.example.petshotel.domain.entity.ExtraService;
 import com.example.petshotel.repository.ExtraServiceRepository;
 import com.example.petshotel.service.impl.ExtraServiceServiceImpl;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 public class ExtraServiceServiceTest {
     private ExtraServiceRepository extraServiceRepository;
@@ -163,9 +164,10 @@ public class ExtraServiceServiceTest {
 
         when(extraServiceRepository.findById(99L))
             .thenReturn(Optional.empty());
-        
-        assertThrows(IllegalArgumentException.class, 
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
             () -> extraServiceService.updateExtraService(99L, details));
+
+        assertEquals("ExtraService not found: 99", exception.getMessage());
         verify(extraServiceRepository, never()).save(any(ExtraService.class));
     }
 

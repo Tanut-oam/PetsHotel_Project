@@ -23,6 +23,7 @@ import com.example.petshotel.domain.entity.Receipt;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.ReceiptServiceImpl;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 public class ReceiptServiceTest  {
     private ReceiptRepository receiptRepository;
@@ -104,9 +105,10 @@ public class ReceiptServiceTest  {
         when(bookingRepository.findById(99L))
             .thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-            () -> receiptService.createReceipt(99L));
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class, () -> receiptService.createReceipt(99L));
         
+        assertEquals("Booking not found: 99", exception.getMessage());
         verify(receiptRepository, never()).save(any(Receipt.class));
     }
 

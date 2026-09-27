@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.petshotel.domain.entity.ExtraService;
 import com.example.petshotel.repository.ExtraServiceRepository;
 import com.example.petshotel.service.ExtraServiceService;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 @Service
 public class ExtraServiceServiceImpl implements ExtraServiceService {
@@ -28,7 +29,7 @@ public class ExtraServiceServiceImpl implements ExtraServiceService {
     @Transactional(readOnly = true)
     public ExtraService getExtraServiceById(Long id) {
         return extraServiceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("ExtraService not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ExtraService", id));
     }
 
     @Override
@@ -78,7 +79,7 @@ public class ExtraServiceServiceImpl implements ExtraServiceService {
     @Transactional
     public void deleteExtraService(Long id) {
         ExtraService extraService = extraServiceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("ExtraService not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ExtraService", id));
         extraService.setActive(false);
         extraServiceRepository.save(extraService);
     }

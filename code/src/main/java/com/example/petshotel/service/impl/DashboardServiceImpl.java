@@ -2,9 +2,13 @@ package com.example.petshotel.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,19 +16,33 @@ import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.dto.response.DashboardResponse;
+import com.example.petshotel.dto.response.RecentBookingResponse;
+import com.example.petshotel.mapper.RecentBookingMapper;
 import com.example.petshotel.repository.BookingRepository;
+import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
+import com.example.petshotel.service.AvailabilityService;
 import com.example.petshotel.service.DashboardService;
 
 @Service 
 public class DashboardServiceImpl implements DashboardService{
     private final ReceiptRepository receiptRepository;
     private final BookingRepository bookingRepository;
+    private final PetRepository petRepository;
+    private final AvailabilityService availabilityService;
+    private final RecentBookingMapper recentBookingMapper;
 
-    public DashboardServiceImpl(ReceiptRepository receiptRepository, BookingRepository bookingRepository) {
+    public DashboardServiceImpl(ReceiptRepository receiptRepository, BookingRepository bookingRepository,
+        PetRepository petRepository,
+        AvailabilityService availabilityService,
+        RecentBookingMapper recentBookingMapper) {
         this.receiptRepository = receiptRepository;
         this.bookingRepository = bookingRepository;
+        this.petRepository = petRepository;
+        this.availabilityService = availabilityService;
+        this.recentBookingMapper = recentBookingMapper;
     }
+
 
     @Override 
     @Transactional(readOnly = true)
@@ -100,12 +118,48 @@ public class DashboardServiceImpl implements DashboardService{
 
     @Override 
     @Transactional(readOnly = true)
+    public long getTotalBookings() {
+        return bookingRepository.count();
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public long getAvailableRoomCountToday(){
+        LocalDate today = LocalDate.now();
+        return availabilityService.findAvailableRooms(today, today.plusDays(1), 1).size();
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public long getTotalPets() {
+        return petRepository.count();
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public List<RecentBookingResponse> getRecentBookings(){
+        PageRequest pageRequest = PageRequest.of(
+            0, 5, Sort.by(Sort.Direction.DESC, Booking::getCreatedAt, Booking::getId));
+        List<Booking> bookings = bookingRepository.findAll(pageRequest).getContent();
+        List<RecentBookingResponse> responses = new ArrayList<>();
+        for(Booking booking : bookings){
+            responses.add(recentBookingMapper.toResponse(booking));
+        }
+        return responses;
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
     public DashboardResponse getDashboard(){
         return new DashboardResponse(
             getTotalRevenue(),
             getBookingsThisMonth(),
             getCheckedInPets(),
-            getTopRoom()
+            getTopRoom(),
+            getTotalBookings(),
+            getAvailableRoomCountToday(),
+            getTotalPets(),
+            getRecentBookings()
         );
     }
 
