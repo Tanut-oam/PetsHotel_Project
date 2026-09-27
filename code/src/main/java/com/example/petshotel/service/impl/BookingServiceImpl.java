@@ -85,7 +85,7 @@ public class BookingServiceImpl implements BookingService {
                         )
                 );
 
-        Room room = roomRepository.findById(request.getRoomId())
+        Room room = roomRepository.findByIdForUpdate(request.getRoomId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Room" , request.getRoomId()
@@ -153,8 +153,8 @@ public class BookingServiceImpl implements BookingService {
                 }
 
                 ExtraService extraService = extraServiceRepository.findById(serviceId)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Extra service not found: " + serviceId));
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Extra service" , serviceId));
 
                 if (!Boolean.TRUE.equals(extraService.getActive())
                         || extraService.getPrice() == null
@@ -180,7 +180,7 @@ public class BookingServiceImpl implements BookingService {
         Promotion promotion = null;
         if (request.getPromotionId() != null) {
             promotion = promotionRepository.findById(request.getPromotionId())
-                    .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + request.getPromotionId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Promotion" , request.getPromotionId()));
         }
         // ------------------------------------
 
@@ -209,7 +209,7 @@ public class BookingServiceImpl implements BookingService {
                 .surchargeAmount(price.holidaySurcharge())
                 .discountAmount(price.discountAmount())
                 .totalPrice(price.totalPrice())
-                .promotion(promotion) // <-- เพิ่มโปรโมชั่นเข้าไปผูกกับ Booking ด้วย
+                .promotion(promotion) 
                 .build();
 
         // สร้าง BookingPet เพื่อเชื่อม booking กับสัตว์แต่ละตัว
