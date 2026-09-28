@@ -7,8 +7,8 @@ import com.example.petshotel.domain.entity.Booking;
 public class BookingConfirmedEvent extends ApplicationEvent{
     private final Booking booking;
 
-    public BookingConfirmedEvent(Object source,Booking booking){
-        super(booking);
+    public BookingConfirmedEvent(Object source, Booking booking) {
+        super(source);
         this.booking = booking;
     }
     
