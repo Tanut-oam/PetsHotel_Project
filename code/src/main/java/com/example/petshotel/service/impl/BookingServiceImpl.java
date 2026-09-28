@@ -2,16 +2,15 @@ package com.example.petshotel.service.impl;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.BookingExtraService;
-import com.example.petshotel.domain.entity.BookingPet;
 import com.example.petshotel.domain.entity.ExtraService;
 import com.example.petshotel.domain.entity.Pet;
 import com.example.petshotel.domain.entity.Promotion;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.entity.User;
 
-
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.domain.enums.PaymentStatus;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
@@ -37,6 +36,10 @@ import com.example.petshotel.state.CheckedOutState;
 import com.example.petshotel.state.ConfirmedState;
 import com.example.petshotel.state.PendingState;
 
+import com.example.petshotel.notification.BookingConfirmedEvent;
+
+import com.example.petshotel.mapper.BookingMapper;
+
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 
@@ -44,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
@@ -54,6 +58,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.Objects;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +74,8 @@ public class BookingServiceImpl implements BookingService {
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
     private final AvailabilityService availabilityService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final BookingMapper bookingMapper;
 
     // =========================================================
     // CREATE BOOKING
@@ -214,24 +222,14 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         // สร้าง BookingPet เพื่อเชื่อม booking กับสัตว์แต่ละตัว
-        List<BookingPet> bookingPets = pets.stream()
-                .map(pet -> BookingPet.builder()
-                        .booking(booking)
-                        .pet(pet)
-                        .build())
-                .toList();
-
-        booking.getBookingPets().addAll(bookingPets);
+        pets.forEach(pet -> booking.addPet(pet));
 
         // ผูก BookingExtraService กับ Booking หลัก
-        if (!selectedServices.isEmpty()) {
-            selectedServices.forEach(service -> service.setBooking(booking));
-            booking.getExtraServices().addAll(selectedServices);
-        }
+        selectedServices.forEach(service -> booking.addExtraService(service));
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     // =========================================================
@@ -244,7 +242,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = findBooking(id);
 
-        return toResponse(booking);
+        return bookingMapper.toResponse(booking);
     }
 
     @Override
@@ -253,7 +251,7 @@ public class BookingServiceImpl implements BookingService {
 
         return bookingRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(bookingMapper::toResponse)
                 .toList();
     }
 
@@ -264,7 +262,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse confirmBooking(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         BookingState state = getState(booking.getStatus());
 
@@ -272,27 +270,49 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        eventPublisher.publishEvent(
+        new BookingConfirmedEvent(this, savedBooking)
+        );
+
+        return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
     public BookingResponse checkIn(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         BookingState state = getState(booking.getStatus());
+
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+        LocalDate today = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
+        if (today.isBefore(booking.getCheckInDate())) {
+            throw new IllegalStateException(
+                    "Cannot check in before the scheduled check-in date"
+            );
+        }
+
+        if (!today.isBefore(booking.getCheckOutDate())) {
+            throw new IllegalStateException(
+                    "Cannot check in on or after the scheduled check-out date"
+            );
+        }
+      }
 
         state.checkIn(booking);
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
     public BookingResponse checkOut(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         BookingState state = getState(booking.getStatus());
 
@@ -300,21 +320,26 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
     public BookingResponse cancelBooking(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
+
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+        throw new IllegalStateException(
+                "Paid bookings cannot be cancelled through this operation"
+        );
+      }
 
         BookingState state = getState(booking.getStatus());
-
         state.cancel(booking);
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     // =========================================================
@@ -325,10 +350,17 @@ public class BookingServiceImpl implements BookingService {
 
         return bookingRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Booking not found: " + id
+                        new ResourceNotFoundException(
+                                "Booking" , id
                         )
                 );
+    }
+
+    private Booking findBookingForUpdate(Long id) {
+    return bookingRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                    "Booking", id
+            ));
     }
 
     private void validateCreateRequest(CreateBookingRequest request) {
@@ -367,7 +399,7 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        if (request.getPetIds().contains(null)) {
+        if (request.getPetIds().stream().anyMatch(Objects::isNull)) {
                 throw new IllegalArgumentException(
                         "Pet ID must not be null"
                 );
@@ -435,23 +467,4 @@ public class BookingServiceImpl implements BookingService {
         };
     }
 
-    private BookingResponse toResponse(Booking booking) {
-
-        List<Long> petIds = booking.getBookingPets()
-                .stream()
-                .map(bookingPet ->
-                        bookingPet.getPet().getId())
-                .toList();
-
-        return BookingResponse.builder()
-                .id(booking.getId())
-                .userId(booking.getUser().getId())
-                .roomId(booking.getRoom().getId())
-                .petIds(petIds)
-                .checkInDate(booking.getCheckInDate())
-                .checkOutDate(booking.getCheckOutDate())
-                .status(booking.getStatus())
-                .totalPrice(booking.getTotalPrice())
-                .build();
-    }
 }

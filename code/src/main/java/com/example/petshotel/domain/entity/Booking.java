@@ -107,4 +107,18 @@ public class Booking {
     @Column(precision = 10, scale = 2)
     private BigDecimal paidAmount;
 
+    public void addPet(Pet pet) {
+        BookingPet bookingPet = BookingPet.builder()
+                .booking(this)
+                .pet(pet)
+                .build();
+
+        bookingPets.add(bookingPet);
+    }
+
+    public void addExtraService(BookingExtraService service) {
+        extraServices.add(service);
+        service.setBooking(this);
+    }
+
 }
