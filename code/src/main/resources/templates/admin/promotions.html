@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,12 +17,12 @@
 
   <div class="layout">
     <aside class="sidebar">
-      <a href="index.html">▦ ภาพรวม</a>
+      <a class="active" th:href="@{/admin}">▦ ภาพรวม</a>
       <a href="bookings.html">▤ จัดการการจอง</a>
       <a href="rooms.html">▣ จัดการห้องพัก</a>
       <a href="pets.html">♧ สัตว์เลี้ยง</a>
-      <a href="services.html">✿ บริการเสริม</a>
-      <a href="promotions.html">◇ โปรโมชัน</a>
+      <a th:href="@{/admin/services}">✿ บริการเสริม</a>
+      <a th:href="@{/admin/promotions}">◇ โปรโมชัน</a>
       <a href="reports.html">▤ รายงานการดูแล</a>
       <a href="users.html">♙ สมาชิก</a>
       <a href="settings.html">⚙ ตั้งค่า</a>
@@ -31,14 +31,14 @@
     <main class="content">
         <div class="section-title">
             <h1>โปรโมชัน</h1>
-            <button class="btn btn-primary" type="button">+ เพิ่มโปรโมชัน</button>
+            <a id="add-promotion" class="btn btn-primary" href="#promotion-form">+ เพิ่มโปรโมชัน</a>
             </div>
 
             <div class="panel table-scroll">
             <table class="table">
                 <thead>
                 <tr>
-                    <th>โค้ด</th>
+                    <th>ชื่อโปรโมชัน</th>
                     <th>ส่วนลด</th>
                     <th>วันหมดอายุ</th>
                     <th>สถานะ</th>
@@ -47,17 +47,47 @@
                 </thead>
 
                 <tbody>
-                <tr>
-                    <td>WELCOME10</td>
-                    <td>10%</td>
-                    <td>31 ธ.ค. 2026</td>
-                    <td><span class="badge">ใช้งานได้</span></td>
-                    <td>
-                    <button class="btn btn-small">แก้ไข</button>
-                    <button class="btn btn-small">ปิดใช้</button>
-                    </td>
-                </tr>
-                </tbody>
+                  <tr th:if="${#lists.isEmpty(promotions)}">
+                      <td colspan="5">ยังไม่มีโปรโมชัน</td>
+                  </tr>
+
+                  <tr th:each="promotion : ${promotions}">
+                      <td th:text="${promotion.name}">ชื่อโปรโมชัน</td>
+
+                      <td>
+                          <span th:if="${promotion.type.name() == 'PERCENTAGE'}"
+                                th:text="|${promotion.value}%|">10%</span>
+
+                          <span th:if="${promotion.type.name() == 'FIXED_AMOUNT'}"
+                                th:text="|฿${promotion.value}|">฿100</span>
+                      </td>
+
+                      <td th:text="${promotion.endDate}">2026-12-31</td>
+
+                      <td>
+                          <span th:if="${promotion.active}" class="badge">
+                              เปิดใช้
+                          </span>
+                          <span th:unless="${promotion.active}" class="badge badge-danger">
+                              ปิดใช้
+                          </span>
+                      </td>
+
+                      <td>
+                          <button class="btn btn-small edit-promotion"
+                                  type="button"
+                                  th:attr="data-promotion-id=${promotion.id}">
+                              แก้ไข
+                          </button>
+                          <button class="btn btn-small deactivate-promotion"
+                                  type="button"
+                                  th:attr="data-promotion-id=${promotion.id}"
+                                  th:disabled="${!promotion.active}">
+                              ปิดใช้
+                          </button>
+                      </td>
+                  </tr>
+              </tbody>
             </table>
             </div>
 
@@ -65,30 +95,54 @@
             <h2>ฟอร์มโปรโมชัน</h2>
             </div>
 
-            <form class="panel grid cols-2">
-            <label class="field">รหัสโปรโมชัน<input name="code" required></label>
+            <form id="promotion-form" class="panel grid cols-2">
+              <label class="field">
+                  ชื่อโปรโมชัน
+                  <input name="name" required>
+              </label>
 
-            <label class="field">
-                ประเภทส่วนลด
-                <select name="discountType">
-                <option value="PERCENT">เปอร์เซ็นต์</option>
-                <option value="FIXED">จำนวนเงิน</option>
-                </select>
-            </label>
+              <label class="field">
+                  ประเภทส่วนลด
+                  <select name="type" required>
+                      <option value="PERCENTAGE">เปอร์เซ็นต์</option>
+                      <option value="FIXED_AMOUNT">จำนวนเงิน</option>
+                  </select>
+              </label>
 
-            <label class="field">
-                มูลค่าส่วนลด
-                <input type="number" name="discountValue" min="1" required>
-            </label>
+              <label class="field">
+                  มูลค่าส่วนลด
+                  <input type="number"
+                        name="discountValue"
+                        min="0.01"
+                        step="0.01"
+                        required>
+              </label>
 
-            <label class="field">
-                วันหมดอายุ
-                <input type="date" name="expiresAt" required>
-            </label>
+              <label class="field">
+                  วันเริ่มต้น
+                  <input type="date" name="startDate" required>
+              </label>
 
-            <button class="btn btn-primary" type="submit">บันทึกโปรโมชัน</button>
-            </form>
+              <label class="field">
+                  วันสิ้นสุด
+                  <input type="date" name="endDate" required>
+              </label>
+
+              <label class="field">
+                  <input type="checkbox" name="active" checked>
+                  เปิดใช้โปรโมชัน
+              </label>
+
+              <p id="promotion-message" role="status" aria-live="polite"></p>
+
+              <button class="btn btn-primary" type="submit" disabled>
+                  บันทึกโปรโมชัน
+              </button>
+          </form>
     </main>
   </div>
+
+  <script th:src="@{/js/admin-promotions.js}" defer></script>
+
 </body>
 </html>

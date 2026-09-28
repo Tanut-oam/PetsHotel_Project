@@ -34,6 +34,7 @@ public class User {
     @Column(nullable = false)
     private  String phoneNumber;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
 
@@ -42,4 +43,10 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (active == null) active = true;
+    }
 }
