@@ -60,7 +60,7 @@ public class ReceiptServiceTest  {
     void createsReceiptUsingSavedBookingPrices(){
         Booking booking = bookingWithPrices();
 
-        when(bookingRepository.findById(1L))
+        when(bookingRepository.findByIdForUpdate(1L))
             .thenReturn(Optional.of(booking));
         when(receiptRepository.findByBookingId(1L))
             .thenReturn(Optional.empty());
@@ -95,7 +95,7 @@ public class ReceiptServiceTest  {
         existing.setId(10L);
         existing.setBooking(booking);
 
-        when(bookingRepository.findById(1L))
+        when(bookingRepository.findByIdForUpdate(1L))
             .thenReturn(Optional.of(booking));
         when(receiptRepository.findByBookingId(1L))
             .thenReturn(Optional.of(existing));
@@ -108,7 +108,7 @@ public class ReceiptServiceTest  {
 
     @Test 
     void rejectsMissingBooking(){
-        when(bookingRepository.findById(99L))
+        when(bookingRepository.findByIdForUpdate(99L))
             .thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
@@ -123,7 +123,7 @@ public class ReceiptServiceTest  {
         Booking booking = bookingWithPrices();
         booking.setDiscountAmount(null);
 
-        when(bookingRepository.findById(1L))
+        when(bookingRepository.findByIdForUpdate(1L))
             .thenReturn(Optional.of(booking));
         when(receiptRepository.findByBookingId(1L))
             .thenReturn(Optional.empty());
