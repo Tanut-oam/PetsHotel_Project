@@ -10,6 +10,7 @@ import com.example.petshotel.domain.entity.User;
 
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.domain.enums.PaymentStatus;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
@@ -261,7 +262,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse confirmBooking(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         BookingState state = getState(booking.getStatus());
 
@@ -279,7 +280,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse checkIn(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         BookingState state = getState(booking.getStatus());
 
@@ -311,7 +312,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse checkOut(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         BookingState state = getState(booking.getStatus());
 
@@ -325,10 +326,15 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse cancelBooking(Long id) {
 
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
+
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+        throw new IllegalStateException(
+                "Paid bookings cannot be cancelled through this operation"
+        );
+      }
 
         BookingState state = getState(booking.getStatus());
-
         state.cancel(booking);
 
         Booking savedBooking = bookingRepository.save(booking);
@@ -348,6 +354,13 @@ public class BookingServiceImpl implements BookingService {
                                 "Booking" , id
                         )
                 );
+    }
+
+    private Booking findBookingForUpdate(Long id) {
+    return bookingRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                    "Booking", id
+            ));
     }
 
     private void validateCreateRequest(CreateBookingRequest request) {
