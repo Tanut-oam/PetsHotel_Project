@@ -7,13 +7,12 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
-import com.example.petshotel.repository.BookingPetRepository;
+import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.AvailabilityService;
 
