@@ -37,6 +37,8 @@ import com.example.petshotel.state.PendingState;
 
 import com.example.petshotel.notification.BookingConfirmedEvent;
 
+import com.example.petshotel.mapper.BookingMapper;
+
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 
@@ -72,6 +74,7 @@ public class BookingServiceImpl implements BookingService {
     private final PromotionRepository promotionRepository;
     private final AvailabilityService availabilityService;
     private final ApplicationEventPublisher eventPublisher;
+    private final BookingMapper bookingMapper;
 
     // =========================================================
     // CREATE BOOKING
@@ -225,7 +228,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     // =========================================================
@@ -238,7 +241,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = findBooking(id);
 
-        return toResponse(booking);
+        return bookingMapper.toResponse(booking);
     }
 
     @Override
@@ -247,7 +250,7 @@ public class BookingServiceImpl implements BookingService {
 
         return bookingRepository.findAll()
                 .stream()
-                .map(this::toResponse)
+                .map(bookingMapper::toResponse)
                 .toList();
     }
 
@@ -270,7 +273,7 @@ public class BookingServiceImpl implements BookingService {
         new BookingConfirmedEvent(this, savedBooking)
         );
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
@@ -302,7 +305,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
@@ -316,7 +319,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
@@ -330,7 +333,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        return toResponse(savedBooking);
+        return bookingMapper.toResponse(savedBooking);
     }
 
     // =========================================================
@@ -341,8 +344,8 @@ public class BookingServiceImpl implements BookingService {
 
         return bookingRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Booking not found: " + id
+                        new ResourceNotFoundException(
+                                "Booking" , id
                         )
                 );
     }
@@ -451,23 +454,4 @@ public class BookingServiceImpl implements BookingService {
         };
     }
 
-    private BookingResponse toResponse(Booking booking) {
-
-        List<Long> petIds = booking.getBookingPets()
-                .stream()
-                .map(bookingPet ->
-                        bookingPet.getPet().getId())
-                .toList();
-
-        return BookingResponse.builder()
-                .id(booking.getId())
-                .userId(booking.getUser().getId())
-                .roomId(booking.getRoom().getId())
-                .petIds(petIds)
-                .checkInDate(booking.getCheckInDate())
-                .checkOutDate(booking.getCheckOutDate())
-                .status(booking.getStatus())
-                .totalPrice(booking.getTotalPrice())
-                .build();
-    }
 }
