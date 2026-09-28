@@ -8,7 +8,6 @@ import com.example.petshotel.domain.entity.Promotion;
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.entity.User;
 
-
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
 
@@ -36,6 +35,8 @@ import com.example.petshotel.state.CheckedOutState;
 import com.example.petshotel.state.ConfirmedState;
 import com.example.petshotel.state.PendingState;
 
+import com.example.petshotel.notification.BookingConfirmedEvent;
+
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 
@@ -43,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
@@ -53,6 +55,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.Objects;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +71,7 @@ public class BookingServiceImpl implements BookingService {
     private final ExtraServiceRepository extraServiceRepository;
     private final PromotionRepository promotionRepository;
     private final AvailabilityService availabilityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // =========================================================
     // CREATE BOOKING
@@ -220,6 +225,11 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
+        eventPublisher.publishEvent(
+                new BookingConfirmedEvent(this, savedBooking)
+        );
+
+
         return toResponse(savedBooking);
     }
 
@@ -270,6 +280,24 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBooking(id);
 
         BookingState state = getState(booking.getStatus());
+
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+        LocalDate today = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
+        if (today.isBefore(booking.getCheckInDate())) {
+            throw new IllegalStateException(
+                    "Cannot check in before the scheduled check-in date"
+            );
+        }
+
+        if (!today.isBefore(booking.getCheckOutDate())) {
+            throw new IllegalStateException(
+                    "Cannot check in on or after the scheduled check-out date"
+            );
+        }
+      }
 
         state.checkIn(booking);
 
