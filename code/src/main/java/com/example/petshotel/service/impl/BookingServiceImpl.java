@@ -225,11 +225,6 @@ public class BookingServiceImpl implements BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        eventPublisher.publishEvent(
-                new BookingConfirmedEvent(this, savedBooking)
-        );
-
-
         return toResponse(savedBooking);
     }
 
@@ -270,6 +265,10 @@ public class BookingServiceImpl implements BookingService {
         state.confirm(booking);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        eventPublisher.publishEvent(
+        new BookingConfirmedEvent(this, savedBooking)
+        );
 
         return toResponse(savedBooking);
     }
