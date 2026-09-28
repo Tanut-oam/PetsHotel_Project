@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,12 +17,12 @@
 
   <div class="layout">
     <aside class="sidebar">
-      <a href="index.html">▦ ภาพรวม</a>
+      <a class="active" th:href="@{/admin}">▦ ภาพรวม</a>
       <a href="bookings.html">▤ จัดการการจอง</a>
       <a href="rooms.html">▣ จัดการห้องพัก</a>
       <a href="pets.html">♧ สัตว์เลี้ยง</a>
-      <a href="services.html">✿ บริการเสริม</a>
-      <a href="promotions.html">◇ โปรโมชัน</a>
+      <a th:href="@{/admin/services}">✿ บริการเสริม</a>
+      <a th:href="@{/admin/promotions}">◇ โปรโมชัน</a>
       <a href="reports.html">▤ รายงานการดูแล</a>
       <a href="users.html">♙ สมาชิก</a>
       <a href="settings.html">⚙ ตั้งค่า</a>
@@ -31,7 +31,7 @@
     <main class="content">
         <div class="section-title">
             <h1>บริการเสริม</h1>
-            <button class="btn btn-primary" type="button">+ เพิ่มบริการ</button>
+            <a id="add-extra-service" class="btn btn-primary" href="#extra-service-form">+ เพิ่มบริการ</a>
             </div>
 
             <div class="panel table-scroll">
@@ -40,35 +40,46 @@
                 <tr>
                     <th>ชื่อบริการ</th>
                     <th>ราคา</th>
-                    <th>หน่วย</th>
                     <th>สถานะ</th>
                     <th>จัดการ</th>
                 </tr>
                 </thead>
 
                 <tbody>
-                <tr>
-                    <td>อาหารเสริม</td>
-                    <td>฿50</td>
-                    <td>วัน</td>
-                    <td><span class="badge">เปิดใช้</span></td>
-                    <td>
-                    <button class="btn btn-small">แก้ไข</button>
-                    <button class="btn btn-small">ปิดใช้</button>
-                    </td>
-                </tr>
+                  <tr th:if="${#lists.isEmpty(extraServices)}">
+                      <td colspan="4">ยังไม่มีบริการเสริม</td>
+                  </tr>
 
-                <tr>
-                    <td>อาบน้ำ</td>
-                    <td>฿300</td>
-                    <td>ครั้ง</td>
-                    <td><span class="badge">เปิดใช้</span></td>
-                    <td>
-                    <button class="btn btn-small">แก้ไข</button>
-                    <button class="btn btn-small">ปิดใช้</button>
-                    </td>
-                </tr>
-                </tbody>
+                  <tr th:each="service : ${extraServices}">
+                      <td th:text="${service.name}">ชื่อบริการ</td>
+
+                      <td th:text="|฿${service.price}|">฿0.00</td>
+
+                      <td>
+                          <span th:if="${service.active}" class="badge">
+                              เปิดใช้
+                          </span>
+                          <span th:unless="${service.active}"
+                                class="badge badge-danger">
+                              ปิดใช้
+                          </span>
+                      </td>
+
+                      <td>
+                          <button class="btn btn-small edit-extra-service"
+                                  type="button"
+                                  th:attr="data-service-id=${service.id}">
+                              แก้ไข
+                          </button>
+                          <button class="btn btn-small deactivate-extra-service"
+                                  type="button"
+                                  th:attr="data-service-id=${service.id}"
+                                  th:disabled="${!service.active}">
+                              ปิดใช้
+                          </button>
+                      </td>
+                  </tr>
+              </tbody>
             </table>
             </div>
 
@@ -76,21 +87,43 @@
             <h2>ฟอร์มบริการเสริม</h2>
             </div>
 
-            <form class="panel grid cols-2">
-            <label class="field">ชื่อบริการ<input name="name" required></label>
-            <label class="field">ราคา<input type="number" name="price" min="0" required></label>
+            <form id="extra-service-form" class="panel grid cols-2">
+              <label class="field">
+                  ชื่อบริการ
+                  <input name="name" required>
+              </label>
 
-            <label class="field">
-                คิดราคาแบบ
-                <select name="unit">
-                <option value="DAY">ต่อวัน</option>
-                <option value="ONCE">ต่อครั้ง</option>
-                </select>
-            </label>
+              <label class="field">
+                  รายละเอียด
+                  <textarea name="description"></textarea>
+              </label>
 
-            <button class="btn btn-primary" type="submit">บันทึกบริการ</button>
-            </form>
+              <label class="field">
+                  ราคา
+                  <input type="number"
+                        name="price"
+                        min="0"
+                        step="0.01"
+                        required>
+              </label>
+
+              <label class="field">
+                  <input type="checkbox" name="active" checked>
+                  เปิดใช้บริการ
+              </label>
+
+              <p id="extra-service-message"
+                role="status"
+                aria-live="polite"></p>
+
+              <button class="btn btn-primary" type="submit" disabled>
+                  บันทึกบริการ
+              </button>
+          </form>
     </main>
   </div>
+
+  <script th:src="@{/js/admin-extra-services.js}" defer></script>
+
 </body>
 </html>

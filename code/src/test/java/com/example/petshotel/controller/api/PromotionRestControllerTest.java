@@ -259,5 +259,54 @@ class PromotionRestControllerTest {
                         "Percentage discount must not exceed 100"));
 
         verify(promotionService).createPromotion(invalidRequest);
-    }
+}
+        @Test
+        void createPromotionWithTooManyDecimalPlacesShouldReturnBadRequest()
+                throws Exception {
+
+        String invalidJson = """
+                {
+                        "name": "Invalid fixed discount",
+                        "type": "FIXED_AMOUNT",
+                        "discountValue": 10.123,
+                        "startDate": "2026-10-01",
+                        "endDate": "2026-10-31",
+                        "active": true
+                }
+                """;
+
+        mockMvc.perform(post("/api/promotions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.discountValue").exists());
+
+        verifyNoInteractions(promotionService);
+        }
+
+        @Test
+        void updatePromotionWithTooManyIntegerDigitsShouldReturnBadRequest()
+                throws Exception {
+
+        String invalidJson = """
+                {
+                        "name": "Invalid fixed discount",
+                        "type": "FIXED_AMOUNT",
+                        "discountValue": 999999999,
+                        "startDate": "2026-10-01",
+                        "endDate": "2026-10-31",
+                        "active": true
+                }
+                """;
+
+        mockMvc.perform(put("/api/promotions/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.discountValue").exists());
+
+        verifyNoInteractions(promotionService);
+        }
 }
