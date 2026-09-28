@@ -399,7 +399,7 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        if (request.getPetIds().contains(null)) {
+        if (request.getPetIds().stream().anyMatch(Objects::isNull)) {
                 throw new IllegalArgumentException(
                         "Pet ID must not be null"
                 );
