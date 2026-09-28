@@ -43,6 +43,8 @@ class PetServiceTest {
     void createPetShouldSavePetWithCorrectOwner() {
         User owner = new User();
         owner.setId(1L);
+        owner.setFirstName("กานต์");
+        owner.setLastName("ใจดี");
 
         CreatePetRequest request = new CreatePetRequest(
             "โมจิ",
@@ -81,6 +83,7 @@ class PetServiceTest {
 
         assertEquals(Long.valueOf(10L), response.id());
         assertEquals(Long.valueOf(1L), response.ownerId());
+        assertEquals("กานต์ ใจดี", response.ownerName());
         assertEquals("โมจิ", response.name());
         assertEquals(request.breed(), response.breed());
         assertEquals(request.age(), response.age());
@@ -209,7 +212,7 @@ class PetServiceTest {
     void getPetsByOwnerShouldReturnEmptyListWhenOwnerHasNoPets() {
     when(userRepository.existsById(1L)).thenReturn(true);
 
-    when(petRepository.findByOwner_Id(1L))
+    when(petRepository.findByOwner_IdAndActiveTrue(1L))
         .thenReturn(List.of());
 
     List<PetResponse> responses = petService.getPetsByOwner(1L);
@@ -227,6 +230,44 @@ class PetServiceTest {
 
     verify(petRepository, never()).findByOwner_IdAndActiveTrue(any());
     }
+
+    @Test
+    void getActivePetsForAdminShouldReturnPetsFromDifferentOwners() {
+    User firstOwner = new User();
+    firstOwner.setId(1L);
+    firstOwner.setFirstName("กานต์");
+    firstOwner.setLastName("ใจดี");
+
+    Pet firstPet = new Pet();
+    firstPet.setId(10L);
+    firstPet.setName("โมจิ");
+    firstPet.setOwner(firstOwner);
+    firstPet.setActive(true);
+
+    User secondOwner = new User();
+    secondOwner.setId(2L);
+    secondOwner.setFirstName("เมย์");
+    secondOwner.setLastName("รักสัตว์");
+
+    Pet secondPet = new Pet();
+    secondPet.setId(11L);
+    secondPet.setName("ลิลลี่");
+    secondPet.setOwner(secondOwner);
+    secondPet.setActive(true);
+
+    when(petRepository.findByActiveTrue())
+        .thenReturn(List.of(firstPet, secondPet));
+
+    List<PetResponse> responses = petService.getActivePetsForAdmin();
+
+    assertEquals(2, responses.size());
+    assertEquals("โมจิ", responses.get(0).name());
+    assertEquals("กานต์ ใจดี", responses.get(0).ownerName());
+    assertEquals("ลิลลี่", responses.get(1).name());
+    assertEquals("เมย์ รักสัตว์", responses.get(1).ownerName());
+    verify(petRepository).findByActiveTrue();
+    }
+
     @Test
     void updatePetShouldUpdatePetForItsOwner() {
     User owner = new User();

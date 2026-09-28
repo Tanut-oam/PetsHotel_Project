@@ -177,6 +177,7 @@ class PetRestControllerTest {
                 "Morning and evening",
                 "Afraid of loud noises",
                 1L,
+                "Karn Jaidee",
                 true
         );
     }
