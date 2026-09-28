@@ -3,6 +3,8 @@ package com.example.petshotel.exception;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,6 +20,8 @@ import jakarta.servlet.http.HttpServletRequest;
 // ใช้เฉพาะ REST API ไม่ยุ่งกับหน้า Thymeleaf ใน controller/web
 @RestControllerAdvice(basePackages = "com.example.petshotel.controller.api")
 public class GlobalExceptionHandler {
+
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
@@ -56,6 +60,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
+        logger.error("Unexpected error on {} {}", request.getMethod(), request.getRequestURI(), ex);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", request);
     }
 

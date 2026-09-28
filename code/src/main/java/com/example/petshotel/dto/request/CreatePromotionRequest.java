@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import com.example.petshotel.domain.enums.PromotionType;
 
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -17,6 +18,10 @@ public record CreatePromotionRequest(
 
     @NotNull(message = "Discount value is required")
     @Positive(message = "Discount value must be greater than zero")
+    @Digits(
+    integer = 8,
+    fraction = 2,
+    message = "Discount value must have at most 8 digits and 2 decimal places")
     BigDecimal discountValue,
 
     @NotNull(message = "Start date is required")
