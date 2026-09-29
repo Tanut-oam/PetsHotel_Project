@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สมัครสมาชิก | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <main class="content">
+    <section class="panel" style="max-width: 480px; margin: 40px auto;">
+      <h1>🐾 สมัครสมาชิก</h1>
+
+      <form th:action="@{/register}" th:object="${registerRequest}" method="post">
+        <label class="field">
+          ชื่อ
+          <input type="text" th:field="*{firstName}" required>
+          <small style="color: var(--red);" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></small>
+        </label>
+        <label class="field">
+          นามสกุล
+          <input type="text" th:field="*{lastName}" required>
+          <small style="color: var(--red);" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></small>
+        </label>
+        <label class="field">
+          อีเมล
+          <input type="email" th:field="*{email}" required>
+          <small style="color: var(--red);" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+        </label>
+        <label class="field">
+          เบอร์โทร
+          <input type="tel" th:field="*{phoneNumber}" required>
+          <small style="color: var(--red);" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></small>
+        </label>
+        <label class="field">
+          รหัสผ่าน
+          <input type="password" th:field="*{password}" required minlength="8">
+          <small style="color: var(--red);" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+        </label>
+        <label class="field">
+          ยืนยันรหัสผ่าน
+          <input type="password" th:field="*{confirmPassword}" required>
+          <small style="color: var(--red);" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+        </label>
+        <button class="btn btn-primary" type="submit">สมัครสมาชิก</button>
+      </form>
+
+      <p>มีบัญชีแล้ว? <a th:href="@{/login}">เข้าสู่ระบบ</a></p>
+    </section>
+  </main>
+</body>
+</html>
