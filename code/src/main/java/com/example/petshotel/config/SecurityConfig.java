@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -28,16 +27,16 @@ public class SecurityConfig {
                 // เปิดสาธารณะ
                 .requestMatchers("/", "/login", "/register",
                         "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
-                .requestMatchers("/api/availability/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/room/**").permitAll()
+                .requestMatchers("/rooms/available").permitAll()
 
-                // ADMIN เท่านั้น
+                // ADMIN เท่านั้น (ห้อง / โปรโมชั่น / บริการเสริม)
                 .requestMatchers("/admin/**", "/dashboard/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/rooms/**",
+                .requestMatchers(HttpMethod.POST, "/api/room/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/rooms/**",
+                .requestMatchers(HttpMethod.PUT, "/api/room/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/rooms/**",
+                .requestMatchers(HttpMethod.DELETE, "/api/room/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
 
                 // STAFF และ ADMIN
@@ -47,8 +46,12 @@ public class SecurityConfig {
                 // ที่เหลือต้องล็อกอิน (ตรวจความเป็นเจ้าของใน Service ภายหลัง)
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults())   // หน้า login สำเร็จรูป ใช้ทดสอบก่อน
-            .logout(Customizer.withDefaults())
+            .formLogin(form -> form
+                .loginPage("/login")
+                .defaultSuccessUrl("/", false)
+                .permitAll()
+            )
+            .logout(logout -> logout.permitAll())
             .exceptionHandling(ex -> ex
                 // /api/** ตอบ 401 แทนการ redirect ไปหน้า login
                 .defaultAuthenticationEntryPointFor(
