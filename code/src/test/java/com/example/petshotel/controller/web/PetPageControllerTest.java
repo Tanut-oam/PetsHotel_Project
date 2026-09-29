@@ -23,6 +23,15 @@ import com.example.petshotel.dto.response.PetResponse;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.PetService;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+
+import org.mockito.ArgumentCaptor;
+
+import com.example.petshotel.dto.request.CreatePetRequest;
+
 class PetPageControllerTest {
 
     private final PetService petService = mock(PetService.class);
@@ -81,5 +90,66 @@ class PetPageControllerTest {
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(petService);
+    }
+
+        @Test
+    void createPetShouldUseLoggedInOwner() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+
+        mockMvc.perform(post("/pets")
+                .principal(() -> "owner@example.com")
+                .param("name", "Mochi")
+                .param("type", "DOG")
+                .param("age", "2")
+                .param("weight", "12.5")
+                .param("breed", "Shiba"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/pets"))
+                .andExpect(flash().attribute(
+                        "message", "เพิ่มสัตว์เลี้ยงสำเร็จ"));
+
+        ArgumentCaptor<CreatePetRequest> requestCaptor =
+                ArgumentCaptor.forClass(CreatePetRequest.class);
+
+        verify(petService).createPet(eq(7L), requestCaptor.capture());
+        assertEquals("Mochi", requestCaptor.getValue().name());
+        assertEquals(PetType.DOG, requestCaptor.getValue().type());
+        assertEquals(Integer.valueOf(2), requestCaptor.getValue().age());
+    }
+
+    @Test
+    void createPetShouldRejectInvalidName() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+
+        mockMvc.perform(post("/pets")
+                .principal(() -> "owner@example.com")
+                .param("name", "")
+                .param("type", "DOG"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/pets"))
+                .andExpect(flash().attribute(
+                        "error", "กรุณาตรวจสอบข้อมูลสัตว์เลี้ยง"));
+
+        verifyNoInteractions(petService);
+    }
+
+    @Test
+    void createPetShouldRejectMissingLogin() throws Exception {
+        mockMvc.perform(post("/pets")
+                .param("name", "Mochi")
+                .param("type", "DOG"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(userRepository, petService);
     }
 }

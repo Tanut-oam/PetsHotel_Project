@@ -11,7 +11,14 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.PetService;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.example.petshotel.dto.request.CreatePetRequest;
+
+import jakarta.validation.Valid;
 @Controller
 public class PetPageController {
 
@@ -39,5 +46,30 @@ public class PetPageController {
 
         model.addAttribute("pets", petService.getPetsByOwner(owner.getId()));
         return "pets";
+    }
+
+    @PostMapping("/pets")
+    public  String createPet(Principal principal,@Valid  @ModelAttribute CreatePetRequest request,
+            BindingResult bindingResult,RedirectAttributes redirectAttributes){
+
+                if(principal == null){
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+                }
+
+                User owner = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+                if (!Boolean.TRUE.equals(owner.getActive())) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+                 }
+
+                if (bindingResult.hasErrors()) {
+                redirectAttributes.addFlashAttribute(
+                        "error", "กรุณาตรวจสอบข้อมูลสัตว์เลี้ยง");
+                return "redirect:/pets";
+                }
+
+                petService.createPet(owner.getId(), request);
+                redirectAttributes.addFlashAttribute(
+                        "message", "เพิ่มสัตว์เลี้ยงสำเร็จ");
+                return "redirect:/pets";
     }
 }
