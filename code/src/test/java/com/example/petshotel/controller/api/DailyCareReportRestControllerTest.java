@@ -8,7 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -17,6 +20,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.service.DailyCareReportService;
 
 import java.util.List;
@@ -29,18 +33,29 @@ import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 class DailyCareReportRestControllerTest {
 
     private DailyCareReportService reportService;
+    private UserRepository userRepository;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        reportService = mock(DailyCareReportService.class);
+    reportService = mock(DailyCareReportService.class);
+    userRepository = mock(UserRepository.class);
 
-        DailyCareReportRestController controller =
-                new DailyCareReportRestController(reportService);
+    User staff = new User();
+    staff.setId(5L);
+    staff.setEmail("staff@example.com");
+    staff.setActive(true);
 
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(controller)
-                .build();
+    when(userRepository.findByEmail("staff@example.com"))
+            .thenReturn(Optional.of(staff));
+
+    DailyCareReportRestController controller =
+            new DailyCareReportRestController(reportService, userRepository);
+
+    mockMvc = MockMvcBuilders
+            .standaloneSetup(controller)
+            .setControllerAdvice(new GlobalExceptionHandler())
+            .build();
     }
 
     @Test
@@ -52,7 +67,7 @@ class DailyCareReportRestControllerTest {
         )).thenReturn(createReportResponse());
 
         mockMvc.perform(post("/api/care-reports/booking-pets/21")
-                .requestAttr("currentUserId", 5L)
+                .principal(() -> "staff@example.com")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -82,7 +97,7 @@ class DailyCareReportRestControllerTest {
     @Test
     void createReportShouldRejectMissingReportDate() throws Exception {
         mockMvc.perform(post("/api/care-reports/booking-pets/21")
-                .requestAttr("currentUserId", 5L)
+                .principal(() -> "staff@example.com")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -120,7 +135,7 @@ class DailyCareReportRestControllerTest {
             .thenReturn(createReportResponse());
 
     mockMvc.perform(get("/api/care-reports/100")
-            .requestAttr("currentUserId", 5L))
+            .principal(() -> "staff@example.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(100))
             .andExpect(jsonPath("$.petName").value("Mochi"));
@@ -134,7 +149,7 @@ class DailyCareReportRestControllerTest {
             .thenReturn(List.of(createReportResponse()));
 
     mockMvc.perform(get("/api/care-reports/booking-pets/21")
-            .requestAttr("currentUserId", 5L))
+            .principal(() -> "staff@example.com"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].id").value(100))
@@ -163,7 +178,7 @@ class DailyCareReportRestControllerTest {
             .thenReturn(createReportResponse());
 
     mockMvc.perform(put("/api/care-reports/100")
-            .requestAttr("currentUserId", 5L)
+            .principal(() -> "staff@example.com")
             .contentType(MediaType.APPLICATION_JSON)
             .content("""
                 {
@@ -187,9 +202,9 @@ class DailyCareReportRestControllerTest {
     }
 
     @Test
-    void getReportByIdShouldRejectMissingCurrentUserId() throws Exception {
+    void getReportByIdShouldRejectMissingPrincipal() throws Exception {
     mockMvc.perform(get("/api/care-reports/100"))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isUnauthorized());
 
     verifyNoInteractions(reportService);
     }
@@ -197,7 +212,7 @@ class DailyCareReportRestControllerTest {
     @Test
     void updateReportShouldRejectNegativeWalkingMinutes() throws Exception {
     mockMvc.perform(put("/api/care-reports/100")
-            .requestAttr("currentUserId", 5L)
+            .principal(() -> "staff@example.com")
             .contentType(MediaType.APPLICATION_JSON)
             .content("""
                 {
