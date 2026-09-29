@@ -10,6 +10,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.security.access.AccessDeniedException;
 
 class GlobalExceptionHandlerTest {
 
@@ -78,5 +79,21 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(500, response.getStatusCode().value());
         assertEquals("Unexpected server error", response.getBody().message());
+    }
+
+    @Test
+    void duplicateResourceShouldReturn409() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleConflict(new DuplicateResourceException("อีเมลนี้ถูกใช้สมัครแล้ว"), request);
+
+        assertEquals(409, response.getStatusCode().value());
+    }
+
+    @Test
+    void accessDeniedShouldReturn403() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleForbidden(new AccessDeniedException("not owner"), request);
+
+        assertEquals(403, response.getStatusCode().value());
     }
 }
