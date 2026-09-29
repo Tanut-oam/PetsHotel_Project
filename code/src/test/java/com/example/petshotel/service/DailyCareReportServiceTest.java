@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.Optional;
-
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -293,6 +293,21 @@ public class DailyCareReportServiceTest {
     assertEquals("โมจิ", response.petName());
     }
 
+    @Test
+    void getAllReportsForStaffAndAdminShouldRejectCustomer() {
+    staff.setRole(UserRole.CUSTOMER);
+    when(userRepository.findById(5L))
+        .thenReturn(Optional.of(staff));
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> reportService.getAllReportsForStaffAndAdmin(5L)
+    );
+
+    verify(reportRepository, never())
+        .findAllByOrderByReportDateDescIdDesc();
+    }
+
     private UpdateDailyCareReportRequest createUpdateRequest(Long bookingPetId, LocalDate reportDate) {
 
     return new UpdateDailyCareReportRequest(
@@ -306,6 +321,26 @@ public class DailyCareReportServiceTest {
             "ปกติ",
             "แก้ไขรายละเอียดการดูแล"
     );
+    }
+
+    @Test
+    void getAllReportsForStaffAndAdminShouldAllowStaff() {
+    User owner = new User();
+    owner.setId(8L);
+    DailyCareReport report = createExistingReport(owner);
+
+    when(userRepository.findById(5L))
+        .thenReturn(Optional.of(staff));
+    when(reportRepository.findAllByOrderByReportDateDescIdDesc())
+        .thenReturn(List.of(report));
+
+    List<DailyCareReportResponse> responses =
+        reportService.getAllReportsForStaffAndAdmin(5L);
+
+    assertEquals(1, responses.size());
+    assertEquals(Long.valueOf(100L), responses.get(0).id());
+    assertEquals("โมจิ", responses.get(0).petName());
+    verify(reportRepository).findAllByOrderByReportDateDescIdDesc();
     }
 
     @Test
