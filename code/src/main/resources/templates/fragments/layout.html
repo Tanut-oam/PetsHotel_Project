@@ -13,7 +13,6 @@
     <a sec:authorize="isAuthenticated()" th:href="@{/bookings}">การจอง</a>
   </nav>
   <div class="top-actions">
-    <a sec:authorize="hasRole('ADMIN')" class="btn btn-small" th:href="@{/admin}">ฝั่งแอดมิน</a>
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/login}">เข้าสู่ระบบ</a>
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/register}">สมัครสมาชิก</a>
     <span sec:authorize="isAuthenticated()" sec:authentication="name"></span>
@@ -28,6 +27,7 @@
   <a th:href="@{/rooms/available}">▣ ห้องพัก</a>
   <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
   <a th:href="@{/bookings}">▤ การจองของฉัน</a>
+  <a sec:authorize="hasAnyRole('STAFF', 'ADMIN')" th:href="@{/admin/bookings}">▤ จัดการการจอง</a>
   <a th:href="@{/reports}">♡ รายงานการดูแล</a>
   <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
 </aside>
@@ -36,7 +36,6 @@
 <header class="topbar" th:fragment="admin-topbar">
   <a class="brand" th:href="@{/admin}">🐾 PetsHotel Admin</a>
   <div class="top-actions">
-    <a class="btn btn-small" th:href="@{/}">ดูหน้าลูกค้า</a>
     <form th:action="@{/logout}" method="post" style="display:inline">
       <button class="btn btn-small" type="submit">ออกจากระบบ</button>
     </form>
