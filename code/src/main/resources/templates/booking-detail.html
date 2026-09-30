@@ -1,77 +1,45 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>รายละเอียดการจอง · PetsHotel</title>
+  <link rel="stylesheet"
+        href="../static/css/styles.css"
+        th:href="@{/css/styles.css}">
+  <script defer
+          src="../static/js/booking-ui.js"
+          th:src="@{/js/booking-ui.js}"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
-    </nav>
-
-    <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
-
+  <header th:replace="~{fragments/layout :: topbar}"></header>
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="content" data-booking-page="detail">
 
-    <main class="content">
-        <a href="my-bookings.html">← กลับไปหน้าการจอง</a>
+      <h1>รายละเอียดการจองตัวอย่าง</h1>
+      <p class="muted">หน้านี้ไม่อ่านหรือแก้ไขรายการจองจริง</p>
 
-            <div class="section-title">
-            <h1>รายละเอียดการจอง #1025</h1>
-            <span class="badge">ยืนยันแล้ว</span>
-            </div>
+      <label class="field">
+        เลือกรายการตัวอย่างเพื่อทดลอง
+        <select id="demo-booking-select"></select>
+      </label>
 
-            <div class="detail-layout">
-            <section class="panel">
-                <h2>ข้อมูลการจอง</h2>
+      <p id="booking-message" role="status" hidden></p>
+      <section id="booking-detail" class="panel"></section>
 
-                <p><strong>ห้อง:</strong> Deluxe Room (101)</p>
-                <p><strong>สัตว์เลี้ยง:</strong> Mochi</p>
-                <p><strong>เช็กอิน:</strong> 10 ต.ค. 2026</p>
-                <p><strong>เช็กเอาต์:</strong> 15 ต.ค. 2026</p>
-                <p><strong>บริการเสริม:</strong> อาหารเสริม, พาเดินเล่น</p>
-                <p><strong>ผู้ติดต่อ:</strong> ตัวอย่างผู้ใช้ · 081-234-5678</p>
-                <p><strong>การชำระเงิน:</strong> ชำระ ณ ที่พัก</p>
+      <dialog id="booking-dialog" aria-labelledby="dialog-title">
+        <h2 id="dialog-title"></h2>
+        <p id="dialog-text" style="white-space: pre-line"></p>
+        <div class="row">
+          <button id="dialog-close" class="btn" type="button">ปิด</button>
+          <button id="dialog-confirm" class="btn btn-primary" type="button" hidden>
+            ยืนยันตัวอย่าง
+          </button>
+        </div>
+      </dialog>
 
-                <hr class="divider">
-
-                <div class="row">
-                <a class="btn" href="reports.html">ดูรายงานการดูแล</a>
-                <button class="btn btn-danger" type="button">ยกเลิกการจอง</button>
-                </div>
-            </section>
-
-            <aside class="panel">
-                <h2>สรุปราคา</h2>
-                <div class="summary-line"><span>ค่าห้อง 5 คืน</span><span>฿2,500</span></div>
-                <div class="summary-line"><span>บริการเสริม</span><span>฿750</span></div>
-                <div class="summary-line"><span>ส่วนลด</span><span>−฿250</span></div>
-                <div class="summary-line total"><span>ยอดรวม</span><span>฿3,000</span></div>
-            </aside>
-            </div>
     </main>
   </div>
-
-  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
 </body>
 </html>
