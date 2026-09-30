@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ใบเสร็จ · PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="content">
+      <h1>ใบเสร็จรับเงิน</h1>
+
+      <section class="panel">
+        <dl>
+          <dt>เลขที่ใบเสร็จ</dt>
+          <dd th:text="${receipt.receiptNumber}"></dd>
+
+          <dt>วันที่ออก</dt>
+          <dd th:text="${#temporals.format(receipt.issuedAt, 'dd/MM/yyyy HH:mm')}"></dd>
+
+          <dt>เลขที่การจอง</dt>
+          <dd th:text="${booking.id}"></dd>
+
+          <dt>รหัสผู้จอง</dt>
+          <dd th:text="${booking.userId}"></dd>
+
+          <dt>วันเข้าพัก–วันออก</dt>
+          <dd th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></dd>
+
+          <dt>โปรโมชันตอนจอง</dt>
+          <dd th:text="${booking.promotionName != null
+            ? booking.promotionName : 'ไม่ใช้โปรโมชัน'}"></dd>
+        </dl>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>รายการ</th>
+              <th>จำนวนเงิน (บาท)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ค่าห้องพัก</td>
+              <td th:text="${receipt.roomAmount}"></td>
+            </tr>
+            <tr>
+              <td>ค่าบริการเสริม</td>
+              <td th:text="${receipt.serviceAmount}"></td>
+            </tr>
+            <tr>
+              <td>ค่าธรรมเนียมเพิ่มเติม</td>
+              <td th:text="${receipt.surchargeAmount}"></td>
+            </tr>
+            <tr>
+              <td>ส่วนลด</td>
+              <td th:text="${receipt.discountAmount}"></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>รับชำระแล้ว</th>
+              <th th:text="${receipt.totalAmount}"></th>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+
+      <a class="btn" th:href="@{${backUrl}}">กลับ</a>
+    </main>
+  </div>
+</body>
+</html>
