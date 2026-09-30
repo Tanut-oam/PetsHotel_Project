@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>จัดการห้องพัก | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <main class="content">
+    <h1>จัดการห้องพัก</h1>
+
+    <p th:if="${message}" th:text="${message}" style="color: var(--green);"></p>
+    <p th:if="${error}" th:text="${error}" style="color: var(--red);"></p>
+
+    <p><a class="btn btn-primary" th:href="@{/rooms/new}">+ เพิ่มห้อง</a></p>
+
+    <section class="panel">
+      <p th:if="${#lists.isEmpty(rooms)}">ยังไม่มีห้องพัก</p>
+      <div class="table-scroll" th:unless="${#lists.isEmpty(rooms)}">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>เลขห้อง</th><th>ชื่อ</th><th>รับได้ (ตัว)</th><th>ราคา/ตัว/คืน</th><th>สถานะ</th><th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="room : ${rooms}">
+              <td th:text="${room.roomNumber}">A101</td>
+              <td th:text="${room.name}">Deluxe</td>
+              <td th:text="${room.capacity}">3</td>
+              <td th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500.00</td>
+              <td>
+                <span class="badge" th:if="${room.status.name() == 'ACTIVE'}">เปิดให้จอง</span>
+                <span class="badge badge-warning" th:if="${room.status.name() == 'MAINTENANCE'}">ปิดซ่อม</span>
+                <span class="badge badge-danger" th:if="${room.status.name() == 'INACTIVE'}">ปิดใช้งาน</span>
+              </td>
+              <td>
+                <a class="btn btn-small" th:href="@{/rooms/{id}/edit(id=${room.id})}">แก้ไข</a>
+                <form th:action="@{/rooms/{id}/status(id=${room.id})}" method="post" style="display: inline;">
+                  <select name="status">
+                    <option value="ACTIVE" th:selected="${room.status.name() == 'ACTIVE'}">เปิดให้จอง</option>
+                    <option value="MAINTENANCE" th:selected="${room.status.name() == 'MAINTENANCE'}">ปิดซ่อม</option>
+                    <option value="INACTIVE" th:selected="${room.status.name() == 'INACTIVE'}">ปิดใช้งาน</option>
+                  </select>
+                  <button class="btn btn-small" type="submit">เปลี่ยนสถานะ</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

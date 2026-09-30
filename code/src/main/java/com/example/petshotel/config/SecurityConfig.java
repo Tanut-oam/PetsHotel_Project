@@ -38,6 +38,7 @@ public class SecurityConfig {
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/room/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
+                .requestMatchers("/rooms/**").hasRole("ADMIN")
 
                 // STAFF และ ADMIN
                 .requestMatchers("/api/bookings/*/payment/confirm").hasAnyRole("STAFF", "ADMIN")
