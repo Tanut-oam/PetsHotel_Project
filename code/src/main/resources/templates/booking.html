@@ -4,11 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>สร้างการจอง · PetsHotel</title>
-  <link rel="stylesheet"
-        href="/css/styles.css"
-        th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script defer th:src="@{/js/booking-form.js}"></script>
 </head>
-
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
 
@@ -17,240 +15,106 @@
 
     <main class="content">
       <h1>สร้างการจอง</h1>
-      <p class="muted">
-        ตัวอย่างหน้าจอง ข้อมูลห้องและสัตว์เลี้ยงใช้เพื่อทดลองเท่านั้น
-        ยังไม่มีการบันทึกหรือชำระเงิน
-      </p>
 
-      <div class="steps" aria-label="ขั้นตอนการจอง">
-        <div class="step active"
-             data-step-indicator="0"
-             aria-current="step">
-          1. ห้องและวันที่
-        </div>
-        <div class="step" data-step-indicator="1">
-          2. สัตว์เลี้ยง
-        </div>
-        <div class="step" data-step-indicator="2">
-          3. บริการเสริม
-        </div>
-        <div class="step" data-step-indicator="3">
-          4. ตรวจสอบข้อมูล
-        </div>
-      </div>
+      <form id="booking-form"
+            class="panel"
+            method="post"
+            th:action="@{/bookings}"
+            th:object="${bookingForm}">
 
-      <p id="booking-error" role="alert" hidden></p>
-      <p id="booking-result" role="status" hidden></p>
-
-      <div class="detail-layout">
-
-        <!-- ใช้พื้นที่รับข้อมูลโดยไม่มีการ submit ไป backend -->
-        <div class="panel"
-             id="booking-form"
-             role="form"
-             aria-label="แบบฟอร์มตัวอย่างการจอง">
-
-          <section data-booking-step="0"
-                   aria-labelledby="heading-dates">
-            <h2 id="heading-dates" tabindex="-1">ห้องพักและวันที่</h2>
-
-            <label class="field">
-              ห้องพักตัวอย่าง
-              <select id="room-id" name="roomId" required>
-                <option value="">เลือกห้องพัก</option>
-                <option value="101"
-                        data-name="Deluxe Room 101"
-                        data-capacity="2">
-                  Deluxe Room 101 · รับได้ 2 ตัว
-                </option>
-                <option value="201"
-                        data-name="Family Room 201"
-                        data-capacity="3">
-                  Family Room 201 · รับได้ 3 ตัว
-                </option>
-              </select>
-            </label>
-
-            <div class="grid cols-2">
-              <label class="field">
-                วันเช็กอิน
-                <input id="check-in"
-                       type="date"
-                       name="checkInDate"
-                       required>
-              </label>
-
-              <label class="field">
-                วันเช็กเอาต์
-                <input id="check-out"
-                       type="date"
-                       name="checkOutDate"
-                       required>
-              </label>
-            </div>
-
-            <p class="muted">
-              หน้านี้ยังไม่ตรวจห้องว่างจริง
-              วันเช็กเอาต์ต้องอยู่หลังวันเช็กอิน
-            </p>
-          </section>
-
-          <section data-booking-step="1"
-                   aria-labelledby="heading-pets">
-            <h2 id="heading-pets" tabindex="-1">เลือกสัตว์เลี้ยง</h2>
-
-            <p class="muted">
-              เลือกอย่างน้อย 1 ตัว และไม่เกินความจุห้องที่เลือก
-            </p>
-
-            <label class="choice">
-              <input type="checkbox"
-                     name="petIds"
-                     value="1"
-                     data-name="Mochi">
-              <span class="choice-text">
-                <strong>Mochi</strong><br>
-                <small>สุนัข · ข้อมูลตัวอย่าง</small>
-              </span>
-            </label>
-
-            <label class="choice">
-              <input type="checkbox"
-                     name="petIds"
-                     value="2"
-                     data-name="Lily">
-              <span class="choice-text">
-                <strong>Lily</strong><br>
-                <small>แมว · ข้อมูลตัวอย่าง</small>
-              </span>
-            </label>
-
-            <label class="choice">
-              <input type="checkbox"
-                     name="petIds"
-                     value="3"
-                     data-name="Coco">
-              <span class="choice-text">
-                <strong>Coco</strong><br>
-                <small>สุนัข · ข้อมูลตัวอย่าง</small>
-              </span>
-            </label>
-
-            <p id="pet-selection-count" aria-live="polite">
-              ยังไม่ได้เลือกสัตว์เลี้ยง
-            </p>
-          </section>
-
-          <section data-booking-step="2"
-                   aria-labelledby="heading-services">
-            <h2 id="heading-services" tabindex="-1">บริการเสริม</h2>
-            <p class="muted">
-              ใส่จำนวนครั้งที่ต้องการ หรือ 0 หากไม่เลือก
-              รายการเหล่านี้เป็นข้อมูลตัวอย่าง
-            </p>
-
-            <label class="field">
-              อาบน้ำ — จำนวนครั้ง
-              <input type="number"
-                     name="bathQuantity"
-                     data-service-id="1"
-                     data-name="อาบน้ำ"
-                     value="0"
-                     min="0"
-                     step="1"
-                     required>
-            </label>
-
-            <label class="field">
-              พาเดินเล่น — จำนวนครั้ง
-              <input type="number"
-                     name="walkQuantity"
-                     data-service-id="2"
-                     data-name="พาเดินเล่น"
-                     value="0"
-                     min="0"
-                     step="1"
-                     required>
-            </label>
-          </section>
-
-          <section data-booking-step="3"
-                   aria-labelledby="heading-review">
-            <h2 id="heading-review" tabindex="-1">ตรวจสอบข้อมูล</h2>
-
-            <dl>
-              <dt>ห้องพัก</dt>
-              <dd id="review-room">—</dd>
-
-              <dt>วันเข้าพัก</dt>
-              <dd id="review-dates">—</dd>
-
-              <dt>จำนวนคืน</dt>
-              <dd id="review-nights">—</dd>
-
-              <dt>สัตว์เลี้ยง</dt>
-              <dd id="review-pets">—</dd>
-
-              <dt>บริการเสริม</dt>
-              <dd id="review-services">—</dd>
-            </dl>
-
-            <p class="muted">
-              การยืนยันในหน้านี้เป็นเพียงการทดลอง
-              ไม่ได้สร้างการจองจริง
-            </p>
-          </section>
-
-          <div class="row">
-            <button id="booking-prev"
-                    class="btn"
-                    type="button"
-                    disabled>
-              ย้อนกลับ
-            </button>
-
-            <button id="booking-next"
-                    class="btn btn-primary"
-                    type="button"
-                    disabled>
-              ถัดไป
-            </button>
-
-            <button id="booking-confirm"
-                    class="btn btn-primary"
-                    type="button"
-                    hidden
-                    disabled>
-              ยืนยันตัวอย่าง
-            </button>
-          </div>
+        <div th:if="${#fields.hasAnyErrors()}" role="alert">
+          <p>ยังสร้างการจองไม่ได้ กรุณาตรวจสอบข้อมูล</p>
+          <ul>
+            <li th:each="error : ${#fields.allErrors()}"
+                th:text="${error}"></li>
+          </ul>
         </div>
 
-        <aside class="panel" aria-label="สรุปการเลือก">
-          <h2>สรุปการเลือก</h2>
+        <p id="booking-error" role="alert" hidden></p>
 
-          <div class="summary-line">
-            <span>ห้องพัก</span>
-            <span id="summary-room">ยังไม่ได้เลือก</span>
-          </div>
+        <label class="field">
+          ห้องพัก
+          <select id="room-id" th:field="*{roomId}" required>
+            <option value="">เลือกห้องพัก</option>
 
-          <div class="summary-line">
-            <span>จำนวนคืน</span>
-            <span id="summary-nights">—</span>
-          </div>
+            <option th:each="room : ${rooms}"
+                    th:value="${room.id}"
+                    th:text="${room.name + ' · สูงสุด ' + room.capacity + ' ตัว'}"
+                    th:attr="data-capacity=${room.capacity}">
+            </option>
+          </select>
+        </label>
 
-          <div class="summary-line">
-            <span>จำนวนสัตว์</span>
-            <span id="summary-pets">0 ตัว</span>
-          </div>
+        <label class="field">
+          วันเช็กอิน
+          <input id="check-in"
+                 type="date"
+                 th:field="*{checkInDate}"
+                 required>
+        </label>
 
-          <p class="muted">
-            ยังไม่แสดงราคาและส่วนลด
-            ยอดจริงต้องคำนวณจากระบบเมื่อเชื่อมต่อแล้ว
+        <label class="field">
+          วันเช็กเอาต์
+          <input id="check-out"
+                 type="date"
+                 th:field="*{checkOutDate}"
+                 required>
+        </label>
+
+        <fieldset>
+          <legend>สัตว์เลี้ยงของฉัน</legend>
+
+          <p th:if="${#lists.isEmpty(pets)}">
+            ยังไม่มีสัตว์เลี้ยงที่เลือกได้
+            <a th:href="@{/pets}">ไปเพิ่มสัตว์เลี้ยง</a>
           </p>
-        </aside>
 
-      </div>
+          <label th:each="pet : ${pets}" class="field">
+            <input type="checkbox"
+                   th:field="*{petIds}"
+                   th:value="${pet.id}">
+            <span th:text="${pet.name}"></span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>บริการเสริม</legend>
+          <p>ใส่ 0 หากไม่ต้องการบริการนั้น</p>
+
+          <label th:each="service : ${extraServices}" class="field">
+            <span th:text="${service.name}"></span>
+            <span th:text="${'ราคา ' + service.price + ' บาท/หน่วย'}"></span>
+
+            <input type="number"
+                   min="0"
+                   step="1"
+                   required
+                   data-service-quantity
+                   th:field="*{extraServiceQuantities[__${service.id}__]}">
+          </label>
+        </fieldset>
+
+        <label class="field">
+          โปรโมชั่น
+          <select th:field="*{promotionId}">
+            <option value="">ไม่ใช้โปรโมชั่น</option>
+            <option th:each="promotion : ${promotions}"
+                    th:value="${promotion.id}"
+                    th:text="${promotion.name}">
+            </option>
+          </select>
+        </label>
+
+        <p id="booking-summary" role="status"></p>
+
+        <p>
+          ระบบจะตรวจสอบห้องว่าง เงื่อนไขโปรโมชั่น
+          และคำนวณยอดเมื่อสร้างการจอง
+        </p>
+
+        <button type="submit" class="btn">สร้างการจอง</button>
+        <a class="btn" th:href="@{/bookings}">กลับรายการของฉัน</a>
+      </form>
     </main>
   </div>
 </body>
