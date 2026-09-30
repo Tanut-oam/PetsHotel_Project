@@ -1,98 +1,106 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title th:text="${room.name} + ' | PetsHotel'">ห้องพัก | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
+    <a class="brand" th:href="@{/}">🐾 PetsHotel</a>
 
     <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
+      <a th:href="@{/}">หน้าแรก</a>
+      <a th:href="@{/rooms}">ห้องพัก</a>
+      <a th:href="@{/pets}">สัตว์เลี้ยง</a>
+      <a th:href="@{/my-bookings}">การจอง</a>
     </nav>
 
     <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
+      <a class="btn btn-small" th:href="@{/admin/rooms}">ฝั่งแอดมิน</a>
+      <a class="btn btn-small" th:href="@{/profile}">👤 บัญชีของฉัน</a>
     </div>
   </header>
 
   <div class="layout">
     <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
+      <a th:href="@{/}">⌂ หน้าแรก</a>
+      <a th:href="@{/rooms}">▣ ห้องพัก</a>
+      <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
+      <a th:href="@{/my-bookings}">▤ การจองของฉัน</a>
+      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
+      <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
     </aside>
 
     <main class="content">
-    <a href="rooms.html">← กลับไปหน้าห้องพัก</a>
+      <a th:href="@{/rooms}">← กลับไปหน้าห้องพัก</a>
 
-        <div class="section-title">
-        <h1>Deluxe Room</h1>
-        <span class="badge">ว่าง</span>
-        </div>
+      <div class="section-title">
+        <h1 th:text="${room.name}">Deluxe Room</h1>
+        <span class="badge" th:if="${room.status.name() == 'ACTIVE'}">เปิดให้จอง</span>
+        <span class="badge badge-warning" th:if="${room.status.name() == 'MAINTENANCE'}">ปิดซ่อม</span>
+        <span class="badge badge-danger" th:if="${room.status.name() == 'INACTIVE'}">ปิดใช้งาน</span>
+      </div>
 
-        <p class="muted">ห้อง 101 · รองรับสัตว์เลี้ยงสูงสุด 3 ตัว</p>
+      <p class="muted">
+        ห้อง <span th:text="${room.roomNumber}">101</span> ·
+        รองรับสัตว์เลี้ยงสูงสุด <span th:text="${room.capacity}">3</span> ตัว
+      </p>
 
-        <div class="detail-layout">
+      <div class="detail-layout">
         <div>
-            <img
-            class="room-image large"
-            src="assets/room-deluxe.jpg"
-            alt="ภาพภายใน Deluxe Room"
-            >
-
-            <section class="panel" style="margin-top: 18px;">
+          <section class="panel">
             <h2>รายละเอียดห้อง</h2>
-            <p>
-                ห้องพักกว้างขวาง มีพื้นที่นอนและมุมพักผ่อนสำหรับสัตว์เลี้ยง
-                พร้อมของใช้จำเป็นระหว่างเข้าพัก
-            </p>
+            <p th:text="${room.description}">รายละเอียดห้อง</p>
 
             <div class="grid cols-2">
-                <p>🐾 รองรับสัตว์เลี้ยง 3 ตัว</p>
-                <p>❄ เครื่องปรับอากาศ</p>
-                <p>⌁ Wi-Fi</p>
-                <p>▣ พื้นที่พักผ่อน</p>
+              <p>🐾 รองรับสัตว์เลี้ยง <span th:text="${room.capacity}">3</span> ตัว</p>
             </div>
 
             <hr class="divider">
 
             <h3>เวลาเข้าพัก</h3>
             <p>เช็กอิน 14:00 น. · เช็กเอาต์ 12:00 น.</p>
-            </section>
+          </section>
         </div>
 
         <aside class="panel">
-            <h2>฿500 <small>/ คืน</small></h2>
+          <h2>
+            ฿<span th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 0, 'POINT')}">500</span>
+            <small>/ ตัว / คืน</small>
+          </h2>
+
+          <div th:if="${room.status.name() == 'ACTIVE'}">
             <p>เลือกวันที่เข้าพักเพื่อดูห้องว่างและยอดรวม</p>
 
-            <label class="field">
-            เช็กอิน
-            <input type="date" name="checkIn">
-            </label>
+            <!-- ส่งค่าไปหน้าจองของ Booking (กิตติญาดา) ผ่าน query string -->
+            <form th:action="@{/booking}" method="get">
+              <input type="hidden" name="roomId" th:value="${room.id}">
 
-            <br>
+              <label class="field">
+                เช็กอิน
+                <input type="date" name="checkIn" required>
+              </label>
 
-            <label class="field">
-            เช็กเอาต์
-            <input type="date" name="checkOut">
-            </label>
+              <br>
 
-            <hr class="divider">
+              <label class="field">
+                เช็กเอาต์
+                <input type="date" name="checkOut" required>
+              </label>
 
-            <a class="btn btn-primary" href="booking.html">จองห้องนี้</a>
+              <hr class="divider">
+
+              <button class="btn btn-primary" type="submit">จองห้องนี้</button>
+            </form>
+          </div>
+
+          <p th:unless="${room.status.name() == 'ACTIVE'}" class="muted">
+            ห้องนี้ไม่เปิดให้จองในขณะนี้
+          </p>
         </aside>
-        </div>
+      </div>
     </main>
   </div>
 
