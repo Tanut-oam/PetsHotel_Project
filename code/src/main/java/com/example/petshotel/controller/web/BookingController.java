@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -138,6 +139,52 @@ public class BookingController {
 
         model.addAttribute("booking", booking);
         return "booking-detail";
+    }
+
+    @GetMapping
+    public String showMyBookings(Principal principal, Model model) {
+        User user = currentUser(principal);
+
+        model.addAttribute(
+                "bookings",
+                bookingService.getBookingsByUserId(user.getId())
+        );
+
+        return "my-bookings";
+    }
+
+    @PostMapping("/{id}/cancel")
+    public String cancelBooking(
+            @PathVariable("id") Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        User user = currentUser(principal);
+        BookingResponse booking;
+
+        try {
+            booking = bookingService.getBookingById(id);
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        // หน้าลูกค้าให้จัดการเฉพาะการจองของบัญชีตัวเอง
+        if (!user.getId().equals(booking.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        try {
+            bookingService.cancelBooking(id);
+            redirectAttributes.addFlashAttribute(
+                    "message", "ยกเลิกการจองเรียบร้อยแล้ว"
+            );
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+
+        return "redirect:/bookings/" + id;
     }
 
     private User currentUser(Principal principal) {

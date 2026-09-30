@@ -4,26 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>การจองของฉัน · PetsHotel</title>
-  <link rel="stylesheet"
-        href="../static/css/styles.css"
-        th:href="@{/css/styles.css}">
-  <script defer
-          src="../static/js/booking-ui.js"
-          th:src="@{/js/booking-ui.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script defer th:src="@{/js/booking-ui.js}"></script>
+  <style>
+    [hidden] { display: none !important; }
+    dialog {
+      border: 0;
+      border-radius: 12px;
+      padding: 24px;
+      width: min(480px, 90vw);
+    }
+    dialog::backdrop { background: rgb(0 0 0 / 40%); }
+  </style>
 </head>
+
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
   <div class="layout">
     <aside th:replace="~{fragments/layout :: sidebar}"></aside>
-    <main class="content" data-booking-page="customer">
 
+    <main class="content" data-booking-page="customer">
       <h1>การจองของฉัน</h1>
-      <p class="muted">ข้อมูลตัวอย่างสำหรับทดลองหน้าเว็บ ไม่ใช่รายการจองจริง</p>
+
+      <a class="btn btn-primary" th:href="@{/bookings/new}">
+        สร้างการจอง
+      </a>
+
+      <p th:if="${message}" th:text="${message}" role="status"></p>
+      <p th:if="${error}" th:text="${error}" role="alert"></p>
 
       <div class="toolbar">
         <label class="field">
-          ค้นหาเลขที่ ห้อง หรือชื่อสัตว์
-          <input id="booking-search" type="search" placeholder="เช่น 1025 หรือ Mochi">
+          ค้นหาเลขที่ รหัสห้อง หรือรหัสสัตว์
+          <input id="booking-search" type="search" placeholder="พิมพ์คำค้นหา">
         </label>
 
         <label class="field">
@@ -39,38 +52,87 @@
         </label>
       </div>
 
-      <p id="booking-count" role="status"></p>
-      <p id="booking-message" role="status" hidden></p>
+      <p id="booking-count" role="status"
+         th:text="${'ทั้งหมด ' + #lists.size(bookings) + ' รายการ'}"></p>
 
       <div class="panel table-scroll">
         <table class="table">
           <thead>
             <tr>
               <th>เลขที่</th>
-              <th>สัตว์เลี้ยง</th>
-              <th>ห้องพัก</th>
+              <th>รหัสสัตว์เลี้ยง</th>
+              <th>รหัสห้อง</th>
               <th>วันเข้า–วันออก</th>
               <th>สถานะ</th>
+              <th>การชำระเงิน</th>
+              <th>ยอดรวม</th>
               <th>จัดการ</th>
             </tr>
           </thead>
-          <tbody id="booking-rows"></tbody>
+
+          <tbody id="booking-rows">
+            <tr th:each="booking : ${bookings}"
+                data-booking-row
+                th:attr="data-status=${booking.status.name()}">
+
+              <td data-detail-label="เลขที่" th:text="${booking.id}"></td>
+              <td data-detail-label="รหัสสัตว์" th:text="${booking.petIds}"></td>
+              <td data-detail-label="รหัสห้อง" th:text="${booking.roomId}"></td>
+              <td data-detail-label="วันเข้า–วันออก"
+                  th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></td>
+
+              <td data-detail-label="สถานะ">
+                <span data-status-label
+                      th:attr="data-status-label=${booking.status.name()}"
+                      th:text="${booking.status}"></span>
+              </td>
+
+              <td data-detail-label="การชำระเงิน">
+                <span data-payment-label
+                      th:attr="data-payment-label=${booking.paymentStatus}"
+                      th:text="${booking.paymentStatus}"></span>
+              </td>
+
+              <td data-detail-label="ยอดรวม"
+                  th:text="${booking.totalPrice + ' บาท'}"></td>
+
+              <td>
+                <div class="row">
+                  <a class="btn btn-small"
+                     th:href="@{/bookings/{id}(id=${booking.id})}">
+                    รายละเอียด
+                  </a>
+
+                  <form method="post"
+                        th:if="${booking.paymentStatus != null
+                          and booking.paymentStatus.name() == 'UNPAID'
+                          and (booking.status.name() == 'PENDING'
+                            or booking.status.name() == 'CONFIRMED')}"
+                        th:action="@{/bookings/{id}/cancel(id=${booking.id})}"
+                        th:attr="data-confirm=${'ยืนยันยกเลิกการจอง #' + booking.id + ' หรือไม่?'}">
+                    <button class="btn btn-small" type="submit">ยกเลิก</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
-      <p id="booking-empty" hidden>ไม่พบรายการที่ตรงกับการค้นหา</p>
+      <p id="booking-empty" th:hidden="${not #lists.isEmpty(bookings)}">
+        ไม่พบรายการที่ตรงกับการค้นหา
+      </p>
 
       <dialog id="booking-dialog" aria-labelledby="dialog-title">
-        <h2 id="dialog-title"></h2>
+        <h2 id="dialog-title">ยืนยันการดำเนินการ</h2>
         <p id="dialog-text" style="white-space: pre-line"></p>
         <div class="row">
           <button id="dialog-close" class="btn" type="button">ปิด</button>
-          <button id="dialog-confirm" class="btn btn-primary" type="button" hidden>
-            ยืนยันตัวอย่าง
+          <button id="dialog-confirm" class="btn btn-primary" type="button">
+            ยืนยัน
           </button>
         </div>
       </dialog>
-
     </main>
   </div>
 </body>

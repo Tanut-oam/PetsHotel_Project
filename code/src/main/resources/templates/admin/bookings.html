@@ -4,75 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>จัดการการจอง · PetsHotel</title>
-  <link rel="stylesheet"
-        href="../../static/css/styles.css"
-        th:href="@{/css/styles.css}">
-  <script defer
-          src="../../static/js/booking-ui.js"
-          th:src="@{/js/booking-ui.js}"></script>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script defer th:src="@{/js/booking-ui.js}"></script>
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
   <div class="layout">
     <aside th:replace="~{fragments/layout :: sidebar}"></aside>
-    <main class="content" data-booking-page="staff">
 
+    <main class="content">
       <h1>จัดการการจอง</h1>
-      <p class="muted">
-        หน้าตัวอย่างสำหรับพนักงาน ปุ่มต่าง ๆ ยังไม่เปลี่ยนข้อมูลในระบบ
-      </p>
 
-      <div class="toolbar">
-        <label class="field">
-          ค้นหาเลขที่ ลูกค้า ห้อง หรือสัตว์
-          <input id="booking-search" type="search" placeholder="พิมพ์คำค้นหา">
-        </label>
+      <p th:if="${message}" th:text="${message}" role="status"></p>
+      <p th:if="${error}" th:text="${error}" role="alert"></p>
 
-        <label class="field">
-          สถานะ
-          <select id="booking-filter">
-            <option value="">ทั้งหมด</option>
-            <option value="PENDING">รอยืนยัน</option>
-            <option value="CONFIRMED">ยืนยันแล้ว</option>
-            <option value="CHECKED_IN">เข้าพักแล้ว</option>
-            <option value="CHECKED_OUT">เช็กเอาต์แล้ว</option>
-            <option value="CANCELLED">ยกเลิกแล้ว</option>
-          </select>
-        </label>
-      </div>
-
-      <p id="booking-count" role="status"></p>
-      <p id="booking-message" role="status" hidden></p>
-
-      <div class="panel table-scroll">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>เลขที่</th>
-              <th>สัตว์เลี้ยง</th>
-              <th>ห้องพัก</th>
-              <th>วันเข้า–วันออก</th>
-              <th>สถานะ</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody id="booking-rows"></tbody>
-        </table>
-      </div>
-
-      <p id="booking-empty" hidden>ไม่พบรายการที่ตรงกับการค้นหา</p>
-
-      <dialog id="booking-dialog" aria-labelledby="dialog-title">
-        <h2 id="dialog-title"></h2>
-        <p id="dialog-text" style="white-space: pre-line"></p>
-        <div class="row">
-          <button id="dialog-close" class="btn" type="button">ปิด</button>
-          <button id="dialog-confirm" class="btn btn-primary" type="button" hidden>
-            ยืนยันตัวอย่าง
-          </button>
-        </div>
-      </dialog>
-
+      <section th:replace="~{fragments/booking-table :: table(${bookings}, true)}">
+      </section>
     </main>
   </div>
 </body>

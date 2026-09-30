@@ -1,27 +1,32 @@
 (() => {
-  const root = document.getElementById("booking-form");
-  if (!root) return;
+  const form = document.getElementById("booking-form");
+  if (!form) return;
 
   const byId = id => document.getElementById(id);
-  const steps = [...root.querySelectorAll("[data-booking-step]")];
+  const steps = [...form.querySelectorAll("[data-booking-step]")];
   const indicators = [...document.querySelectorAll("[data-step-indicator]")];
+
   const room = byId("room-id");
   const checkIn = byId("check-in");
   const checkOut = byId("check-out");
+  const promotion = byId("promotion-id");
   const previous = byId("booking-prev");
   const next = byId("booking-next");
-  const confirm = byId("booking-confirm");
+  const submit = byId("booking-confirm");
   const error = byId("booking-error");
-  const result = byId("booking-result");
+
+  const dialog = byId("create-dialog");
+  const dialogConfirm = byId("create-dialog-confirm");
+
   let currentStep = 0;
+  let approved = false;
+  let sending = false;
 
-  function pets() {
-    return [...root.querySelectorAll('input[name="petIds"]:checked')];
-  }
+  const pets = () =>
+    [...form.querySelectorAll('input[name="petIds"]:checked')];
 
-  function services() {
-    return [...root.querySelectorAll("[data-service-id]")];
-  }
+  const services = () =>
+    [...form.querySelectorAll("[data-service-id]")];
 
   function nights() {
     if (!checkIn.value || !checkOut.value) return 0;
@@ -32,36 +37,45 @@
     return Math.max(0, Math.round((end - start) / 86400000)) || 0;
   }
 
-  function selectedRoom() {
-    return room.selectedOptions[0];
+  function roomName() {
+    return room.selectedOptions[0]?.dataset.name || "ยังไม่ได้เลือก";
+  }
+
+  function promotionName() {
+    return promotion.selectedOptions[0]?.textContent.trim()
+      || "ไม่ใช้โปรโมชั่น";
   }
 
   function updateSummary() {
-    const roomName = selectedRoom()?.dataset.name || "ยังไม่ได้เลือก";
     const selectedPets = pets();
     const count = nights();
 
     const selectedServices = services()
       .filter(input => Number(input.value) > 0)
-      .map(input => `${input.dataset.name} ${input.value} ครั้ง`);
+      .map(input => `${input.dataset.name} × ${input.value}`);
 
-    byId("summary-room").textContent = roomName;
+    byId("summary-room").textContent = roomName();
     byId("summary-nights").textContent = count > 0 ? `${count} คืน` : "—";
     byId("summary-pets").textContent = `${selectedPets.length} ตัว`;
 
     byId("pet-selection-count").textContent =
       `เลือกแล้ว ${selectedPets.length} ตัว`;
 
-    byId("review-room").textContent = roomName;
+    byId("review-room").textContent = roomName();
     byId("review-dates").textContent =
       checkIn.value && checkOut.value
         ? `${checkIn.value} – ${checkOut.value}`
         : "—";
+
     byId("review-nights").textContent = count > 0 ? `${count} คืน` : "—";
     byId("review-pets").textContent =
-      selectedPets.map(input => input.dataset.name).join(", ") || "ยังไม่ได้เลือก";
+      selectedPets.map(input => input.dataset.name).join(", ")
+      || "ยังไม่ได้เลือก";
+
     byId("review-services").textContent =
       selectedServices.join(", ") || "ไม่เลือกบริการเสริม";
+
+    byId("review-promotion").textContent = promotionName();
   }
 
   function showStep(index, focus = true) {
@@ -69,7 +83,6 @@
 
     steps.forEach((section, position) => {
       section.hidden = position !== index;
-      section.style.display = position === index ? "" : "none";
     });
 
     indicators.forEach((indicator, position) => {
@@ -83,14 +96,14 @@
       }
     });
 
-    previous.disabled = index === 0;
-    next.disabled = false;
-    next.hidden = index === steps.length - 1;
-    next.style.display = next.hidden ? "none" : "";
+    previous.hidden = false;
+    previous.disabled = sending || index === 0;
 
-    confirm.disabled = false;
-    confirm.hidden = index !== steps.length - 1;
-    confirm.style.display = confirm.hidden ? "none" : "";
+    next.hidden = index === steps.length - 1;
+    next.disabled = sending;
+
+    submit.hidden = index !== steps.length - 1;
+    submit.disabled = sending;
 
     updateSummary();
 
@@ -99,38 +112,41 @@
     }
   }
 
-  function fail(message, input) {
+  function fail(index, message, input) {
+    showStep(index, false);
     error.textContent = message;
     error.hidden = false;
-    input?.focus();
+    (input || error).focus();
     return false;
   }
 
   function validateStep(index) {
-    error.hidden = true;
-
     for (const input of steps[index].querySelectorAll("input, select")) {
       if (!input.checkValidity()) {
-        return fail(input.validationMessage || "กรุณาตรวจสอบข้อมูล", input);
+        return fail(
+          index,
+          input.validationMessage || "กรุณาตรวจสอบข้อมูล",
+          input
+        );
       }
     }
 
     if (index === 0 && nights() < 1) {
-      return fail("วันเช็กเอาต์ต้องอยู่หลังวันเช็กอิน", checkOut);
+      return fail(index, "วันเช็กเอาต์ต้องอยู่หลังวันเช็กอิน", checkOut);
     }
 
     if (index === 1) {
       const selectedPets = pets();
-      const firstPet = root.querySelector('input[name="petIds"]');
+      const firstPet = form.querySelector('input[name="petIds"]');
 
       if (selectedPets.length === 0) {
-        return fail("กรุณาเลือกสัตว์เลี้ยงอย่างน้อย 1 ตัว", firstPet);
+        return fail(index, "กรุณาเลือกสัตว์เลี้ยงอย่างน้อย 1 ตัว", firstPet);
       }
 
-      const capacity = Number(selectedRoom()?.dataset.capacity || 0);
+      const capacity = Number(room.selectedOptions[0]?.dataset.capacity);
 
-      if (selectedPets.length > capacity) {
-        return fail(`ห้องนี้รับสัตว์เลี้ยงได้สูงสุด ${capacity} ตัว`, firstPet);
+      if (!Number.isFinite(capacity) || selectedPets.length > capacity) {
+        return fail(index, "จำนวนสัตว์เลี้ยงเกินความจุห้องที่เลือก", firstPet);
       }
     }
 
@@ -139,9 +155,23 @@
         const quantity = Number(input.value);
 
         if (!Number.isSafeInteger(quantity) || quantity < 0) {
-          return fail("จำนวนบริการต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป", input);
+          return fail(
+            index,
+            "จำนวนบริการต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป",
+            input
+          );
         }
       }
+    }
+
+    return true;
+  }
+
+  function validateAll() {
+    error.hidden = true;
+
+    for (let index = 0; index < steps.length; index++) {
+      if (!validateStep(index)) return false;
     }
 
     return true;
@@ -153,29 +183,102 @@
   });
 
   next.addEventListener("click", () => {
-    if (validateStep(currentStep)) showStep(currentStep + 1);
+    error.hidden = true;
+
+    if (validateStep(currentStep)) {
+      showStep(currentStep + 1);
+    }
   });
 
-  confirm.addEventListener("click", () => {
-    for (let index = 0; index < steps.length - 1; index++) {
-      showStep(index, false);
-      if (!validateStep(index)) return;
+  form.addEventListener("submit", event => {
+    if (sending) {
+      event.preventDefault();
+      return;
     }
 
-    showStep(steps.length - 1);
-    result.textContent =
-      "ตรวจสอบข้อมูลตัวอย่างเรียบร้อย ยังไม่ได้สร้างการจองหรือชำระเงิน";
-    result.hidden = false;
-    result.scrollIntoView({ behavior: "smooth", block: "center" });
+    // กด Enter ในขั้นก่อนหน้าให้ไปขั้นถัดไปก่อน
+    if (currentStep < steps.length - 1) {
+      event.preventDefault();
+      error.hidden = true;
+
+      if (validateStep(currentStep)) {
+        showStep(currentStep + 1);
+      }
+      return;
+    }
+
+    if (!validateAll()) {
+      event.preventDefault();
+      approved = false;
+      return;
+    }
+
+    if (!approved) {
+      event.preventDefault();
+      updateSummary();
+
+      byId("create-dialog-text").textContent = [
+        `ห้อง: ${roomName()}`,
+        `วันเข้า–วันออก: ${checkIn.value} – ${checkOut.value}`,
+        `จำนวนคืน: ${nights()}`,
+        `สัตว์เลี้ยง: ${byId("review-pets").textContent}`,
+        `บริการ: ${byId("review-services").textContent}`,
+        `โปรโมชั่น: ${promotionName()}`,
+        "",
+        "ต้องการสร้างการจองตามข้อมูลนี้หรือไม่?"
+      ].join("\n");
+
+      dialog.showModal();
+      return;
+    }
+
+    // ปล่อยให้ browser ส่ง POST ตาม action ของ form
+    approved = false;
+    sending = true;
+    previous.disabled = true;
+    next.disabled = true;
+    submit.disabled = true;
+    submit.textContent = "กำลังสร้างการจอง…";
   });
 
-  root.addEventListener("input", () => {
-    result.hidden = true;
+  byId("create-dialog-close").addEventListener("click", () => {
+    dialog.close();
+  });
+
+  dialogConfirm.addEventListener("click", () => {
+    if (sending) return;
+
+    dialog.close();
+    approved = true;
+    form.requestSubmit(submit);
+  });
+
+  form.addEventListener("input", () => {
+    approved = false;
     error.hidden = true;
     updateSummary();
   });
 
-  root.addEventListener("change", updateSummary);
+  form.addEventListener("change", updateSummary);
 
-  showStep(0, false);
+  window.addEventListener("pageshow", () => {
+    approved = false;
+    sending = false;
+    submit.textContent = "สร้างการจอง";
+    showStep(currentStep, false);
+  });
+
+  // JavaScript จะตรวจ validity แล้วเปิดขั้นที่ผิดก่อนโฟกัส
+  // หากไม่มี JavaScript form ยังตรวจและส่งได้ตามปกติ
+  form.noValidate = true;
+
+  const errorStep = steps.findIndex(section =>
+    section.querySelector("[data-field-error]")
+  );
+
+  showStep(errorStep >= 0 ? errorStep : 0, false);
+
+  if (byId("server-errors")) {
+    byId("server-errors").focus();
+  }
 })();
