@@ -62,4 +62,28 @@ document.addEventListener("DOMContentLoaded", () => {
       editFeedback.focus();
     }
      });
+
+    document.querySelectorAll(".pet-delete-button").forEach((deleteButton) => {
+        const deleteDialog = document.getElementById(
+        deleteButton.dataset.dialogId
+        );
+        const cancelButton = deleteDialog?.querySelector(".pet-delete-cancel");
+
+        if (!deleteDialog || !cancelButton) {
+        return;
+        }
+
+        deleteButton.addEventListener("click", () => {
+        deleteDialog.showModal();
+        cancelButton.focus();
+        });
+
+        cancelButton.addEventListener("click", () => {
+        deleteDialog.close();
+        });
+
+        deleteDialog.addEventListener("close", () => {
+        deleteButton.focus();
+        });
+    });
 });

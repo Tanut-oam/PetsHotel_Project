@@ -17,15 +17,29 @@
       <div class="section-title">
         <h1>สัตว์เลี้ยงของฉัน</h1>
         <button class="btn btn-primary"
-        type="button"
-        id="add-pet-button"
-        aria-haspopup="dialog"
-        aria-controls="pet-create-dialog">+ เพิ่มสัตว์เลี้ยง</button>
+                type="button"
+                id="add-pet-button"
+                aria-haspopup="dialog"
+                aria-controls="pet-create-dialog">
+          + เพิ่มสัตว์เลี้ยง
+        </button>
       </div>
-      <div class="panel"
+
+      <div class="pet-notice pet-notice-success"
+            th:if="${message}"
+            th:text="${message}"
+            role="status"></div>
+
+      <div class="pet-notice pet-notice-success"
           th:if="${editMessage}"
           th:text="${editMessage}"
           role="status"></div>
+
+      <div class="pet-notice pet-notice-success"
+          th:if="${deleteMessage}"
+          th:text="${deleteMessage}"
+          role="status"></div>
+
       <div class="panel" th:if="${#lists.isEmpty(pets)}">
         ยังไม่มีสัตว์เลี้ยงในบัญชีของคุณ
       </div>
@@ -60,28 +74,35 @@
             </span>
           </p>
 
-                    <div class="row">
+          <div class="row">
             <button class="btn btn-small pet-edit-button"
                     type="button"
                     th:attr="data-dialog-id=|pet-edit-dialog-${pet.id}|"
                     aria-haspopup="dialog">แก้ไข</button>
-            <button class="btn btn-small btn-danger" type="button">ลบ</button>
+
+            <button class="btn btn-small btn-danger pet-delete-button"
+                    type="button"
+                    th:attr="data-dialog-id=|pet-delete-dialog-${pet.id}|"
+                    aria-haspopup="dialog">ลบ</button>
           </div>
 
           <dialog class="pet-dialog pet-edit-dialog"
                   th:id="|pet-edit-dialog-${pet.id}|"
                   th:attr="aria-labelledby=|pet-edit-heading-${pet.id}|">
             <div class="section-title">
-              <h2 th:id="|pet-edit-heading-${pet.id}|">แก้ไขสัตว์เลี้ยง</h2>
+              <h2 th:id="|pet-edit-heading-${pet.id}|">
+                แก้ไขสัตว์เลี้ยง
+              </h2>
               <button class="btn btn-small pet-edit-close"
                       type="button">ปิด</button>
             </div>
 
-            <div class="panel"
-                 th:if="${editPetId == pet.id and editError != null}"
-                 th:text="${editError}"
-                 data-edit-feedback
-                 tabindex="-1"></div>
+            <div class="pet-notice pet-notice-error"
+                  th:if="${editPetId == pet.id and editError != null}"
+                  th:text="${editError}"
+                  data-edit-feedback
+                  tabindex="-1"
+                  role="alert"></div>
 
             <form class="panel grid cols-2"
                   th:action="@{/pets/{petId}/edit(petId=${pet.id})}"
@@ -157,28 +178,47 @@
               </div>
             </form>
           </dialog>
+
+          <dialog class="pet-dialog pet-confirm-dialog"
+                  th:id="|pet-delete-dialog-${pet.id}|"
+                  th:attr="aria-labelledby=|pet-delete-heading-${pet.id}|">
+            <h2 th:id="|pet-delete-heading-${pet.id}|">
+              ยืนยันการลบสัตว์เลี้ยง
+            </h2>
+
+            <p>
+              ต้องการนำ
+              <strong th:text="${pet.name}">ชื่อสัตว์เลี้ยง</strong>
+              ออกจากรายการของคุณหรือไม่?
+            </p>
+
+            <form class="row"
+                  th:action="@{/pets/{petId}/delete(petId=${pet.id})}"
+                  method="post">
+              <button class="btn pet-delete-cancel"
+                      type="button">ยกเลิก</button>
+              <button class="btn btn-danger"
+                      type="submit">ยืนยันลบ</button>
+            </form>
+          </dialog>
         </article>
       </div>
 
-        <dialog id="pet-create-dialog"
-            class="pet-dialog"
-            aria-labelledby="pet-create-heading">
-      <div class="section-title">
-        <h2 id="pet-create-heading">เพิ่มสัตว์เลี้ยง</h2>
-        <button class="btn btn-small"
-                type="button"
-                id="close-pet-dialog">ปิด</button>
-      </div>
+      <dialog id="pet-create-dialog"
+              class="pet-dialog"
+              aria-labelledby="pet-create-heading">
+        <div class="section-title">
+          <h2 id="pet-create-heading">เพิ่มสัตว์เลี้ยง</h2>
+          <button class="btn btn-small"
+                  type="button"
+                  id="close-pet-dialog">ปิด</button>
+        </div>
 
-        <div class="panel"
-             th:if="${message}"
-             th:text="${message}"
-             data-pet-feedback></div>
-
-        <div class="panel"
-             th:if="${error}"
-             th:text="${error}"
-             data-pet-feedback></div>
+        <div class="pet-notice pet-notice-error"
+            th:if="${error}"
+            th:text="${error}"
+            data-pet-feedback
+            role="alert"></div>
 
         <form class="panel grid cols-2"
               id="pet-form"
@@ -244,7 +284,9 @@
           </label>
 
           <div>
-            <button class="btn btn-primary" type="submit">บันทึกข้อมูล</button>
+            <button class="btn btn-primary" type="submit">
+              บันทึกข้อมูล
+            </button>
           </div>
         </form>
       </dialog>
