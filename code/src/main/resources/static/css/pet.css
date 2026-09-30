@@ -1,0 +1,55 @@
+.pet-dialog {
+  width: min(900px, calc(100% - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 24px;
+  overflow-y: auto;
+  border: none;
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--text);
+  box-shadow: 0 20px 60px rgba(20, 50, 30, 0.2);
+}
+
+.pet-dialog::backdrop {
+  background: rgba(15, 35, 25, 0.6);
+}
+
+.pet-dialog .section-title {
+  margin: 0 0 18px;
+}
+
+.pet-dialog .panel {
+  box-shadow: none;
+}
+
+.pet-confirm-dialog {
+  width: min(440px, calc(100% - 32px));
+}
+
+.pet-notice {
+  margin: 0 0 16px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(20, 50, 30, 0.08);
+}
+
+.pet-notice-success {
+  background: #dff3e6;
+  color: #194b36;
+  border: 1px solid #a9d3b7;
+  border-left: 5px solid var(--green);
+}
+
+.pet-notice-error {
+  background: #fde9e9;
+  color: #8d2d2d;
+  border: 1px solid #eab1b1;
+  border-left: 5px solid var(--red);
+}
+
+@media (max-width: 650px) {
+  .pet-dialog {
+    padding: 16px;
+  }
+}

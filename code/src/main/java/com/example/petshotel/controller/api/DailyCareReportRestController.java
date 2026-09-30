@@ -18,7 +18,8 @@ import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
-import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
 
 import jakarta.validation.Valid;
@@ -27,11 +28,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/care-reports")
 public class DailyCareReportRestController {
     private  final DailyCareReportService reportService;
-    private  final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
-    public DailyCareReportRestController(DailyCareReportService reportService,UserRepository userRepository) {
+    public DailyCareReportRestController(DailyCareReportService reportService,CurrentUserService currentUserService) {
         this.reportService = reportService;
-        this.userRepository = userRepository;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping("/booking-pets/{bookingPetId}")
@@ -64,9 +65,12 @@ public class DailyCareReportRestController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        User user;
+        try {
+            user = currentUserService.getByEmail(principal.getName());
+        } catch (ResourceNotFoundException exception) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
 
         if (!Boolean.TRUE.equals(user.getActive())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
