@@ -1,6 +1,7 @@
 package com.example.petshotel.dto.response;
 
 import com.example.petshotel.domain.enums.BookingStatus;
+import com.example.petshotel.domain.enums.PaymentStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -29,4 +30,6 @@ public class BookingResponse {
     private BookingStatus status;
 
     private BigDecimal totalPrice;
+
+    private PaymentStatus paymentStatus;
 }

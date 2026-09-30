@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +32,7 @@ public class SecurityConfig {
                 .requestMatchers("/rooms/available").permitAll()
 
                 // ADMIN เท่านั้น (ห้อง / โปรโมชั่น / บริการเสริม)
+                .requestMatchers("/admin/bookings", "/admin/bookings/**").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/admin/**", "/dashboard/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/room/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
@@ -70,10 +72,17 @@ public class SecurityConfig {
             )
             .logout(logout -> logout.permitAll())
             .exceptionHandling(ex -> ex
-                // /api/** ตอบ 401 แทนการ redirect ไปหน้า login
+                // API ที่ยังไม่ล็อกอินให้ตอบ 401
                 .defaultAuthenticationEntryPointFor(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                    request -> request.getRequestURI().startsWith("/api/"))
+                    request -> request.getRequestURI().startsWith("/api/")
+                )
+
+                // หน้าเว็บที่ยังไม่ล็อกอินให้พาไปหน้า login
+                .defaultAuthenticationEntryPointFor(
+                    new LoginUrlAuthenticationEntryPoint("/login"),
+                    request -> !request.getRequestURI().startsWith("/api/")
+                )
             );
 
         return http.build();
