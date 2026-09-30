@@ -3,8 +3,6 @@ package com.example.petshotel.controller.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-
 
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
@@ -23,26 +21,37 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 
 @Controller
-@RequestMapping("/rooms")
 @RequiredArgsConstructor
 public class RoomController {
     private final RoomService roomService;
 
+    // ===== ลูกค้า =====
+    @GetMapping("/rooms")
+    public String publicList(Model model) {
+        model.addAttribute("rooms",roomService.getActiveRooms());
+        return "rooms";
+    }
 
-    @GetMapping
-    public String listRooms(Model model) {
-        model.addAttribute("rooms",roomService.getAllRooms());
+    @GetMapping("/rooms/{id}")
+    public String detail(@PathVariable Long id, Model model) {
+        model.addAttribute("room", roomService.getRoomById(id));
+        return "room-detail";
+    }
+
+    // ===== Admin =====
+    @GetMapping("/admin/rooms")
+    public String adminList(Model model) {
+        model.addAttribute("rooms", roomService.getAllRooms());
         return "rooms/list";
     }
 
-    //แสดงฟอมสร้าง rooms ใหม่เด้อ
-    @GetMapping("/new")
+
+    @GetMapping("/admin/rooms/new")
     public String newRoomForm() {
         return "rooms/form";
     }
 
-    //รับข้อมูลจากฟอมมาสร้างห้อง
-    @PostMapping("")
+    @PostMapping("/admin/rooms")
     public String createRoom(@ModelAttribute CreateRoomRequest request,RedirectAttributes redirectAttributes) {
         try{
             roomService.createRoom(request);
@@ -51,16 +60,16 @@ public class RoomController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         
-        return "redirect:/rooms";
+        return "redirect:/admin/rooms";
     }
     
-    @GetMapping("/{id}/edit")
+    @GetMapping("/admin/rooms/{id}/edit")
     public String editRoomForm(@PathVariable Long id,Model model) {
         model.addAttribute("room", roomService.getRoomById(id));
         return "rooms/edit";
     }
     
-    @PostMapping("/{id}")
+    @PostMapping("/admin/rooms/{id}")
     public String updateRoom(@PathVariable Long id,@ModelAttribute UpdateRoomRequest request,RedirectAttributes redirectAttributes) {
         try{
             roomService.updateRoom(id, request);
@@ -69,10 +78,10 @@ public class RoomController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         
-        return "redirect:/rooms";
+        return "redirect:/admin/rooms";
     }
     
-    @PostMapping("/{id}/status")
+    @PostMapping("/admin/rooms/{id}/status")
     public String updateStatus(@PathVariable Long id,@ModelAttribute UpdateStatusRequest request,RedirectAttributes redirectAttributes) {
         try{
             roomService.setRoomStatus(id, request);
@@ -80,10 +89,10 @@ public class RoomController {
         } catch(IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/rooms";
+        return "redirect:/admin/rooms";
     }
     
-    @PostMapping("/{id}/deactivate")
+    @PostMapping("/admin/rooms/{id}/deactivate")
     public String deactivateRoom(@PathVariable Long id,RedirectAttributes redirectAttributes) {
         try{
             roomService.deactivateRoom(id);
@@ -92,6 +101,6 @@ public class RoomController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         
-        return "redirect:/rooms";
+        return "redirect:/admin/rooms";
     }
 }

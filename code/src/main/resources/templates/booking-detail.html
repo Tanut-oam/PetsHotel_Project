@@ -1,77 +1,102 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>รายละเอียดการจอง · PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script defer th:src="@{/js/booking-ui.js}"></script>
+  <style>
+    [hidden] { display: none !important; }
+    dialog {
+      border: 0;
+      border-radius: 12px;
+      padding: 24px;
+      width: min(480px, 90vw);
+    }
+    dialog::backdrop { background: rgb(0 0 0 / 40%); }
+  </style>
 </head>
+
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
-    </nav>
-
-    <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
-
+  <header th:replace="~{fragments/layout :: topbar}"></header>
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
-    <main class="content">
-        <a href="my-bookings.html">← กลับไปหน้าการจอง</a>
+    <main class="content" data-booking-page="detail">
+      <h1 th:text="${'รายละเอียดการจอง #' + booking.id}"></h1>
 
-            <div class="section-title">
-            <h1>รายละเอียดการจอง #1025</h1>
-            <span class="badge">ยืนยันแล้ว</span>
-            </div>
+      <p th:if="${message}" th:text="${message}" role="status"></p>
+      <p th:if="${error}" th:text="${error}" role="alert"></p>
 
-            <div class="detail-layout">
-            <section class="panel">
-                <h2>ข้อมูลการจอง</h2>
+      <section id="booking-detail" class="panel">
+        <h2>ข้อมูลการจอง</h2>
 
-                <p><strong>ห้อง:</strong> Deluxe Room (101)</p>
-                <p><strong>สัตว์เลี้ยง:</strong> Mochi</p>
-                <p><strong>เช็กอิน:</strong> 10 ต.ค. 2026</p>
-                <p><strong>เช็กเอาต์:</strong> 15 ต.ค. 2026</p>
-                <p><strong>บริการเสริม:</strong> อาหารเสริม, พาเดินเล่น</p>
-                <p><strong>ผู้ติดต่อ:</strong> ตัวอย่างผู้ใช้ · 081-234-5678</p>
-                <p><strong>การชำระเงิน:</strong> ชำระ ณ ที่พัก</p>
+        <dl>
+          <dt>เลขที่การจอง</dt>
+          <dd th:text="${booking.id}"></dd>
 
-                <hr class="divider">
+          <dt>รหัสห้อง</dt>
+          <dd th:text="${booking.roomId}"></dd>
 
-                <div class="row">
-                <a class="btn" href="reports.html">ดูรายงานการดูแล</a>
-                <button class="btn btn-danger" type="button">ยกเลิกการจอง</button>
-                </div>
-            </section>
+          <dt>รหัสสัตว์เลี้ยง</dt>
+          <dd th:text="${booking.petIds}"></dd>
 
-            <aside class="panel">
-                <h2>สรุปราคา</h2>
-                <div class="summary-line"><span>ค่าห้อง 5 คืน</span><span>฿2,500</span></div>
-                <div class="summary-line"><span>บริการเสริม</span><span>฿750</span></div>
-                <div class="summary-line"><span>ส่วนลด</span><span>−฿250</span></div>
-                <div class="summary-line total"><span>ยอดรวม</span><span>฿3,000</span></div>
-            </aside>
-            </div>
+          <dt>วันเช็กอิน</dt>
+          <dd th:text="${booking.checkInDate}"></dd>
+
+          <dt>วันเช็กเอาต์</dt>
+          <dd th:text="${booking.checkOutDate}"></dd>
+
+          <dt>สถานะ</dt>
+          <dd>
+            <span data-status-label
+                  th:attr="data-status-label=${booking.status.name()}"
+                  th:text="${booking.status}"></span>
+          </dd>
+
+          <dt>การชำระเงิน</dt>
+          <dd>
+            <span data-payment-label
+                  th:attr="data-payment-label=${booking.paymentStatus}"
+                  th:text="${booking.paymentStatus}"></span>
+          </dd>
+
+          <dt>ยอดรวม</dt>
+          <dd th:text="${booking.totalPrice + ' บาท'}"></dd>
+        </dl>
+
+        <div class="row">
+          <a class="btn" th:href="@{/bookings}">กลับรายการของฉัน</a>
+
+          <form method="post"
+                th:if="${booking.paymentStatus != null
+                  and booking.paymentStatus.name() == 'UNPAID'
+                  and (booking.status.name() == 'PENDING'
+                    or booking.status.name() == 'CONFIRMED')}"
+                th:action="@{/bookings/{id}/cancel(id=${booking.id})}"
+                th:attr="data-confirm=${'ยืนยันยกเลิกการจอง #' + booking.id + ' หรือไม่?'}">
+            <button class="btn" type="submit">ยกเลิกการจอง</button>
+          </form>
+        </div>
+
+        <p class="muted">
+          ยกเลิกได้เฉพาะรายการที่ยังไม่ชำระเงิน
+          และอยู่ในสถานะรอยืนยันหรือยืนยันแล้ว
+        </p>
+      </section>
+
+      <dialog id="booking-dialog" aria-labelledby="dialog-title">
+        <h2 id="dialog-title">ยืนยันการดำเนินการ</h2>
+        <p id="dialog-text" style="white-space: pre-line"></p>
+        <div class="row">
+          <button id="dialog-close" class="btn" type="button">ปิด</button>
+          <button id="dialog-confirm" class="btn btn-primary" type="button">
+            ยืนยัน
+          </button>
+        </div>
+      </dialog>
     </main>
   </div>
-
-  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
 </body>
 </html>

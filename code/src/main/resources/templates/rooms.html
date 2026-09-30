@@ -1,129 +1,85 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>ห้องพัก | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
+    <a class="brand" th:href="@{/}">🐾 PetsHotel</a>
 
     <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
+      <a th:href="@{/}">หน้าแรก</a>
+      <a th:href="@{/rooms}">ห้องพัก</a>
+      <a th:href="@{/pets}">สัตว์เลี้ยง</a>
+      <a th:href="@{/my-bookings}">การจอง</a>
     </nav>
 
     <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
+      <a class="btn btn-small" th:href="@{/admin/rooms}">ฝั่งแอดมิน</a>
+      <a class="btn btn-small" th:href="@{/profile}">👤 บัญชีของฉัน</a>
     </div>
   </header>
 
   <div class="layout">
     <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
+      <a th:href="@{/}">⌂ หน้าแรก</a>
+      <a th:href="@{/rooms}">▣ ห้องพัก</a>
+      <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
+      <a th:href="@{/my-bookings}">▤ การจองของฉัน</a>
+      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
+      <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
     </aside>
 
     <main class="content">
       <h1>ห้องพักทั้งหมด</h1>
 
-        <section class="panel">
-        <form class="form-grid">
-            <label class="field">
+      <!-- ฟอร์มค้นหาห้องว่าง: ต้องรอ endpoint ของ Availability (ธเนศ) -->
+      <section class="panel">
+        <form class="form-grid" th:action="@{/rooms/search}" method="get">
+          <label class="field">
             เช็กอิน
             <input type="date" name="checkIn" required>
-            </label>
+          </label>
 
-            <label class="field">
+          <label class="field">
             เช็กเอาต์
             <input type="date" name="checkOut" required>
-            </label>
+          </label>
 
-            <label class="field">
-            ประเภทห้อง
-            <select name="type">
-                <option value="">ทุกประเภท</option>
-                <option value="deluxe">Deluxe</option>
-                <option value="standard">Standard</option>
-                <option value="family">Family</option>
-            </select>
-            </label>
+          <label class="field">
+            จำนวนสัตว์เลี้ยง
+            <input type="number" name="petCount" min="1" value="1" required>
+          </label>
 
-            <button class="btn btn-primary">ค้นหา</button>
+          <button class="btn btn-primary" type="submit">ค้นหา</button>
         </form>
-        </section>
+      </section>
 
-        <div class="toolbar">
-        <label class="field">
-            ค้นหาห้อง
-            <input type="search" placeholder="ชื่อหรือหมายเลขห้อง">
-        </label>
-
-        <label class="field">
-            สถานะ
-            <select>
-            <option>ทั้งหมด</option>
-            <option>ว่าง</option>
-            <option>ไม่ว่าง</option>
-            </select>
-        </label>
-        </div>
-
-        <div class="grid cols-3">
-        <article class="card">
-            <img class="room-image" src="assets/room-deluxe.jpg" alt="Deluxe Room">
-            <div class="card-body">
+      <div class="grid cols-3">
+        <article class="card" th:each="r : ${rooms}">
+          <div class="card-body">
             <div class="row">
-                <h3>Deluxe Room</h3>
-                <span class="badge">ว่าง</span>
+              <h3 th:text="${r.name}">Deluxe Room</h3>
+              <span class="badge">เปิดให้จอง</span>
             </div>
-            <p>ห้อง 101 · รองรับ 3 ตัว</p>
+            <p>
+              ห้อง <span th:text="${r.roomNumber}">101</span> ·
+              รองรับ <span th:text="${r.capacity}">3</span> ตัว
+            </p>
             <div class="row">
-                <span class="price">฿500 / คืน</span>
-                <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
+              <span class="price">
+                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 0, 'POINT')}">500</span> / คืน
+              </span>
+              <a class="btn btn-small" th:href="@{/rooms/{id}(id=${r.id})}">ดูห้อง</a>
             </div>
-            </div>
+          </div>
         </article>
+      </div>
 
-        <article class="card">
-            <img class="room-image" src="assets/room-standard.jpg" alt="Standard Room">
-            <div class="card-body">
-            <div class="row">
-                <h3>Standard Room</h3>
-                <span class="badge">ว่าง</span>
-            </div>
-            <p>ห้อง 201 · รองรับ 2 ตัว</p>
-            <div class="row">
-                <span class="price">฿400 / คืน</span>
-                <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
-            </div>
-            </div>
-        </article>
-
-        <article class="card">
-            <img class="room-image" src="assets/room-family.jpg" alt="Family Room">
-            <div class="card-body">
-            <div class="row">
-                <h3>Family Room</h3>
-                <span class="badge badge-warning">ไม่ว่าง</span>
-            </div>
-            <p>ห้อง 301 · รองรับ 4 ตัว</p>
-            <div class="row">
-                <span class="price">฿700 / คืน</span>
-                <a class="btn btn-small" href="room-detail.html">ดูห้อง</a>
-            </div>
-            </div>
-        </article>
-        </div>
+      <p class="muted" th:if="${#lists.isEmpty(rooms)}">ยังไม่มีห้องพักที่เปิดให้จอง</p>
     </main>
   </div>
 

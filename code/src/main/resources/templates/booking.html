@@ -1,148 +1,272 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>สร้างการจอง · PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script defer th:src="@{/js/booking-form.js}"></script>
+  <style>
+    [hidden] { display: none !important; }
+    dialog {
+      border: 0;
+      border-radius: 12px;
+      padding: 24px;
+      width: min(480px, 90vw);
+    }
+    dialog::backdrop { background: rgb(0 0 0 / 40%); }
+  </style>
 </head>
+
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
-    </nav>
-
-    <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
-        <a href="room-detail.html">← กลับไปหน้าห้อง</a>
-    <h1>จอง Deluxe Room · ห้อง 101</h1>
+      <h1>สร้างการจอง</h1>
+      <p class="muted">เลือกห้อง สัตว์เลี้ยง และบริการก่อนยืนยันการจอง</p>
 
-    <div class="steps">
-    <div class="step done">1. วันเข้าพัก</div>
-    <div class="step active">2. สัตว์เลี้ยง</div>
-    <div class="step">3. บริการเสริม</div>
-    <div class="step">4. ยืนยัน</div>
-    </div>
+      <div class="steps" aria-label="ขั้นตอนการจอง">
+        <div class="step" data-step-indicator="0">1. ห้องและวันที่</div>
+        <div class="step" data-step-indicator="1">2. สัตว์เลี้ยง</div>
+        <div class="step" data-step-indicator="2">3. บริการเสริม</div>
+        <div class="step" data-step-indicator="3">4. ตรวจสอบข้อมูล</div>
+      </div>
 
-    <div class="detail-layout">
-    <form class="panel">
-        <section id="step-dates">
-        <h2>วันเข้าพัก</h2>
+      <div class="detail-layout">
+        <form id="booking-form"
+              class="panel"
+              method="post"
+              th:action="@{/bookings}"
+              th:object="${bookingForm}">
 
-        <div class="grid cols-2">
+          <div id="server-errors"
+               th:if="${#fields.hasAnyErrors()}"
+               role="alert"
+               tabindex="-1">
+            <p>ยังสร้างการจองไม่ได้ กรุณาตรวจสอบข้อมูล</p>
+            <ul>
+              <li th:each="error : ${#fields.allErrors()}"
+                  th:text="${error}"></li>
+            </ul>
+          </div>
+
+          <p id="booking-error" role="alert" tabindex="-1" hidden></p>
+
+          <section data-booking-step="0" aria-labelledby="heading-dates">
+            <h2 id="heading-dates" tabindex="-1">ห้องพักและวันที่</h2>
+
             <label class="field">
-            เช็กอิน
-            <input type="date" name="checkIn" required>
+              ห้องพัก
+              <select id="room-id" th:field="*{roomId}" required>
+                <option value="">เลือกห้องพัก</option>
+                <option th:each="room : ${rooms}"
+                        th:value="${room.id}"
+                        th:text="${room.name + ' · รับได้ ' + room.capacity + ' ตัว'}"
+                        th:attr="data-name=${room.name},data-capacity=${room.capacity}">
+                </option>
+              </select>
+            </label>
+
+            <p th:if="${#lists.isEmpty(rooms)}" class="muted">
+              ยังไม่มีห้องที่เปิดให้จอง
+            </p>
+
+            <p th:if="${#fields.hasErrors('roomId')}"
+               th:errors="*{roomId}" data-field-error></p>
+
+            <div class="grid cols-2">
+              <label class="field">
+                วันเช็กอิน
+                <input id="check-in"
+                       type="date"
+                       th:field="*{checkInDate}"
+                       required>
+              </label>
+
+              <label class="field">
+                วันเช็กเอาต์
+                <input id="check-out"
+                       type="date"
+                       th:field="*{checkOutDate}"
+                       required>
+              </label>
+            </div>
+
+            <p th:if="${#fields.hasErrors('checkInDate')}"
+               th:errors="*{checkInDate}" data-field-error></p>
+            <p th:if="${#fields.hasErrors('checkOutDate')}"
+               th:errors="*{checkOutDate}" data-field-error></p>
+
+            <p class="muted">
+              วันเช็กเอาต์ต้องอยู่หลังวันเช็กอิน
+              ระบบจะตรวจสอบห้องว่างอีกครั้งเมื่อสร้างการจอง
+            </p>
+          </section>
+
+          <section data-booking-step="1" aria-labelledby="heading-pets">
+            <h2 id="heading-pets" tabindex="-1">เลือกสัตว์เลี้ยง</h2>
+
+            <p class="muted">
+              เลือกอย่างน้อย 1 ตัว และไม่เกินความจุห้อง
+            </p>
+
+            <p th:if="${#lists.isEmpty(pets)}">
+              ยังไม่มีสัตว์เลี้ยงที่เลือกได้
+              <a th:href="@{/pets}">ไปเพิ่มสัตว์เลี้ยง</a>
+            </p>
+
+            <label th:each="pet : ${pets}" class="choice">
+              <input type="checkbox"
+                     th:field="*{petIds}"
+                     th:value="${pet.id}"
+                     th:attr="data-name=${pet.name}">
+              <span class="choice-text">
+                <strong th:text="${pet.name}"></strong><br>
+                <small th:text="${pet.type}"></small>
+              </span>
+            </label>
+
+            <p th:if="${#fields.hasErrors('petIds')}"
+               th:errors="*{petIds}" data-field-error></p>
+
+            <p id="pet-selection-count" aria-live="polite"></p>
+          </section>
+
+          <section data-booking-step="2" aria-labelledby="heading-services">
+            <h2 id="heading-services" tabindex="-1">บริการเสริมและโปรโมชั่น</h2>
+
+            <p class="muted">ใส่จำนวนที่ต้องการ หรือ 0 หากไม่เลือกบริการ</p>
+
+            <p th:if="${#lists.isEmpty(extraServices)}" class="muted">
+              ยังไม่มีบริการเสริมที่เปิดใช้งาน
+            </p>
+
+            <label th:each="service : ${extraServices}" class="field">
+              <span th:text="${service.name}"></span>
+              <small th:text="${service.price + ' บาท/หน่วย'}"></small>
+
+              <input type="number"
+                     min="0"
+                     step="1"
+                     required
+                     th:field="*{extraServiceQuantities[__${service.id}__]}"
+                     th:attr="data-service-id=${service.id},data-name=${service.name}">
             </label>
 
             <label class="field">
-            เช็กเอาต์
-            <input type="date" name="checkOut" required>
+              โปรโมชั่น
+              <select id="promotion-id" th:field="*{promotionId}">
+                <option value="">ไม่ใช้โปรโมชั่น</option>
+                <option th:each="promotion : ${promotions}"
+                        th:value="${promotion.id}"
+                        th:text="${promotion.name}">
+                </option>
+              </select>
             </label>
-        </div>
-        </section>
 
-        <hr class="divider">
+            <p class="muted">
+              ระบบจะตรวจสอบเงื่อนไขโปรโมชั่นและคำนวณยอดจริงเมื่อสร้างการจอง
+            </p>
+          </section>
 
-        <section id="step-pets">
-        <h2>เลือกสัตว์เลี้ยง</h2>
+          <section data-booking-step="3" aria-labelledby="heading-review">
+            <h2 id="heading-review" tabindex="-1">ตรวจสอบข้อมูล</h2>
 
-        <label class="choice">
-            <input type="checkbox" name="petIds" value="1">
-            <img class="pet-photo" src="assets/dog.jpg" alt="Mochi">
-            <span class="choice-text">
-            <strong>Mochi</strong><br>
-            <small>สุนัข · ชิบะอินุ</small>
-            </span>
-        </label>
+            <dl>
+              <dt>ห้องพัก</dt>
+              <dd id="review-room">—</dd>
 
-        <label class="choice">
-            <input type="checkbox" name="petIds" value="2">
-            <img class="pet-photo" src="assets/cat.jpg" alt="Lily">
-            <span class="choice-text">
-            <strong>Lily</strong><br>
-            <small>แมว · บริติชช็อตแฮร์</small>
-            </span>
-        </label>
+              <dt>วันเข้า–วันออก</dt>
+              <dd id="review-dates">—</dd>
 
-        <a class="btn btn-small" href="pets.html">+ เพิ่มสัตว์เลี้ยง</a>
-        </section>
+              <dt>จำนวนคืน</dt>
+              <dd id="review-nights">—</dd>
 
-        <hr class="divider">
+              <dt>สัตว์เลี้ยง</dt>
+              <dd id="review-pets">—</dd>
 
-        <section id="step-services">
-        <h2>บริการเสริม</h2>
+              <dt>บริการเสริม</dt>
+              <dd id="review-services">—</dd>
 
-        <label class="choice">
-            <input type="checkbox" name="serviceIds" value="FOOD">
-            <span class="choice-text">อาหารเสริม</span>
-            <strong>฿50 / วัน</strong>
-        </label>
+              <dt>โปรโมชั่น</dt>
+              <dd id="review-promotion">—</dd>
+            </dl>
 
-        <label class="choice">
-            <input type="checkbox" name="serviceIds" value="BATH">
-            <span class="choice-text">อาบน้ำ</span>
-            <strong>฿300 / ครั้ง</strong>
-        </label>
+            <p class="muted">
+              เมื่อสร้างการจองสำเร็จ จะแสดงรายละเอียดและยอดรวมในหน้าถัดไป
+              ขั้นตอนนี้ยังไม่ได้ชำระเงิน
+            </p>
+          </section>
 
-        <label class="choice">
-            <input type="checkbox" name="serviceIds" value="WALK">
-            <span class="choice-text">พาเดินเล่น</span>
-            <strong>฿100 / วัน</strong>
-        </label>
-        </section>
+          <div class="row">
+            <button id="booking-prev" class="btn" type="button" hidden>
+              ย้อนกลับ
+            </button>
 
-        <hr class="divider">
+            <button id="booking-next"
+                    class="btn btn-primary"
+                    type="button"
+                    hidden>
+              ถัดไป
+            </button>
 
-        <section id="step-confirm">
-        <h2>ตรวจสอบและยืนยัน</h2>
+            <button id="booking-confirm"
+                    class="btn btn-primary"
+                    type="submit">
+              สร้างการจอง
+            </button>
 
-        <label class="field">
-            โค้ดส่วนลด
-            <input name="promotionCode" placeholder="เช่น WELCOME10">
-        </label>
+            <a class="btn" th:href="@{/bookings}">กลับรายการ</a>
+          </div>
 
-        <p>ผู้ติดต่อ: ตัวอย่างผู้ใช้ · 081-234-5678</p>
-        <p>วิธีชำระเงิน: ชำระ ณ ที่พัก</p>
-        </section>
+          <noscript>
+            <p>
+              กรอกข้อมูลทุกส่วนแล้วกดสร้างการจอง
+              ระบบจะตรวจสอบข้อมูลหลังส่งแบบฟอร์ม
+            </p>
+          </noscript>
+        </form>
 
+        <aside class="panel" aria-label="สรุปการเลือก">
+          <h2>สรุปการเลือก</h2>
+
+          <div class="summary-line">
+            <span>ห้องพัก</span>
+            <span id="summary-room">ยังไม่ได้เลือก</span>
+          </div>
+
+          <div class="summary-line">
+            <span>จำนวนคืน</span>
+            <span id="summary-nights">—</span>
+          </div>
+
+          <div class="summary-line">
+            <span>จำนวนสัตว์</span>
+            <span id="summary-pets">0 ตัว</span>
+          </div>
+
+          <p class="muted">ยอดจริงแสดงหลังระบบตรวจสอบและสร้างการจองสำเร็จ</p>
+        </aside>
+      </div>
+
+      <dialog id="create-dialog" aria-labelledby="create-dialog-title">
+        <h2 id="create-dialog-title">ยืนยันสร้างการจอง</h2>
+        <p id="create-dialog-text" style="white-space: pre-line"></p>
         <div class="row">
-        <button class="btn" type="button">ย้อนกลับ</button>
-        <button class="btn btn-primary" type="submit">ยืนยันการจอง</button>
+          <button id="create-dialog-close" class="btn" type="button">
+            กลับไปตรวจสอบ
+          </button>
+          <button id="create-dialog-confirm"
+                  class="btn btn-primary"
+                  type="button">
+            ยืนยันสร้างการจอง
+          </button>
         </div>
-    </form>
-
-    <aside class="panel">
-        <h3>สรุปราคา</h3>
-        <div class="summary-line"><span>ค่าห้อง 2 คืน</span><span>฿1,000</span></div>
-        <div class="summary-line"><span>บริการเสริม</span><span>฿100</span></div>
-        <div class="summary-line"><span>ส่วนลด</span><span>−฿100</span></div>
-        <div class="summary-line total"><span>รวม</span><span>฿1,000</span></div>
-    </aside>
-    </div>
+      </dialog>
     </main>
   </div>
-
-  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
 </body>
 </html>

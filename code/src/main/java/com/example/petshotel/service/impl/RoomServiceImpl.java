@@ -28,6 +28,7 @@ public class RoomServiceImpl implements RoomService {
         this.roomMapper = roomMapper;
     }
 
+    @Override
     @Transactional
     public RoomResponse createRoom(CreateRoomRequest request){
         if(roomRepository.existsByRoomNumber(request.roomNumber())){
@@ -46,14 +47,27 @@ public class RoomServiceImpl implements RoomService {
 
         return roomMapper.toResponse(saved);
 
-    };
+    }
 
+    @Override
     @Transactional(readOnly = true)
     public  RoomResponse getRoomById(Long id){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
         return roomMapper.toResponse(room);
     }
 
+    @Override
+    @Transactional(readOnly  = true)
+    public List<RoomResponse> getActiveRooms() {
+        List<RoomResponse> ActiveRooms = new ArrayList<>();
+        for(Room room:roomRepository.findByStatus(RoomStatus.ACTIVE)){
+            RoomResponse response = roomMapper.toResponse(room);
+            ActiveRooms.add(response);
+        }
+        return ActiveRooms;
+    }
+
+    @Override
     @Transactional(readOnly  = true)
     public List<RoomResponse> getAllRooms(){
         List<RoomResponse> AllRoom = new ArrayList<>();
@@ -64,8 +78,9 @@ public class RoomServiceImpl implements RoomService {
         }
         
         return AllRoom;
-    };
+    }
 
+    @Override
     @Transactional
     public RoomResponse deactivateRoom(Long id){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
@@ -75,6 +90,7 @@ public class RoomServiceImpl implements RoomService {
         return roomMapper.toResponse(room);
     }
 
+    @Override
     @Transactional
     public RoomResponse setRoomStatus(Long id,UpdateStatusRequest request){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
@@ -85,6 +101,7 @@ public class RoomServiceImpl implements RoomService {
         return roomMapper.toResponse(room);
     }
 
+    @Override
     @Transactional
     public RoomResponse updateRoom(Long id,UpdateRoomRequest request){
         Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
@@ -104,5 +121,5 @@ public class RoomServiceImpl implements RoomService {
 
         return roomMapper.toResponse(room);
 
-    };
+    }
 }
