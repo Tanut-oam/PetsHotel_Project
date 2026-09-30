@@ -43,10 +43,10 @@ public class SecurityConfig {
                 // STAFF และ ADMIN
                 .requestMatchers(
                     HttpMethod.POST,
-                    "/api/bookings//payment/confirm",
-                    "/api/bookings//confirm",
-                    "/api/bookings//check-in",
-                    "/api/bookings//check-out"
+                    "/api/bookings/*/payment/confirm",
+                    "/api/bookings/*/confirm",
+                    "/api/bookings/*/check-in",
+                    "/api/bookings/*/check-out"
                 ).hasAnyRole("STAFF", "ADMIN")
 
                 .requestMatchers(
