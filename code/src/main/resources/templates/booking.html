@@ -1,148 +1,257 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>สร้างการจอง · PetsHotel</title>
+  <link rel="stylesheet"
+        href="/css/styles.css"
+        th:href="@{/css/styles.css}">
 </head>
+
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a href="pets.html">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
-    </nav>
-
-    <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
-        <a href="room-detail.html">← กลับไปหน้าห้อง</a>
-    <h1>จอง Deluxe Room · ห้อง 101</h1>
+      <h1>สร้างการจอง</h1>
+      <p class="muted">
+        ตัวอย่างหน้าจอง ข้อมูลห้องและสัตว์เลี้ยงใช้เพื่อทดลองเท่านั้น
+        ยังไม่มีการบันทึกหรือชำระเงิน
+      </p>
 
-    <div class="steps">
-    <div class="step done">1. วันเข้าพัก</div>
-    <div class="step active">2. สัตว์เลี้ยง</div>
-    <div class="step">3. บริการเสริม</div>
-    <div class="step">4. ยืนยัน</div>
-    </div>
+      <div class="steps" aria-label="ขั้นตอนการจอง">
+        <div class="step active"
+             data-step-indicator="0"
+             aria-current="step">
+          1. ห้องและวันที่
+        </div>
+        <div class="step" data-step-indicator="1">
+          2. สัตว์เลี้ยง
+        </div>
+        <div class="step" data-step-indicator="2">
+          3. บริการเสริม
+        </div>
+        <div class="step" data-step-indicator="3">
+          4. ตรวจสอบข้อมูล
+        </div>
+      </div>
 
-    <div class="detail-layout">
-    <form class="panel">
-        <section id="step-dates">
-        <h2>วันเข้าพัก</h2>
+      <p id="booking-error" role="alert" hidden></p>
+      <p id="booking-result" role="status" hidden></p>
 
-        <div class="grid cols-2">
+      <div class="detail-layout">
+
+        <!-- ใช้พื้นที่รับข้อมูลโดยไม่มีการ submit ไป backend -->
+        <div class="panel"
+             id="booking-form"
+             role="form"
+             aria-label="แบบฟอร์มตัวอย่างการจอง">
+
+          <section data-booking-step="0"
+                   aria-labelledby="heading-dates">
+            <h2 id="heading-dates" tabindex="-1">ห้องพักและวันที่</h2>
+
             <label class="field">
-            เช็กอิน
-            <input type="date" name="checkIn" required>
+              ห้องพักตัวอย่าง
+              <select id="room-id" name="roomId" required>
+                <option value="">เลือกห้องพัก</option>
+                <option value="101"
+                        data-name="Deluxe Room 101"
+                        data-capacity="2">
+                  Deluxe Room 101 · รับได้ 2 ตัว
+                </option>
+                <option value="201"
+                        data-name="Family Room 201"
+                        data-capacity="3">
+                  Family Room 201 · รับได้ 3 ตัว
+                </option>
+              </select>
+            </label>
+
+            <div class="grid cols-2">
+              <label class="field">
+                วันเช็กอิน
+                <input id="check-in"
+                       type="date"
+                       name="checkInDate"
+                       required>
+              </label>
+
+              <label class="field">
+                วันเช็กเอาต์
+                <input id="check-out"
+                       type="date"
+                       name="checkOutDate"
+                       required>
+              </label>
+            </div>
+
+            <p class="muted">
+              หน้านี้ยังไม่ตรวจห้องว่างจริง
+              วันเช็กเอาต์ต้องอยู่หลังวันเช็กอิน
+            </p>
+          </section>
+
+          <section data-booking-step="1"
+                   aria-labelledby="heading-pets">
+            <h2 id="heading-pets" tabindex="-1">เลือกสัตว์เลี้ยง</h2>
+
+            <p class="muted">
+              เลือกอย่างน้อย 1 ตัว และไม่เกินความจุห้องที่เลือก
+            </p>
+
+            <label class="choice">
+              <input type="checkbox"
+                     name="petIds"
+                     value="1"
+                     data-name="Mochi">
+              <span class="choice-text">
+                <strong>Mochi</strong><br>
+                <small>สุนัข · ข้อมูลตัวอย่าง</small>
+              </span>
+            </label>
+
+            <label class="choice">
+              <input type="checkbox"
+                     name="petIds"
+                     value="2"
+                     data-name="Lily">
+              <span class="choice-text">
+                <strong>Lily</strong><br>
+                <small>แมว · ข้อมูลตัวอย่าง</small>
+              </span>
+            </label>
+
+            <label class="choice">
+              <input type="checkbox"
+                     name="petIds"
+                     value="3"
+                     data-name="Coco">
+              <span class="choice-text">
+                <strong>Coco</strong><br>
+                <small>สุนัข · ข้อมูลตัวอย่าง</small>
+              </span>
+            </label>
+
+            <p id="pet-selection-count" aria-live="polite">
+              ยังไม่ได้เลือกสัตว์เลี้ยง
+            </p>
+          </section>
+
+          <section data-booking-step="2"
+                   aria-labelledby="heading-services">
+            <h2 id="heading-services" tabindex="-1">บริการเสริม</h2>
+            <p class="muted">
+              ใส่จำนวนครั้งที่ต้องการ หรือ 0 หากไม่เลือก
+              รายการเหล่านี้เป็นข้อมูลตัวอย่าง
+            </p>
+
+            <label class="field">
+              อาบน้ำ — จำนวนครั้ง
+              <input type="number"
+                     name="bathQuantity"
+                     data-service-id="1"
+                     data-name="อาบน้ำ"
+                     value="0"
+                     min="0"
+                     step="1"
+                     required>
             </label>
 
             <label class="field">
-            เช็กเอาต์
-            <input type="date" name="checkOut" required>
+              พาเดินเล่น — จำนวนครั้ง
+              <input type="number"
+                     name="walkQuantity"
+                     data-service-id="2"
+                     data-name="พาเดินเล่น"
+                     value="0"
+                     min="0"
+                     step="1"
+                     required>
             </label>
+          </section>
+
+          <section data-booking-step="3"
+                   aria-labelledby="heading-review">
+            <h2 id="heading-review" tabindex="-1">ตรวจสอบข้อมูล</h2>
+
+            <dl>
+              <dt>ห้องพัก</dt>
+              <dd id="review-room">—</dd>
+
+              <dt>วันเข้าพัก</dt>
+              <dd id="review-dates">—</dd>
+
+              <dt>จำนวนคืน</dt>
+              <dd id="review-nights">—</dd>
+
+              <dt>สัตว์เลี้ยง</dt>
+              <dd id="review-pets">—</dd>
+
+              <dt>บริการเสริม</dt>
+              <dd id="review-services">—</dd>
+            </dl>
+
+            <p class="muted">
+              การยืนยันในหน้านี้เป็นเพียงการทดลอง
+              ไม่ได้สร้างการจองจริง
+            </p>
+          </section>
+
+          <div class="row">
+            <button id="booking-prev"
+                    class="btn"
+                    type="button"
+                    disabled>
+              ย้อนกลับ
+            </button>
+
+            <button id="booking-next"
+                    class="btn btn-primary"
+                    type="button"
+                    disabled>
+              ถัดไป
+            </button>
+
+            <button id="booking-confirm"
+                    class="btn btn-primary"
+                    type="button"
+                    hidden
+                    disabled>
+              ยืนยันตัวอย่าง
+            </button>
+          </div>
         </div>
-        </section>
 
-        <hr class="divider">
+        <aside class="panel" aria-label="สรุปการเลือก">
+          <h2>สรุปการเลือก</h2>
 
-        <section id="step-pets">
-        <h2>เลือกสัตว์เลี้ยง</h2>
+          <div class="summary-line">
+            <span>ห้องพัก</span>
+            <span id="summary-room">ยังไม่ได้เลือก</span>
+          </div>
 
-        <label class="choice">
-            <input type="checkbox" name="petIds" value="1">
-            <img class="pet-photo" src="assets/dog.jpg" alt="Mochi">
-            <span class="choice-text">
-            <strong>Mochi</strong><br>
-            <small>สุนัข · ชิบะอินุ</small>
-            </span>
-        </label>
+          <div class="summary-line">
+            <span>จำนวนคืน</span>
+            <span id="summary-nights">—</span>
+          </div>
 
-        <label class="choice">
-            <input type="checkbox" name="petIds" value="2">
-            <img class="pet-photo" src="assets/cat.jpg" alt="Lily">
-            <span class="choice-text">
-            <strong>Lily</strong><br>
-            <small>แมว · บริติชช็อตแฮร์</small>
-            </span>
-        </label>
+          <div class="summary-line">
+            <span>จำนวนสัตว์</span>
+            <span id="summary-pets">0 ตัว</span>
+          </div>
 
-        <a class="btn btn-small" href="pets.html">+ เพิ่มสัตว์เลี้ยง</a>
-        </section>
+          <p class="muted">
+            ยังไม่แสดงราคาและส่วนลด
+            ยอดจริงต้องคำนวณจากระบบเมื่อเชื่อมต่อแล้ว
+          </p>
+        </aside>
 
-        <hr class="divider">
-
-        <section id="step-services">
-        <h2>บริการเสริม</h2>
-
-        <label class="choice">
-            <input type="checkbox" name="serviceIds" value="FOOD">
-            <span class="choice-text">อาหารเสริม</span>
-            <strong>฿50 / วัน</strong>
-        </label>
-
-        <label class="choice">
-            <input type="checkbox" name="serviceIds" value="BATH">
-            <span class="choice-text">อาบน้ำ</span>
-            <strong>฿300 / ครั้ง</strong>
-        </label>
-
-        <label class="choice">
-            <input type="checkbox" name="serviceIds" value="WALK">
-            <span class="choice-text">พาเดินเล่น</span>
-            <strong>฿100 / วัน</strong>
-        </label>
-        </section>
-
-        <hr class="divider">
-
-        <section id="step-confirm">
-        <h2>ตรวจสอบและยืนยัน</h2>
-
-        <label class="field">
-            โค้ดส่วนลด
-            <input name="promotionCode" placeholder="เช่น WELCOME10">
-        </label>
-
-        <p>ผู้ติดต่อ: ตัวอย่างผู้ใช้ · 081-234-5678</p>
-        <p>วิธีชำระเงิน: ชำระ ณ ที่พัก</p>
-        </section>
-
-        <div class="row">
-        <button class="btn" type="button">ย้อนกลับ</button>
-        <button class="btn btn-primary" type="submit">ยืนยันการจอง</button>
-        </div>
-    </form>
-
-    <aside class="panel">
-        <h3>สรุปราคา</h3>
-        <div class="summary-line"><span>ค่าห้อง 2 คืน</span><span>฿1,000</span></div>
-        <div class="summary-line"><span>บริการเสริม</span><span>฿100</span></div>
-        <div class="summary-line"><span>ส่วนลด</span><span>−฿100</span></div>
-        <div class="summary-line total"><span>รวม</span><span>฿1,000</span></div>
-    </aside>
-    </div>
+      </div>
     </main>
   </div>
-
-  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
 </body>
 </html>

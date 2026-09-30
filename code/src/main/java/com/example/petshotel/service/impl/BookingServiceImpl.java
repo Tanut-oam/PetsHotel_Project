@@ -342,6 +342,15 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.toResponse(savedBooking);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getBookingsByUserId(Long userId) {
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(bookingMapper::toResponse)
+                .toList();
+    }
+
     // =========================================================
     // PRIVATE HELPER METHODS
     // =========================================================
