@@ -32,6 +32,12 @@ public class ExtraServiceServiceImpl implements ExtraServiceService {
                 .orElseThrow(() -> new ResourceNotFoundException("ExtraService", id));
     }
 
+    @Override 
+    @Transactional(readOnly = true)
+    public List<ExtraService> getActiveExtraServices(){
+        return extraServiceRepository.findByActiveTrue();
+    }
+
     @Override
     @Transactional
     public ExtraService createExtraService(ExtraService extraService) {
