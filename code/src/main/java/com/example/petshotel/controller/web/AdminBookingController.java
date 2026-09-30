@@ -7,6 +7,7 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.BookingService;
 import com.example.petshotel.service.CurrentUserService;
+import com.example.petshotel.service.PaymentService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,7 @@ public class AdminBookingController {
 
     private final BookingService bookingService;
     private final CurrentUserService currentUserService;
+    private final PaymentService paymentService;
 
     @GetMapping
     public String showBookings(Principal principal, Model model) {
@@ -89,5 +91,35 @@ public class AdminBookingController {
                 && user.getRole() != UserRole.ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
+    }
+
+    @PostMapping("/{id}/payment/confirm")
+    public String confirmPayment(
+            @PathVariable("id") Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        requireStaff(principal);
+
+        if (id <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            paymentService.confirmPayment(id);
+
+            redirectAttributes.addFlashAttribute(
+                    "message",
+                    "บันทึกการชำระเงินและออกใบเสร็จเรียบร้อยแล้ว"
+            );
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "error", ex.getMessage()
+            );
+        }
+
+        return "redirect:/admin/bookings";
     }
 }

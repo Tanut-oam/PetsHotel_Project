@@ -2,12 +2,14 @@ package com.example.petshotel.controller.web;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import com.example.petshotel.config.SecurityConfig;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.domain.enums.UserRole;
+import com.example.petshotel.domain.entity.Receipt;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
 import com.example.petshotel.service.BookingService;
@@ -16,6 +18,8 @@ import com.example.petshotel.service.ExtraServiceService;
 import com.example.petshotel.service.PetService;
 import com.example.petshotel.service.PromotionService;
 import com.example.petshotel.service.RoomService;
+import com.example.petshotel.service.PaymentService;
+import com.example.petshotel.service.ReceiptService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -118,6 +122,11 @@ class BookingControllerTest {
                     ".html"
             );
         }
+
+        @Bean
+        PaymentService paymentService() {
+            return mock(PaymentService.class);
+        }
     }
 
     @Autowired
@@ -140,6 +149,9 @@ class BookingControllerTest {
 
     @Autowired
     private PromotionService promotionService;
+
+    @Autowired
+    private PaymentService paymentService;
 
     private MockMvc mvc;
     private User account;
