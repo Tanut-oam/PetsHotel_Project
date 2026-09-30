@@ -15,4 +15,5 @@ public interface RoomService {
     RoomResponse updateRoom(Long id,UpdateRoomRequest request);
     RoomResponse deactivateRoom(Long id);
     RoomResponse setRoomStatus(Long id,UpdateStatusRequest request);
+    List<RoomResponse> getActiveRooms();
 }

@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 
 @Controller
-@RequestMapping("/rooms")
 @RequiredArgsConstructor
 public class RoomController {
     private final RoomService roomService;
