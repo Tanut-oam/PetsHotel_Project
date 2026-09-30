@@ -2,6 +2,8 @@ package com.example.petshotel.dto.request;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import com.example.petshotel.domain.enums.PromotionType;
 
 import jakarta.validation.constraints.Digits;
@@ -18,16 +20,15 @@ public record CreatePromotionRequest(
 
     @NotNull(message = "Discount value is required")
     @Positive(message = "Discount value must be greater than zero")
-    @Digits(
-    integer = 8,
-    fraction = 2,
-    message = "Discount value must have at most 8 digits and 2 decimal places")
+    @Digits(integer = 8, fraction = 2, message = "Discount value must have at most 8 digits and 2 decimal places")
     BigDecimal discountValue,
 
     @NotNull(message = "Start date is required")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     LocalDate startDate,
 
     @NotNull(message = "End date is required")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     LocalDate endDate,
 
     boolean active
