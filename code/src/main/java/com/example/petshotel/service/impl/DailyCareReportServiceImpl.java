@@ -92,6 +92,15 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
 
         return reportRepository.findByBookingPet_IdOrderByReportDateDesc(bookingPetId).stream().map(mapper::toResponse).toList();
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public  List<DailyCareReportResponse> getAllReportsForStaffAndAdmin(Long currentUserId){
+        User currentUser = findUser(currentUserId);
+        requireStaffOrAdmin(currentUser);
+
+        return  reportRepository.findAllByOrderByReportDateDescIdDesc().stream().map(mapper::toResponse).toList();
+    }
 
     @Override
     @Transactional 
