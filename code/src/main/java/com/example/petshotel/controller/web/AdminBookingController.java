@@ -5,8 +5,8 @@ import java.security.Principal;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.exception.ResourceNotFoundException;
-import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.BookingService;
+import com.example.petshotel.service.CurrentUserService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +23,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminBookingController {
 
     private final BookingService bookingService;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     @GetMapping
     public String showBookings(Principal principal, Model model) {
@@ -73,9 +73,13 @@ public class AdminBookingController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        User user;
+
+        try {
+            user = currentUserService.getByEmail(principal.getName());
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
 
         if (!Boolean.TRUE.equals(user.getActive())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
