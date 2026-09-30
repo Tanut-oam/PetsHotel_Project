@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface ExtraServiceService {
     List<ExtraService> getAllExtraServices();
+    List<ExtraService> getActiveExtraServices();
     ExtraService getExtraServiceById(Long id);
     ExtraService createExtraService(ExtraService extraService);
     ExtraService updateExtraService(Long id, ExtraService extraServiceDetails);

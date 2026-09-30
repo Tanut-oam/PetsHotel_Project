@@ -1,13 +1,8 @@
 package com.example.petshotel.controller.web;
 
-import com.example.petshotel.domain.entity.User;
-import com.example.petshotel.domain.enums.RoomStatus;
-import com.example.petshotel.dto.request.CreateBookingRequest;
-import com.example.petshotel.dto.response.BookingResponse;
-import com.example.petshotel.exception.ResourceNotFoundException;
-import com.example.petshotel.exception.RoomNotAvailableException;
-import com.example.petshotel.repository.*;
-import com.example.petshotel.service.BookingService;
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.Objects;
 
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -16,13 +11,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.security.Principal;
-import java.util.HashMap;
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.dto.request.CreateBookingRequest;
+import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.exception.RoomNotAvailableException;
+import com.example.petshotel.service.BookingService;
+import com.example.petshotel.service.CurrentUserService;
+import com.example.petshotel.service.ExtraServiceService;
+import com.example.petshotel.service.PetService;
+import com.example.petshotel.service.PromotionService;
+import com.example.petshotel.service.RoomService;
 
 @Controller
 @RequestMapping("/bookings")
@@ -30,16 +40,16 @@ import java.util.HashMap;
 public class BookingController {
 
     private final BookingService bookingService;
-    private final UserRepository userRepository;
-    private final RoomRepository roomRepository;
-    private final PetRepository petRepository;
-    private final ExtraServiceRepository extraServiceRepository;
-    private final PromotionRepository promotionRepository;
+    private final CurrentUserService currentUserService;
+    private final RoomService roomService;
+    private final PetService petService;
+    private final ExtraServiceService extraServiceService;
+    private final PromotionService promotionService;
     private final Validator validator;
 
     @InitBinder("bookingForm")
     public void configureBinding(WebDataBinder binder) {
-        // userId must come from the logged-in account, not the form.
+        // userId ต้องมาจากบัญชีที่ล็อกอิน ไม่รับจาก form
         binder.setAllowedFields(
                 "roomId",
                 "petIds",
@@ -58,7 +68,9 @@ public class BookingController {
 
         User user = currentUser(principal);
 
-        CreateBookingRequest form = new CreateBookingRequest();
+        CreateBookingRequest form =
+                new CreateBookingRequest();
+
         form.setRoomId(roomId);
 
         loadChoices(model, user, form);
@@ -69,52 +81,63 @@ public class BookingController {
 
     @PostMapping
     public String createBooking(
-            @ModelAttribute("bookingForm") CreateBookingRequest form,
+            @ModelAttribute("bookingForm")
+            CreateBookingRequest form,
             BindingResult bindingResult,
             Principal principal,
             Model model) {
 
         User user = currentUser(principal);
+
+        // ป้องกันการจองในชื่อผู้ใช้อื่น
         form.setUserId(user.getId());
 
-        // Zero means the optional service was not selected.
-        if (form.getExtraServiceQuantities() != null) {
-            form.getExtraServiceQuantities().entrySet()
-                    .removeIf(entry -> Integer.valueOf(0).equals(entry.getValue()));
-        }
+        removeUnselectedServices(form);
 
-        // Validate after assigning the trusted userId.
-        // Conversion errors, such as invalid dates, are already in BindingResult.
-        if (!bindingResult.hasErrors()) {
-            validator.validate(form).forEach(violation ->
-                    bindingResult.rejectValue(
-                            violation.getPropertyPath().toString(),
-                            "invalid",
-                            violation.getMessage()
-                    )
-            );
-        }
+        validateForm(form, bindingResult);
 
         if (bindingResult.hasErrors()) {
             loadChoices(model, user, form);
             return "booking";
         }
 
-        BookingResponse created;
-
         try {
-            created = bookingService.createBooking(form);
+            BookingResponse created =
+                    bookingService.createBooking(form);
+
+            return "redirect:/bookings/"
+                    + created.getId();
+
         } catch (ResourceNotFoundException
                  | RoomNotAvailableException
                  | IllegalArgumentException
                  | IllegalStateException ex) {
 
-            bindingResult.reject("booking.failed", ex.getMessage());
+            bindingResult.reject(
+                    "booking.failed",
+                    ex.getMessage()
+            );
+
             loadChoices(model, user, form);
             return "booking";
         }
+    }
 
-        return "redirect:/bookings/" + created.getId();
+    @GetMapping
+    public String showMyBookings(
+            Principal principal,
+            Model model) {
+
+        User user = currentUser(principal);
+
+        model.addAttribute(
+                "bookings",
+                bookingService.getBookingsByUserId(
+                        user.getId()
+                )
+        );
+
+        return "my-bookings";
     }
 
     @GetMapping("/{id}")
@@ -124,33 +147,13 @@ public class BookingController {
             Model model) {
 
         User user = currentUser(principal);
-        BookingResponse booking;
+        BookingResponse booking = findBooking(id);
 
-        try {
-            booking = bookingService.getBookingById(id);
-        } catch (ResourceNotFoundException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-
-        // This customer page only displays the customer's own booking.
-        if (!user.getId().equals(booking.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        requireOwner(user, booking);
 
         model.addAttribute("booking", booking);
+
         return "booking-detail";
-    }
-
-    @GetMapping
-    public String showMyBookings(Principal principal, Model model) {
-        User user = currentUser(principal);
-
-        model.addAttribute(
-                "bookings",
-                bookingService.getBookingsByUserId(user.getId())
-        );
-
-        return "my-bookings";
     }
 
     @PostMapping("/{id}/cancel")
@@ -160,28 +163,30 @@ public class BookingController {
             RedirectAttributes redirectAttributes) {
 
         User user = currentUser(principal);
-        BookingResponse booking;
+        BookingResponse booking = findBooking(id);
 
-        try {
-            booking = bookingService.getBookingById(id);
-        } catch (ResourceNotFoundException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-
-        // หน้าลูกค้าให้จัดการเฉพาะการจองของบัญชีตัวเอง
-        if (!user.getId().equals(booking.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        requireOwner(user, booking);
 
         try {
             bookingService.cancelBooking(id);
+
             redirectAttributes.addFlashAttribute(
-                    "message", "ยกเลิกการจองเรียบร้อยแล้ว"
+                    "message",
+                    "ยกเลิกการจองเรียบร้อยแล้ว"
             );
+
         } catch (ResourceNotFoundException ex) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND
+            );
+
+        } catch (IllegalArgumentException
+                 | IllegalStateException ex) {
+
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    ex.getMessage()
+            );
         }
 
         return "redirect:/bookings/" + id;
@@ -189,18 +194,90 @@ public class BookingController {
 
     private User currentUser(Principal principal) {
         if (principal == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED
+            );
         }
 
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+        User user;
+
+        try {
+            user = currentUserService.getByEmail(
+                    principal.getName()
+            );
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
 
         if (!Boolean.TRUE.equals(user.getActive())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN
+            );
         }
 
         return user;
+    }
+
+    private BookingResponse findBooking(Long id) {
+        try {
+            return bookingService.getBookingById(id);
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND
+            );
+        }
+    }
+
+    private void requireOwner(
+            User user,
+            BookingResponse booking) {
+
+        if (!Objects.equals(
+                user.getId(),
+                booking.getUserId())) {
+
+            // ใช้ 404 เพื่อไม่เปิดเผยรายการของผู้ใช้อื่น
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND
+            );
+        }
+    }
+
+    private void removeUnselectedServices(
+            CreateBookingRequest form) {
+
+        if (form.getExtraServiceQuantities() == null) {
+            return;
+        }
+
+        form.getExtraServiceQuantities()
+                .entrySet()
+                .removeIf(entry ->
+                        Integer.valueOf(0)
+                                .equals(entry.getValue())
+                );
+    }
+
+    private void validateForm(
+            CreateBookingRequest form,
+            BindingResult bindingResult) {
+
+        // Conversion error เช่นรูปแบบวันที่ผิด
+        // จะอยู่ใน BindingResult อยู่แล้ว
+        if (bindingResult.hasErrors()) {
+            return;
+        }
+
+        validator.validate(form).forEach(violation ->
+                bindingResult.rejectValue(
+                        violation.getPropertyPath()
+                                .toString(),
+                        "invalid",
+                        violation.getMessage()
+                )
+        );
     }
 
     private void loadChoices(
@@ -208,23 +285,47 @@ public class BookingController {
             User user,
             CreateBookingRequest form) {
 
-        var services = extraServiceRepository.findByActiveTrue();
+        var services =
+                extraServiceService
+                        .getActiveExtraServices();
 
         if (form.getExtraServiceQuantities() == null) {
-            form.setExtraServiceQuantities(new HashMap<>());
+            form.setExtraServiceQuantities(
+                    new HashMap<>()
+            );
         }
 
         for (var service : services) {
-            form.getExtraServiceQuantities().putIfAbsent(service.getId(), 0);
+            form.getExtraServiceQuantities()
+                    .putIfAbsent(
+                            service.getId(),
+                            0
+                    );
         }
 
         model.addAttribute("customer", user);
-        model.addAttribute("rooms", roomRepository.findByStatus(RoomStatus.ACTIVE));
+
+        model.addAttribute(
+                "rooms",
+                roomService.getActiveRooms()
+        );
+
         model.addAttribute(
                 "pets",
-                petRepository.findByOwner_IdAndActiveTrue(user.getId())
+                petService.getPetsByOwner(
+                        user.getId()
+                )
         );
-        model.addAttribute("extraServices", services);
-        model.addAttribute("promotions", promotionRepository.findByActiveTrue());
+
+        model.addAttribute(
+                "extraServices",
+                services
+        );
+
+        model.addAttribute(
+                "promotions",
+                promotionService
+                        .getActivePromotions()
+        );
     }
 }

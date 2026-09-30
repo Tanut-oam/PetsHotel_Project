@@ -2,6 +2,7 @@ package com.example.petshotel.notification;
 
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -34,8 +35,7 @@ public class EmailNotificationService {
             mailSender.send(message);
             log.info("Sent confirmation email to {} for Booking #{}", toEmail, booking.getId());
 
-        } catch (MessagingException e) {
-            // อย่าให้การส่งอีเมลล้มเหลวไปทำให้ transaction การจองพัง
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send email for Booking #{}: {}", booking.getId(), e.getMessage());
         }
     }

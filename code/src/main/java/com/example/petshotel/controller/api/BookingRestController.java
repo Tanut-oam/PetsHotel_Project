@@ -5,8 +5,9 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateBookingApiRequest;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
-import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.BookingService;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.CurrentUserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ import java.util.Objects;
 public class BookingRestController {
 
     private final BookingService bookingService;
-    private final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(
@@ -123,11 +124,16 @@ public class BookingRestController {
             );
         }
 
-        User user = userRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED,
-                        "Authenticated user was not found"
-                ));
+        User user;
+
+        try {
+            user = currentUserService.getByEmail(principal.getName());
+        } catch (ResourceNotFoundException ex) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Authenticated user was not found"
+            );
+        }
 
         if (!Boolean.TRUE.equals(user.getActive())) {
             throw new AccessDeniedException("Account is inactive");

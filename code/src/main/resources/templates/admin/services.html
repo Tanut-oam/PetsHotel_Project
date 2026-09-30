@@ -3,127 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel Admin</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>บริการเสริม | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
+
 <body class="admin">
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
-    <div class="top-actions">
-      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
-      <span>ผู้ดูแลระบบ</span>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a class="active" th:href="@{/admin}">▦ ภาพรวม</a>
-      <a href="bookings.html">▤ จัดการการจอง</a>
-      <a href="rooms.html">▣ จัดการห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยง</a>
-      <a th:href="@{/admin/services}">✿ บริการเสริม</a>
-      <a th:href="@{/admin/promotions}">◇ โปรโมชัน</a>
-      <a href="reports.html">▤ รายงานการดูแล</a>
-      <a href="users.html">♙ สมาชิก</a>
-      <a href="settings.html">⚙ ตั้งค่า</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content">
-        <div class="section-title">
-            <h1>บริการเสริม</h1>
-            <a id="add-extra-service" class="btn btn-primary" href="#extra-service-form">+ เพิ่มบริการ</a>
-            </div>
+      <div class="section-title">
+        <h1>บริการเสริม</h1>
+        <a class="btn btn-primary"
+           th:href="@{/admin/services} + '#extra-service-form'">
+          + เพิ่มบริการ
+        </a>
+      </div>
 
-            <div class="panel table-scroll">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>ชื่อบริการ</th>
-                    <th>ราคา</th>
-                    <th>สถานะ</th>
-                    <th>จัดการ</th>
-                </tr>
-                </thead>
+      <p th:if="${message}"
+         th:text="${message}"
+         role="status"></p>
 
-                <tbody>
-                  <tr th:if="${#lists.isEmpty(extraServices)}">
-                      <td colspan="4">ยังไม่มีบริการเสริม</td>
-                  </tr>
+      <p th:if="${error}"
+         th:text="${error}"
+         role="alert"></p>
 
-                  <tr th:each="service : ${extraServices}">
-                      <td th:text="${service.name}">ชื่อบริการ</td>
+      <div class="panel table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ชื่อบริการ</th>
+              <th>ราคา</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
 
-                      <td th:text="|฿${service.price}|">฿0.00</td>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(extraServices)}">
+              <td colspan="4">ยังไม่มีบริการเสริม</td>
+            </tr>
 
-                      <td>
-                          <span th:if="${service.active}" class="badge">
-                              เปิดใช้
-                          </span>
-                          <span th:unless="${service.active}"
-                                class="badge badge-danger">
-                              ปิดใช้
-                          </span>
-                      </td>
+            <tr th:each="service : ${extraServices}">
+              <td th:text="${service.name}">ชื่อบริการ</td>
+              <td th:text="|฿${service.price}|">฿0.00</td>
 
-                      <td>
-                          <button class="btn btn-small edit-extra-service"
-                                  type="button"
-                                  th:attr="data-service-id=${service.id}">
-                              แก้ไข
-                          </button>
-                          <button class="btn btn-small deactivate-extra-service"
-                                  type="button"
-                                  th:attr="data-service-id=${service.id}"
-                                  th:disabled="${!service.active}">
-                              ปิดใช้
-                          </button>
-                      </td>
-                  </tr>
-              </tbody>
-            </table>
-            </div>
+              <td>
+                <span th:if="${service.active}" class="badge">
+                  เปิดใช้
+                </span>
 
-            <div class="section-title">
-            <h2>ฟอร์มบริการเสริม</h2>
-            </div>
+                <span th:unless="${service.active}"
+                      class="badge badge-danger">
+                  ปิดใช้
+                </span>
+              </td>
 
-            <form id="extra-service-form" class="panel grid cols-2">
-              <label class="field">
-                  ชื่อบริการ
-                  <input name="name" required>
-              </label>
+              <td>
+                <a class="btn btn-small"
+                   th:href="@{/admin/services(editId=${service.id})} + '#extra-service-form'">
+                  แก้ไข
+                </a>
 
-              <label class="field">
-                  รายละเอียด
-                  <textarea name="description"></textarea>
-              </label>
+                <form class="deactivate-extra-service-form"
+                      th:action="@{/admin/services/{id}/deactivate(id=${service.id})}"
+                      th:attr="data-name=${service.name}"
+                      method="post"
+                      style="display:inline">
+                  <button class="btn btn-small"
+                          type="submit"
+                          th:disabled="${!service.active}">
+                    ปิดใช้
+                  </button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-              <label class="field">
-                  ราคา
-                  <input type="number"
-                        name="price"
-                        min="0"
-                        step="0.01"
-                        required>
-              </label>
+      <div class="section-title">
+        <h2 th:text="${editingId == null ? 'เพิ่มบริการเสริม' : 'แก้ไขบริการเสริม'}">
+          ฟอร์มบริการเสริม
+        </h2>
+      </div>
 
-              <label class="field">
-                  <input type="checkbox" name="active" checked>
-                  เปิดใช้บริการ
-              </label>
+      <form id="extra-service-form"
+            class="panel grid cols-2"
+            th:action="@{/admin/services}"
+            th:object="${serviceForm}"
+            method="post">
 
-              <p id="extra-service-message"
-                role="status"
-                aria-live="polite"></p>
+        <input th:if="${editingId != null}"
+               type="hidden"
+               name="id"
+               th:value="${editingId}">
 
-              <button class="btn btn-primary" type="submit" disabled>
-                  บันทึกบริการ
-              </button>
-          </form>
+        <div th:if="${#fields.hasAnyErrors()}" role="alert">
+          <ul>
+            <li th:each="formError : ${#fields.allErrors()}"
+                th:text="${formError}">
+              ข้อมูลไม่ถูกต้อง
+            </li>
+          </ul>
+        </div>
+
+        <label class="field">
+          ชื่อบริการ
+          <input th:field="*{name}" required>
+        </label>
+
+        <label class="field">
+          รายละเอียด
+          <textarea th:field="*{description}"></textarea>
+        </label>
+
+        <label class="field">
+          ราคา
+          <input type="number"
+                 th:field="*{price}"
+                 min="0"
+                 step="0.01"
+                 required>
+        </label>
+
+        <label class="field">
+          <input type="checkbox" th:field="*{active}">
+          เปิดใช้บริการ
+        </label>
+
+        <button class="btn btn-primary"
+                type="submit"
+                th:text="${editingId == null ? 'บันทึกบริการ' : 'บันทึกการแก้ไข'}">
+          บันทึกบริการ
+        </button>
+
+        <a class="btn btn-small" th:href="@{/admin/services}">
+          ล้างฟอร์ม / ยกเลิก
+        </a>
+      </form>
     </main>
   </div>
 
   <script th:src="@{/js/admin-extra-services.js}" defer></script>
-
 </body>
 </html>
