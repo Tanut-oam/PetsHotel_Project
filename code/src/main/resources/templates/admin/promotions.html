@@ -17,18 +17,25 @@
       <div class="section-title">
         <h1>โปรโมชัน</h1>
         <a class="btn btn-primary"
-           th:href="@{/admin/promotions} + '#promotion-form'">
-          + เพิ่มโปรโมชัน
+            data-open-form
+            th:href="@{/admin/promotions(create=true)}">
+            + เพิ่มโปรโมชัน
         </a>
       </div>
 
-      <p th:if="${message}"
-         th:text="${message}"
-         role="status"></p>
+        <div th:if="${message}"
+            class="flash-notice flash-success"
+            role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+        </div>
 
-      <p th:if="${error}"
-         th:text="${error}"
-         role="alert"></p>
+        <div th:if="${error}"
+            class="flash-notice flash-error"
+            role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+        </div>
 
       <div class="panel table-scroll">
         <table class="table">
@@ -64,116 +71,116 @@
 
               <td th:text="${promotion.endDate}">2026-12-31</td>
 
-              <td>
-                <span th:if="${promotion.active}" class="badge">
-                  เปิดใช้
-                </span>
-
-                <span th:unless="${promotion.active}"
-                      class="badge badge-danger">
-                  ปิดใช้
-                </span>
-              </td>
+            <td>
+            <span th:if="${promotion.active}" class="badge">
+                เปิดใช้
+            </span>
+            <span th:unless="${promotion.active}" class="badge badge-danger">
+                ปิดใช้
+            </span>
+            </td>
 
               <td>
                 <a class="btn btn-small"
-                   th:href="@{/admin/promotions(editId=${promotion.id})} + '#promotion-form'">
-                  แก้ไข
+                    th:href="@{/admin/promotions(editId=${promotion.id})}">
+                    แก้ไข
                 </a>
-
-                <form class="deactivate-promotion-form"
-                      th:action="@{/admin/promotions/{id}/deactivate(id=${promotion.id})}"
-                      th:attr="data-name=${promotion.name}"
-                      method="post"
-                      style="display:inline">
-                  <button class="btn btn-small"
-                          type="submit"
-                          th:disabled="${!promotion.active}">
-                    ปิดใช้
-                  </button>
-                </form>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="section-title">
-        <h2 th:text="${editingId == null ? 'เพิ่มโปรโมชัน' : 'แก้ไขโปรโมชัน'}">
-          ฟอร์มโปรโมชัน
-        </h2>
-      </div>
 
-      <form id="promotion-form"
-            class="panel grid cols-2"
-            th:action="@{/admin/promotions}"
-            th:object="${promotionForm}"
-            method="post">
+      <dialog class="admin-form-dialog"
+        aria-labelledby="promotion-dialog-title">
 
-        <input th:if="${editingId != null}"
-               type="hidden"
-               name="id"
-               th:value="${editingId}">
+        <form id="promotion-form"
+                class="admin-dialog-form"
+                th:action="@{/admin/promotions}"
+                th:object="${promotionForm}"
+                th:attr="data-auto-open=${editingId != null or #fields.hasAnyErrors()}"
+                method="post">
 
-        <div th:if="${#fields.hasAnyErrors()}" role="alert">
-          <ul>
-            <li th:each="formError : ${#fields.allErrors()}"
-                th:text="${formError}">
-              ข้อมูลไม่ถูกต้อง
-            </li>
-          </ul>
-        </div>
+            <h2 id="promotion-dialog-title"
+                th:text="${editingId == null ? 'เพิ่มโปรโมชัน' : 'แก้ไขโปรโมชัน'}">
+            เพิ่มโปรโมชัน
+            </h2>
 
-        <label class="field">
-          ชื่อโปรโมชัน
-          <input th:field="*{name}" required>
-        </label>
+            <input th:if="${editingId != null}"
+                type="hidden"
+                name="id"
+                th:value="${editingId}">
 
-        <label class="field">
-          ประเภทส่วนลด
-          <select th:field="*{type}" required>
-            <option value="PERCENTAGE">เปอร์เซ็นต์</option>
-            <option value="FIXED_AMOUNT">จำนวนเงิน</option>
-          </select>
-        </label>
+            <div class="admin-form-errors"
+                th:if="${#fields.hasAnyErrors()}"
+                role="alert">
+            <ul>
+                <li th:each="formError : ${#fields.allErrors()}"
+                    th:text="${formError}">
+                ข้อมูลไม่ถูกต้อง
+                </li>
+            </ul>
+            </div>
 
-        <label class="field">
-          มูลค่าส่วนลด
-          <input type="number"
-                 th:field="*{discountValue}"
-                 min="0.01"
-                 step="0.01"
-                 required>
-        </label>
+            <div class="grid cols-2">
+            <label class="field">
+                ชื่อโปรโมชัน
+                <input th:field="*{name}" required autofocus>
+            </label>
 
-        <label class="field">
-          วันเริ่มต้น
-          <input type="date" th:field="*{startDate}" required>
-        </label>
+            <label class="field">
+                ประเภทส่วนลด
+                <select th:field="*{type}" required>
+                <option value="PERCENTAGE">เปอร์เซ็นต์</option>
+                <option value="FIXED_AMOUNT">จำนวนเงิน</option>
+                </select>
+            </label>
 
-        <label class="field">
-          วันสิ้นสุด
-          <input type="date" th:field="*{endDate}" required>
-        </label>
+            <label class="field">
+                มูลค่าส่วนลด
+                <input type="number"
+                    th:field="*{discountValue}"
+                    min="0.01"
+                    step="0.01"
+                    required>
+            </label>
 
-        <label class="field">
-          <input type="checkbox" th:field="*{active}">
-          เปิดใช้โปรโมชัน
-        </label>
+            <label class="field">
+                วันเริ่มต้น
+                <input type="date"
+                    th:field="*{startDate}"
+                    required>
+            </label>
 
-        <button class="btn btn-primary"
-                type="submit"
-                th:text="${editingId == null ? 'บันทึกโปรโมชัน' : 'บันทึกการแก้ไข'}">
-          บันทึกโปรโมชัน
-        </button>
+            <label class="field">
+                วันสิ้นสุด
+                <input type="date"
+                    th:field="*{endDate}"
+                    required>
+            </label>
 
-        <a class="btn btn-small" th:href="@{/admin/promotions}">
-          ล้างฟอร์ม / ยกเลิก
-        </a>
-      </form>
+            <label class="admin-dialog-check">
+                <input type="checkbox" th:field="*{active}">
+                เปิดใช้โปรโมชัน
+            </label>
+            </div>
+
+            <div class="admin-dialog-actions">
+            <button class="btn"
+                    type="button"
+                    data-close-form>
+                ยกเลิก
+            </button>
+
+            <button class="btn btn-primary" type="submit">
+                บันทึก
+            </button>
+            </div>
+        </form>
+        </dialog>
     </main>
-  </div>
-
-  <script th:src="@{/js/admin-promotions.js}" defer></script>
+</div>
+    <script th:src="@{/js/admin-form-dialog.js}" defer></script>
 </body>
 </html>
