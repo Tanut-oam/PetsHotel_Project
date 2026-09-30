@@ -147,6 +147,13 @@
             กลับรายการของฉัน
           </a>
 
+          <a class="btn btn-primary"
+             th:if="${booking.paymentStatus != null
+               and booking.paymentStatus.name() == 'PAID'}"
+             th:href="@{/bookings/{id}/receipt(id=${booking.id})}">
+            ดูใบเสร็จ
+          </a>
+
           <form method="post"
                 th:if="${booking.paymentStatus != null
                   and booking.paymentStatus.name() == 'UNPAID'
