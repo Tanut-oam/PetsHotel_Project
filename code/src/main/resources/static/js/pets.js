@@ -33,4 +33,33 @@ document.addEventListener("DOMContentLoaded", () => {
     feedback.setAttribute("tabindex", "-1");
     feedback.focus();
   }
+
+    document.querySelectorAll(".pet-edit-button").forEach((editButton) => {
+    const dialogId = editButton.dataset.dialogId;
+    const editDialog = document.getElementById(dialogId);
+    const closeEditButton = editDialog?.querySelector(".pet-edit-close");
+
+    if (!editDialog || !closeEditButton) {
+      return;
+    }
+
+    editButton.addEventListener("click", () => {
+      editDialog.showModal();
+      editDialog.querySelector('input[name="name"]')?.focus();
+    });
+
+    closeEditButton.addEventListener("click", () => {
+      editDialog.close();
+    });
+
+    editDialog.addEventListener("close", () => {
+      editButton.focus();
+    });
+
+    const editFeedback = editDialog.querySelector("[data-edit-feedback]");
+    if (editFeedback) {
+      editDialog.showModal();
+      editFeedback.focus();
+    }
+     });
 });

@@ -22,7 +22,10 @@
         aria-haspopup="dialog"
         aria-controls="pet-create-dialog">+ เพิ่มสัตว์เลี้ยง</button>
       </div>
-
+      <div class="panel"
+          th:if="${editMessage}"
+          th:text="${editMessage}"
+          role="status"></div>
       <div class="panel" th:if="${#lists.isEmpty(pets)}">
         ยังไม่มีสัตว์เลี้ยงในบัญชีของคุณ
       </div>
@@ -57,10 +60,103 @@
             </span>
           </p>
 
-          <div class="row">
-            <button class="btn btn-small" type="button">แก้ไข</button>
+                    <div class="row">
+            <button class="btn btn-small pet-edit-button"
+                    type="button"
+                    th:attr="data-dialog-id=|pet-edit-dialog-${pet.id}|"
+                    aria-haspopup="dialog">แก้ไข</button>
             <button class="btn btn-small btn-danger" type="button">ลบ</button>
           </div>
+
+          <dialog class="pet-dialog pet-edit-dialog"
+                  th:id="|pet-edit-dialog-${pet.id}|"
+                  th:attr="aria-labelledby=|pet-edit-heading-${pet.id}|">
+            <div class="section-title">
+              <h2 th:id="|pet-edit-heading-${pet.id}|">แก้ไขสัตว์เลี้ยง</h2>
+              <button class="btn btn-small pet-edit-close"
+                      type="button">ปิด</button>
+            </div>
+
+            <div class="panel"
+                 th:if="${editPetId == pet.id and editError != null}"
+                 th:text="${editError}"
+                 data-edit-feedback
+                 tabindex="-1"></div>
+
+            <form class="panel grid cols-2"
+                  th:action="@{/pets/{petId}/edit(petId=${pet.id})}"
+                  method="post">
+              <label class="field">
+                ชื่อ
+                <input name="name" th:value="${pet.name}" required>
+              </label>
+
+              <label class="field">
+                ประเภท
+                <select name="type" required>
+                  <option value="DOG"
+                          th:selected="${pet.type.name() == 'DOG'}">สุนัข</option>
+                  <option value="CAT"
+                          th:selected="${pet.type.name() == 'CAT'}">แมว</option>
+                  <option value="OTHER"
+                          th:selected="${pet.type.name() == 'OTHER'}">สัตว์ชนิดอื่น</option>
+                </select>
+              </label>
+
+              <label class="field">
+                สายพันธุ์
+                <input name="breed" th:value="${pet.breed}">
+              </label>
+
+              <label class="field">
+                อายุ (ปี)
+                <input type="number" name="age" min="0"
+                       th:value="${pet.age}">
+              </label>
+
+              <label class="field">
+                น้ำหนัก (กก.)
+                <input type="number" name="weight" min="0.01" step="any"
+                       th:value="${pet.weight}">
+              </label>
+
+              <label class="field">
+                เพศ
+                <select name="gender">
+                  <option value=""
+                          th:selected="${#strings.isEmpty(pet.gender)}">ไม่ระบุ</option>
+                  <option value="MALE"
+                          th:selected="${pet.gender == 'MALE'}">เพศผู้</option>
+                  <option value="FEMALE"
+                          th:selected="${pet.gender == 'FEMALE'}">เพศเมีย</option>
+                </select>
+              </label>
+
+              <label class="field">
+                ข้อควรระวัง/โรคประจำตัว
+                <textarea name="medicalNote"
+                          th:text="${pet.medicalNote}"></textarea>
+              </label>
+
+              <label class="field">
+                คำแนะนำการให้อาหาร
+                <textarea name="feedingInstruction"
+                          th:text="${pet.feedingInstruction}"></textarea>
+              </label>
+
+              <label class="field">
+                หมายเหตุเพิ่มเติม
+                <textarea name="specialNote"
+                          th:text="${pet.specialNote}"></textarea>
+              </label>
+
+              <div>
+                <button class="btn btn-primary" type="submit">
+                  บันทึกการแก้ไข
+                </button>
+              </div>
+            </form>
+          </dialog>
         </article>
       </div>
 

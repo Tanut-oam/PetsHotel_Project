@@ -31,6 +31,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.mockito.ArgumentCaptor;
 
 import com.example.petshotel.dto.request.CreatePetRequest;
+import static org.mockito.ArgumentMatchers.any;
+
+import com.example.petshotel.dto.request.UpdatePetRequest;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 class PetPageControllerTest {
 
@@ -151,5 +155,91 @@ class PetPageControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(userRepository, petService);
+    }
+
+        @Test
+    void updatePetShouldUseLoggedInOwner() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+
+        mockMvc.perform(post("/pets/10/edit")
+                .principal(() -> "owner@example.com")
+                .param("name", "Lily")
+                .param("type", "CAT")
+                .param("breed", "British Shorthair")
+                .param("age", "4")
+                .param("weight", "4.2")
+                .param("gender", "FEMALE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/pets"))
+                .andExpect(flash().attribute(
+                        "editMessage", "แก้ไขสัตว์เลี้ยงสำเร็จ"));
+
+        ArgumentCaptor<UpdatePetRequest> requestCaptor =
+                ArgumentCaptor.forClass(UpdatePetRequest.class);
+
+        verify(petService).updatePet(
+                eq(10L), eq(7L), requestCaptor.capture());
+
+        assertEquals("Lily", requestCaptor.getValue().name());
+        assertEquals(PetType.CAT, requestCaptor.getValue().type());
+        assertEquals(Integer.valueOf(4), requestCaptor.getValue().age());
+        assertEquals(Double.valueOf(4.2), requestCaptor.getValue().weight());
+    }
+
+    @Test
+    void updatePetShouldRejectInvalidRequest() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+
+        mockMvc.perform(post("/pets/10/edit")
+                .principal(() -> "owner@example.com")
+                .param("name", "")
+                .param("type", "DOG"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/pets"))
+                .andExpect(flash().attribute(
+                        "editError", "กรุณาตรวจสอบข้อมูลสัตว์เลี้ยง"))
+                .andExpect(flash().attribute("editPetId", 10L));
+
+        verifyNoInteractions(petService);
+    }
+
+    @Test
+    void updatePetShouldRejectMissingLogin() throws Exception {
+        mockMvc.perform(post("/pets/10/edit")
+                .param("name", "Mochi")
+                .param("type", "DOG"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(userRepository, petService);
+    }
+
+    @Test
+    void updatePetShouldReturn404ForAnotherOwnersPet() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+
+        when(petService.updatePet(
+                eq(10L), eq(7L), any(UpdatePetRequest.class)))
+                .thenThrow(new ResourceNotFoundException("Pet", 10L));
+
+        mockMvc.perform(post("/pets/10/edit")
+                .principal(() -> "owner@example.com")
+                .param("name", "Mochi")
+                .param("type", "DOG"))
+                .andExpect(status().isNotFound());
     }
 }
