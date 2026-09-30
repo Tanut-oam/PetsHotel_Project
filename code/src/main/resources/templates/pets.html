@@ -29,117 +29,128 @@
       <a href="rooms.html">▣ ห้องพัก</a>
       <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
       <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a href="reports.html">♡ รายงานการดูแล</a>
+      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
       <a href="profile.html">♙ บัญชีของฉัน</a>
     </aside>
 
     <main class="content">
-        <div class="section-title">
-    <h1>สัตว์เลี้ยงของฉัน</h1>
-    <button class="btn btn-primary" type="button">+ เพิ่มสัตว์เลี้ยง</button>
-    </div>
+      <div class="section-title">
+        <h1>สัตว์เลี้ยงของฉัน</h1>
+        <a class="btn btn-primary" href="#pet-form">+ เพิ่มสัตว์เลี้ยง</a>
+      </div>
 
-    <div class="grid cols-2">
-    <article class="panel">
-        <div class="pet-row">
-        <img class="pet-photo" src="assets/dog.jpg" alt="Mochi">
+      <div class="panel" th:if="${#lists.isEmpty(pets)}">
+        ยังไม่มีสัตว์เลี้ยงในบัญชีของคุณ
+      </div>
+
+      <div class="grid cols-2" th:unless="${#lists.isEmpty(pets)}">
+        <article class="panel" th:each="pet : ${pets}">
+          <div class="pet-row">
+            <span aria-hidden="true" style="font-size: 2rem;">🐾</span>
+            <div>
+              <h3 th:text="${pet.name}">ชื่อสัตว์เลี้ยง</h3>
+
+              <p class="muted">
+                <span th:switch="${pet.type.name()}">
+                  <span th:case="'DOG'">สุนัข</span>
+                  <span th:case="'CAT'">แมว</span>
+                  <span th:case="*">สัตว์ชนิดอื่น</span>
+                </span>
+                <span th:if="${!#strings.isEmpty(pet.breed)}"
+                      th:text="| · ${pet.breed}|"></span>
+                <span th:if="${pet.age != null}"
+                      th:text="| · อายุ ${pet.age} ปี|"></span>
+                <span th:if="${pet.weight != null}"
+                      th:text="| · ${pet.weight} กก.|"></span>
+              </p>
+            </div>
+          </div>
+
+          <p>
+            ข้อควรระวัง:
+            <span th:text="${#strings.isEmpty(pet.medicalNote) ? 'ไม่มี' : pet.medicalNote}">
+              ไม่มี
+            </span>
+          </p>
+
+          <div class="row">
+            <button class="btn btn-small" type="button">แก้ไข</button>
+            <button class="btn btn-small btn-danger" type="button">ลบ</button>
+          </div>
+        </article>
+      </div>
+
+      <div class="section-title">
+        <h2>เพิ่มสัตว์เลี้ยง</h2>
+      </div>
+
+      <div class="panel" th:if="${message}" th:text="${message}"></div>
+      <div class="panel" th:if="${error}" th:text="${error}"></div>
+      <form class="panel grid cols-2" id="pet-form"
+      th:action="@{/pets}" method="post">
+        <label class="field">
+          ชื่อ
+          <input name="name" required>
+        </label>
+
+        <label class="field">
+          ประเภท
+          <select name="type" required>
+            <option value="DOG">สุนัข</option>
+            <option value="CAT">แมว</option>
+            <option value="OTHER">สัตว์ชนิดอื่น</option>
+          </select>
+        </label>
+
+        <label class="field">
+          สายพันธุ์
+          <input name="breed">
+        </label>
+
+        <label class="field">
+          อายุ (ปี)
+          <input type="number" name="age" min="0">
+        </label>
+
+        <label class="field">
+          น้ำหนัก (กก.)
+          <input type="number" name="weight" min="0.01" step="any">
+        </label>
+
+        <label class="field">
+          รูปภาพ
+          <input type="file" name="photo" accept="image/*" disabled>
+          <small>ยังไม่รองรับการอัปโหลดรูปภาพ</small>
+        </label>
+
+        <label class="field">
+          เพศ
+          <select name="gender">
+            <option value="">ไม่ระบุ</option>
+            <option value="MALE">เพศผู้</option>
+            <option value="FEMALE">เพศเมีย</option>
+          </select>
+        </label>
+
+        <label class="field">
+          ข้อควรระวัง/โรคประจำตัว
+          <textarea name="medicalNote"></textarea>
+        </label>
+
+        <label class="field">
+          คำแนะนำการให้อาหาร
+          <textarea name="feedingInstruction"></textarea>
+        </label>
+
+        <label class="field">
+          หมายเหตุเพิ่มเติม
+          <textarea name="specialNote"></textarea>
+        </label>
+
         <div>
-            <h3>Mochi</h3>
-            <p class="muted">สุนัข · ชิบะอินุ · อายุ 2 ปี · 12.5 กก.</p>
+          <button class="btn btn-primary" type="submit">บันทึกข้อมูล</button>
         </div>
-        </div>
-
-        <p>ข้อควรระวัง: แพ้อาหารทะเล</p>
-
-        <div class="row">
-        <button class="btn btn-small" type="button">แก้ไข</button>
-        <button class="btn btn-small btn-danger" type="button">ลบ</button>
-        </div>
-    </article>
-
-    <article class="panel">
-        <div class="pet-row">
-        <img class="pet-photo" src="assets/cat.jpg" alt="Lily">
-        <div>
-            <h3>Lily</h3>
-            <p class="muted">แมว · บริติชช็อตแฮร์ · อายุ 4 ปี · 4.2 กก.</p>
-        </div>
-        </div>
-
-        <p>ข้อควรระวัง: ไม่มี</p>
-
-        <div class="row">
-        <button class="btn btn-small" type="button">แก้ไข</button>
-        <button class="btn btn-small btn-danger" type="button">ลบ</button>
-        </div>
-    </article>
-    </div>
-
-    <div class="section-title">
-    <h2>ฟอร์มเพิ่ม/แก้ไขสัตว์เลี้ยง</h2>
-    </div>
-
-    <form class="panel grid cols-2" id="pet-form">
-  <label class="field">
-    ชื่อ
-    <input name="name" required>
-  </label>
-
-  <label class="field">
-    ประเภท
-    <select name="type" required>
-      <option value="DOG">สุนัข</option>
-      <option value="CAT">แมว</option>
-      <option value="OTHER">สัตว์ชนิดอื่น</option>
-    </select>
-  </label>
-
-  <label class="field">
-    สายพันธุ์
-    <input name="breed">
-  </label>
-
-  <label class="field">
-    อายุ (ปี)
-    <input type="number" name="age" min="0">
-  </label>
-
-  <label class="field">
-    น้ำหนัก (กก.)
-    <input type="number" name="weight" min="0.01" step="any">
-  </label>
-  <label class="field">
-    รูปภาพ
-    <input type="file" name="photo" accept="image/*">
-  </label>
-  <label class="field">
-    เพศ
-    <select name="gender">
-      <option value="">ไม่ระบุ</option>
-      <option value="MALE">เพศผู้</option>
-      <option value="FEMALE">เพศเมีย</option>
-    </select>
-  </label>
-
-  <label class="field">
-    ข้อควรระวัง/โรคประจำตัว
-    <textarea name="medicalNote"></textarea>
-  </label>
-
-  <label class="field">
-    คำแนะนำการให้อาหาร
-    <textarea name="feedingInstruction"></textarea>
-  </label>
-
-  <label class="field">
-    หมายเหตุเพิ่มเติม
-    <textarea name="specialNote"></textarea>
-  </label>
-
-  <div>
-    <button class="btn btn-primary" type="submit">บันทึกข้อมูล</button>
-  </div>
-</form>
+      </form>
     </main>
   </div>
 

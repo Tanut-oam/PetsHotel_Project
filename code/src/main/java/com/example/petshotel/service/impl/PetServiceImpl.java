@@ -67,6 +67,17 @@ public class PetServiceImpl implements PetService {
         }
         return responses;
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<PetResponse> getActivePetsForAdmin(){
+        List<PetResponse> responses = new ArrayList<>();
+
+        for (Pet pet : petRepository.findByActiveTrue()){
+            responses.add(petMapper.toResponse(pet));
+        }
+        return  responses;
+    }
 
     @Override 
     @Transactional(readOnly = true)

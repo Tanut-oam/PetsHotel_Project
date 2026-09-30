@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เข้าสู่ระบบ | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+  <main class="content">
+    <section class="panel" style="max-width: 420px; margin: 40px auto;">
+      <h1>🐾 เข้าสู่ระบบ</h1>
+
+      <p th:if="${param.registered}" style="color: var(--green);">สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ</p>
+      <p th:if="${param.error}" style="color: var(--red);">อีเมลหรือรหัสผ่านไม่ถูกต้อง</p>
+      <p th:if="${param.logout}">ออกจากระบบแล้ว</p>
+
+      <form th:action="@{/login}" method="post">
+        <label class="field">
+          อีเมล
+          <input type="email" name="username" required autofocus>
+        </label>
+        <label class="field">
+          รหัสผ่าน
+          <input type="password" name="password" required>
+        </label>
+        <button class="btn btn-primary" type="submit">เข้าสู่ระบบ</button>
+      </form>
+
+      <p>ยังไม่มีบัญชี? <a th:href="@{/register}">สมัครสมาชิก</a></p>
+    </section>
+  </main>
+</body>
+</html>

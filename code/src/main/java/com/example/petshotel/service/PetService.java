@@ -7,6 +7,7 @@ import java.util.List;
 public interface PetService {
     PetResponse createPet(Long ownerId, CreatePetRequest request);
     List<PetResponse> getPetsByOwner(Long ownerId);
+    List<PetResponse> getActivePetsForAdmin();
     PetResponse getPetById(Long petId, Long ownerId);
     PetResponse updatePet(Long petId,Long ownerId,UpdatePetRequest request);
     void deactivatePet(Long petId, Long ownerId);
