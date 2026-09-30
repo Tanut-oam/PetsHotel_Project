@@ -84,7 +84,7 @@ class RoomControllerTest {
 
         mockMvc.perform(get("/admin/rooms"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("rooms/list"))
+                .andExpect(view().name("admin/rooms"))
                 .andExpect(model().attribute("rooms", rooms));
     }
 

@@ -40,9 +40,9 @@ public class RoomController {
 
     // ===== Admin =====
     @GetMapping("/admin/rooms")
-    public String adminList(Model model) {
+        public String adminList(Model model) {
         model.addAttribute("rooms", roomService.getAllRooms());
-        return "rooms/list";
+        return "admin/rooms";
     }
 
 

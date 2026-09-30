@@ -3,54 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>จัดการห้องพัก | PetsHotel</title>
+  <title>จัดการห้องพัก | PetsHotel Admin</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
-<body>
-  <main class="content">
-    <h1>จัดการห้องพัก</h1>
 
-    <p th:if="${message}" th:text="${message}" style="color: var(--green);"></p>
-    <p th:if="${error}" th:text="${error}" style="color: var(--red);"></p>
+<body class="admin">
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
 
-    <p><a class="btn btn-primary" th:href="@{/rooms/new}">+ เพิ่มห้อง</a></p>
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
-    <section class="panel">
-      <p th:if="${#lists.isEmpty(rooms)}">ยังไม่มีห้องพัก</p>
-      <div class="table-scroll" th:unless="${#lists.isEmpty(rooms)}">
+    <main class="content">
+      <div class="section-title">
+        <h1>จัดการห้องพัก</h1>
+        <a class="btn btn-primary" th:href="@{/admin/rooms/new}">
+          + เพิ่มห้อง
+        </a>
+      </div>
+
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+      </div>
+
+      <div th:if="${error}"
+           class="flash-notice flash-error"
+           role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
+
+      <section class="panel table-scroll">
         <table class="table">
           <thead>
             <tr>
-              <th>เลขห้อง</th><th>ชื่อ</th><th>รับได้ (ตัว)</th><th>ราคา/ตัว/คืน</th><th>สถานะ</th><th>จัดการ</th>
+              <th>เลขห้อง</th>
+              <th>ชื่อห้อง</th>
+              <th>รับได้ (ตัว)</th>
+              <th>ราคา/ตัว/คืน</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
             </tr>
           </thead>
+
           <tbody>
+            <tr th:if="${#lists.isEmpty(rooms)}">
+              <td colspan="6">ยังไม่มีห้องพัก</td>
+            </tr>
+
             <tr th:each="room : ${rooms}">
               <td th:text="${room.roomNumber}">A101</td>
               <td th:text="${room.name}">Deluxe</td>
               <td th:text="${room.capacity}">3</td>
-              <td th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500.00</td>
+
               <td>
-                <span class="badge" th:if="${room.status.name() == 'ACTIVE'}">เปิดให้จอง</span>
-                <span class="badge badge-warning" th:if="${room.status.name() == 'MAINTENANCE'}">ปิดซ่อม</span>
-                <span class="badge badge-danger" th:if="${room.status.name() == 'INACTIVE'}">ปิดใช้งาน</span>
+                ฿<span th:text="${#numbers.formatDecimal(
+                    room.pricePerPetPerNight,
+                    1, 'COMMA', 2, 'POINT')}">
+                  500.00
+                </span>
               </td>
+
               <td>
-                <a class="btn btn-small" th:href="@{/rooms/{id}/edit(id=${room.id})}">แก้ไข</a>
-                <form th:action="@{/rooms/{id}/status(id=${room.id})}" method="post" style="display: inline;">
-                  <select name="status">
-                    <option value="ACTIVE" th:selected="${room.status.name() == 'ACTIVE'}">เปิดให้จอง</option>
-                    <option value="MAINTENANCE" th:selected="${room.status.name() == 'MAINTENANCE'}">ปิดซ่อม</option>
-                    <option value="INACTIVE" th:selected="${room.status.name() == 'INACTIVE'}">ปิดใช้งาน</option>
+                <span class="badge"
+                      th:if="${room.status.name() == 'ACTIVE'}">
+                  เปิดให้จอง
+                </span>
+
+                <span class="badge badge-warning"
+                      th:if="${room.status.name() == 'MAINTENANCE'}">
+                  ปิดซ่อม
+                </span>
+
+                <span class="badge badge-danger"
+                      th:if="${room.status.name() == 'INACTIVE'}">
+                  ปิดใช้งาน
+                </span>
+              </td>
+
+              <td>
+                <a class="btn btn-small"
+                   th:href="@{/admin/rooms/{id}/edit(id=${room.id})}">
+                  แก้ไข
+                </a>
+
+                <form th:action="@{/admin/rooms/{id}/status(id=${room.id})}"
+                      method="post"
+                      style="display:inline">
+                  <select name="status"
+                          th:attr="aria-label=|สถานะห้อง ${room.roomNumber}|">
+                    <option value="ACTIVE"
+                            th:selected="${room.status.name() == 'ACTIVE'}">
+                      เปิดให้จอง
+                    </option>
+
+                    <option value="MAINTENANCE"
+                            th:selected="${room.status.name() == 'MAINTENANCE'}">
+                      ปิดซ่อม
+                    </option>
+
+                    <option value="INACTIVE"
+                            th:selected="${room.status.name() == 'INACTIVE'}">
+                      ปิดใช้งาน
+                    </option>
                   </select>
-                  <button class="btn btn-small" type="submit">เปลี่ยนสถานะ</button>
+
+                  <button class="btn btn-small" type="submit">
+                    เปลี่ยนสถานะ
+                  </button>
                 </form>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-    </section>
-  </main>
+      </section>
+    </main>
+  </div>
 </body>
 </html>
