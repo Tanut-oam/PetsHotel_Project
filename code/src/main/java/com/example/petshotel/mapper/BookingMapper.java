@@ -25,6 +25,7 @@ public class BookingMapper {
                 .checkOutDate(booking.getCheckOutDate())
                 .status(booking.getStatus())
                 .totalPrice(booking.getTotalPrice())
+                .paymentStatus(booking.getPaymentStatus())
                 .build();
     }
 }
