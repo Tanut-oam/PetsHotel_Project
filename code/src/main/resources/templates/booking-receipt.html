@@ -3,25 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ใบเสร็จ · PetsHotel</title>
+
+  <title th:text="${'ใบเสร็จ ' + receipt.receiptNumber + ' - PetsHotel'}">
+    ใบเสร็จ · PetsHotel
+  </title>
+
   <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/booking-receipt.css}">
+  <script defer th:src="@{/js/booking-receipt.js}"></script>
 </head>
-<body>
+
+<body class="receipt-page">
   <header th:replace="~{fragments/layout :: topbar}"></header>
 
   <div class="layout">
     <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
-      <h1>ใบเสร็จรับเงิน</h1>
+      <div class="receipt-actions">
+        <a class="btn" th:href="@{${backUrl}}">
+          กลับ
+        </a>
 
-      <section class="panel">
-        <dl>
+        <button id="print-receipt"
+                class="btn btn-primary"
+                type="button"
+                hidden>
+          พิมพ์ / บันทึก PDF
+        </button>
+      </div>
+
+      <noscript>
+        <p class="receipt-print-help">
+          กด Ctrl + P เพื่อพิมพ์หรือบันทึกใบเสร็จเป็น PDF
+        </p>
+      </noscript>
+
+      <article id="receipt-document"
+               class="panel receipt-document"
+               aria-labelledby="receipt-heading">
+
+        <header class="receipt-heading">
+          <p class="receipt-brand">PetsHotel</p>
+          <h1 id="receipt-heading">ใบเสร็จรับเงิน</h1>
+          <p>หลักฐานการรับชำระเงินค่าบริการ</p>
+        </header>
+
+        <dl class="receipt-info">
           <dt>เลขที่ใบเสร็จ</dt>
           <dd th:text="${receipt.receiptNumber}"></dd>
 
           <dt>วันที่ออก</dt>
-          <dd th:text="${#temporals.format(receipt.issuedAt, 'dd/MM/yyyy HH:mm')}"></dd>
+          <dd th:text="${#temporals.format(
+            receipt.issuedAt, 'dd/MM/yyyy HH:mm'
+          )}"></dd>
 
           <dt>เลขที่การจอง</dt>
           <dd th:text="${booking.id}"></dd>
@@ -29,49 +64,90 @@
           <dt>รหัสผู้จอง</dt>
           <dd th:text="${booking.userId}"></dd>
 
-          <dt>วันเข้าพัก–วันออก</dt>
-          <dd th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></dd>
+          <dt>วันเข้าพัก</dt>
+          <dd th:text="${#temporals.format(
+            booking.checkInDate, 'dd/MM/yyyy'
+          )}"></dd>
+
+          <dt>วันออก</dt>
+          <dd th:text="${#temporals.format(
+            booking.checkOutDate, 'dd/MM/yyyy'
+          )}"></dd>
 
           <dt>โปรโมชันตอนจอง</dt>
           <dd th:text="${booking.promotionName != null
             ? booking.promotionName : 'ไม่ใช้โปรโมชัน'}"></dd>
         </dl>
 
-        <table class="table">
+        <table class="table receipt-table">
           <thead>
             <tr>
-              <th>รายการ</th>
-              <th>จำนวนเงิน (บาท)</th>
+              <th scope="col">รายการ</th>
+              <th scope="col" class="receipt-money">
+                จำนวนเงิน (บาท)
+              </th>
             </tr>
           </thead>
+
           <tbody>
             <tr>
               <td>ค่าห้องพัก</td>
-              <td th:text="${receipt.roomAmount}"></td>
+              <td class="receipt-money"
+                  th:text="${receipt.roomAmount != null
+                    ? #numbers.formatDecimal(
+                        receipt.roomAmount, 1, 'COMMA', 2, 'POINT'
+                      )
+                    : 'ไม่มีข้อมูล'}"></td>
             </tr>
+
             <tr>
               <td>ค่าบริการเสริม</td>
-              <td th:text="${receipt.serviceAmount}"></td>
+              <td class="receipt-money"
+                  th:text="${receipt.serviceAmount != null
+                    ? #numbers.formatDecimal(
+                        receipt.serviceAmount, 1, 'COMMA', 2, 'POINT'
+                      )
+                    : 'ไม่มีข้อมูล'}"></td>
             </tr>
+
             <tr>
               <td>ค่าธรรมเนียมเพิ่มเติม</td>
-              <td th:text="${receipt.surchargeAmount}"></td>
+              <td class="receipt-money"
+                  th:text="${receipt.surchargeAmount != null
+                    ? #numbers.formatDecimal(
+                        receipt.surchargeAmount, 1, 'COMMA', 2, 'POINT'
+                      )
+                    : 'ไม่มีข้อมูล'}"></td>
             </tr>
+
             <tr>
               <td>ส่วนลด</td>
-              <td th:text="${receipt.discountAmount}"></td>
+              <td class="receipt-money"
+                  th:text="${receipt.discountAmount != null
+                    ? #numbers.formatDecimal(
+                        receipt.discountAmount, 1, 'COMMA', 2, 'POINT'
+                      )
+                    : 'ไม่มีข้อมูล'}"></td>
             </tr>
           </tbody>
+
           <tfoot>
             <tr>
-              <th>รับชำระแล้ว</th>
-              <th th:text="${receipt.totalAmount}"></th>
+              <th scope="row">รับชำระแล้ว</th>
+              <td class="receipt-money"
+                  th:text="${receipt.totalAmount != null
+                    ? #numbers.formatDecimal(
+                        receipt.totalAmount, 1, 'COMMA', 2, 'POINT'
+                      )
+                    : 'ไม่มีข้อมูล'}"></td>
             </tr>
           </tfoot>
         </table>
-      </section>
 
-      <a class="btn" th:href="@{${backUrl}}">กลับ</a>
+        <p class="receipt-note">
+          ขอบคุณที่ใช้บริการ PetsHotel
+        </p>
+      </article>
     </main>
   </div>
 </body>
