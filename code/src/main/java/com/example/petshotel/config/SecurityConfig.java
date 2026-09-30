@@ -41,8 +41,24 @@ public class SecurityConfig {
                 .requestMatchers("/rooms/**").hasRole("ADMIN")
 
                 // STAFF และ ADMIN
-                .requestMatchers("/api/bookings/*/payment/confirm").hasAnyRole("STAFF", "ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/care-reports/**").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers(
+                    HttpMethod.POST,
+                    "/api/bookings//payment/confirm",
+                    "/api/bookings//confirm",
+                    "/api/bookings//check-in",
+                    "/api/bookings//check-out"
+                ).hasAnyRole("STAFF", "ADMIN")
+
+                .requestMatchers(
+                    HttpMethod.GET,
+                    "/api/bookings",
+                    "/api/bookings/"
+                ).hasAnyRole("STAFF", "ADMIN")
+
+                .requestMatchers(
+                        HttpMethod.POST,
+                        "/api/care-reports/**"
+                ).hasAnyRole("STAFF", "ADMIN")
 
                 // ที่เหลือต้องล็อกอิน (ตรวจความเป็นเจ้าของใน Service ภายหลัง)
                 .anyRequest().authenticated()
