@@ -3,146 +3,177 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel Admin</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>โปรโมชัน | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
+
 <body class="admin">
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
-    <div class="top-actions">
-      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
-      <span>ผู้ดูแลระบบ</span>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a class="active" th:href="@{/admin}">▦ ภาพรวม</a>
-      <a href="bookings.html">▤ จัดการการจอง</a>
-      <a href="rooms.html">▣ จัดการห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยง</a>
-      <a th:href="@{/admin/services}">✿ บริการเสริม</a>
-      <a th:href="@{/admin/promotions}">◇ โปรโมชัน</a>
-      <a href="reports.html">▤ รายงานการดูแล</a>
-      <a href="users.html">♙ สมาชิก</a>
-      <a href="settings.html">⚙ ตั้งค่า</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content">
-        <div class="section-title">
-            <h1>โปรโมชัน</h1>
-            <a id="add-promotion" class="btn btn-primary" href="#promotion-form">+ เพิ่มโปรโมชัน</a>
-            </div>
+      <div class="section-title">
+        <h1>โปรโมชัน</h1>
+        <a class="btn btn-primary"
+           th:href="@{/admin/promotions} + '#promotion-form'">
+          + เพิ่มโปรโมชัน
+        </a>
+      </div>
 
-            <div class="panel table-scroll">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>ชื่อโปรโมชัน</th>
-                    <th>ส่วนลด</th>
-                    <th>วันหมดอายุ</th>
-                    <th>สถานะ</th>
-                    <th>จัดการ</th>
-                </tr>
-                </thead>
+      <p th:if="${message}"
+         th:text="${message}"
+         role="status"></p>
 
-                <tbody>
-                  <tr th:if="${#lists.isEmpty(promotions)}">
-                      <td colspan="5">ยังไม่มีโปรโมชัน</td>
-                  </tr>
+      <p th:if="${error}"
+         th:text="${error}"
+         role="alert"></p>
 
-                  <tr th:each="promotion : ${promotions}">
-                      <td th:text="${promotion.name}">ชื่อโปรโมชัน</td>
+      <div class="panel table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ชื่อโปรโมชัน</th>
+              <th>ส่วนลด</th>
+              <th>วันหมดอายุ</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
 
-                      <td>
-                          <span th:if="${promotion.type.name() == 'PERCENTAGE'}"
-                                th:text="|${promotion.value}%|">10%</span>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(promotions)}">
+              <td colspan="5">ยังไม่มีโปรโมชัน</td>
+            </tr>
 
-                          <span th:if="${promotion.type.name() == 'FIXED_AMOUNT'}"
-                                th:text="|฿${promotion.value}|">฿100</span>
-                      </td>
+            <tr th:each="promotion : ${promotions}">
+              <td th:text="${promotion.name}">ชื่อโปรโมชัน</td>
 
-                      <td th:text="${promotion.endDate}">2026-12-31</td>
+              <td>
+                <span th:if="${promotion.type.name() == 'PERCENTAGE'}"
+                      th:text="|${promotion.value}%|">
+                  10%
+                </span>
 
-                      <td>
-                          <span th:if="${promotion.active}" class="badge">
-                              เปิดใช้
-                          </span>
-                          <span th:unless="${promotion.active}" class="badge badge-danger">
-                              ปิดใช้
-                          </span>
-                      </td>
+                <span th:if="${promotion.type.name() == 'FIXED_AMOUNT'}"
+                      th:text="|฿${promotion.value}|">
+                  ฿100
+                </span>
+              </td>
 
-                      <td>
-                          <button class="btn btn-small edit-promotion"
-                                  type="button"
-                                  th:attr="data-promotion-id=${promotion.id}">
-                              แก้ไข
-                          </button>
-                          <button class="btn btn-small deactivate-promotion"
-                                  type="button"
-                                  th:attr="data-promotion-id=${promotion.id}"
-                                  th:disabled="${!promotion.active}">
-                              ปิดใช้
-                          </button>
-                      </td>
-                  </tr>
-              </tbody>
-            </table>
-            </div>
+              <td th:text="${promotion.endDate}">2026-12-31</td>
 
-            <div class="section-title">
-            <h2>ฟอร์มโปรโมชัน</h2>
-            </div>
+              <td>
+                <span th:if="${promotion.active}" class="badge">
+                  เปิดใช้
+                </span>
 
-            <form id="promotion-form" class="panel grid cols-2">
-              <label class="field">
-                  ชื่อโปรโมชัน
-                  <input name="name" required>
-              </label>
+                <span th:unless="${promotion.active}"
+                      class="badge badge-danger">
+                  ปิดใช้
+                </span>
+              </td>
 
-              <label class="field">
-                  ประเภทส่วนลด
-                  <select name="type" required>
-                      <option value="PERCENTAGE">เปอร์เซ็นต์</option>
-                      <option value="FIXED_AMOUNT">จำนวนเงิน</option>
-                  </select>
-              </label>
+              <td>
+                <a class="btn btn-small"
+                   th:href="@{/admin/promotions(editId=${promotion.id})} + '#promotion-form'">
+                  แก้ไข
+                </a>
 
-              <label class="field">
-                  มูลค่าส่วนลด
-                  <input type="number"
-                        name="discountValue"
-                        min="0.01"
-                        step="0.01"
-                        required>
-              </label>
+                <form class="deactivate-promotion-form"
+                      th:action="@{/admin/promotions/{id}/deactivate(id=${promotion.id})}"
+                      th:attr="data-name=${promotion.name}"
+                      method="post"
+                      style="display:inline">
+                  <button class="btn btn-small"
+                          type="submit"
+                          th:disabled="${!promotion.active}">
+                    ปิดใช้
+                  </button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-              <label class="field">
-                  วันเริ่มต้น
-                  <input type="date" name="startDate" required>
-              </label>
+      <div class="section-title">
+        <h2 th:text="${editingId == null ? 'เพิ่มโปรโมชัน' : 'แก้ไขโปรโมชัน'}">
+          ฟอร์มโปรโมชัน
+        </h2>
+      </div>
 
-              <label class="field">
-                  วันสิ้นสุด
-                  <input type="date" name="endDate" required>
-              </label>
+      <form id="promotion-form"
+            class="panel grid cols-2"
+            th:action="@{/admin/promotions}"
+            th:object="${promotionForm}"
+            method="post">
 
-              <label class="field">
-                  <input type="checkbox" name="active" checked>
-                  เปิดใช้โปรโมชัน
-              </label>
+        <input th:if="${editingId != null}"
+               type="hidden"
+               name="id"
+               th:value="${editingId}">
 
-              <p id="promotion-message" role="status" aria-live="polite"></p>
+        <div th:if="${#fields.hasAnyErrors()}" role="alert">
+          <ul>
+            <li th:each="formError : ${#fields.allErrors()}"
+                th:text="${formError}">
+              ข้อมูลไม่ถูกต้อง
+            </li>
+          </ul>
+        </div>
 
-              <button class="btn btn-primary" type="submit" disabled>
-                  บันทึกโปรโมชัน
-              </button>
-          </form>
+        <label class="field">
+          ชื่อโปรโมชัน
+          <input th:field="*{name}" required>
+        </label>
+
+        <label class="field">
+          ประเภทส่วนลด
+          <select th:field="*{type}" required>
+            <option value="PERCENTAGE">เปอร์เซ็นต์</option>
+            <option value="FIXED_AMOUNT">จำนวนเงิน</option>
+          </select>
+        </label>
+
+        <label class="field">
+          มูลค่าส่วนลด
+          <input type="number"
+                 th:field="*{discountValue}"
+                 min="0.01"
+                 step="0.01"
+                 required>
+        </label>
+
+        <label class="field">
+          วันเริ่มต้น
+          <input type="date" th:field="*{startDate}" required>
+        </label>
+
+        <label class="field">
+          วันสิ้นสุด
+          <input type="date" th:field="*{endDate}" required>
+        </label>
+
+        <label class="field">
+          <input type="checkbox" th:field="*{active}">
+          เปิดใช้โปรโมชัน
+        </label>
+
+        <button class="btn btn-primary"
+                type="submit"
+                th:text="${editingId == null ? 'บันทึกโปรโมชัน' : 'บันทึกการแก้ไข'}">
+          บันทึกโปรโมชัน
+        </button>
+
+        <a class="btn btn-small" th:href="@{/admin/promotions}">
+          ล้างฟอร์ม / ยกเลิก
+        </a>
+      </form>
     </main>
   </div>
 
   <script th:src="@{/js/admin-promotions.js}" defer></script>
-
 </body>
 </html>

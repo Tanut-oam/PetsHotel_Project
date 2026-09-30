@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -169,6 +170,21 @@ public class ExtraServiceServiceTest {
 
         assertEquals("ExtraService not found: 99", exception.getMessage());
         verify(extraServiceRepository, never()).save(any(ExtraService.class));
+    }
+
+    @Test
+    void getsOnlyActiveExtraServices() {
+        ExtraService active = serviceData("Bath", "200.00", true);
+        List<ExtraService> expected = List.of(active);
+
+        when(extraServiceRepository.findByActiveTrue())
+                .thenReturn(expected);
+
+        List<ExtraService> result =
+                extraServiceService.getActiveExtraServices();
+
+        assertSame(expected, result);
+        verify(extraServiceRepository).findByActiveTrue();
     }
 
 }
