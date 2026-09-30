@@ -33,6 +33,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+import org.springframework.http.MediaType;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -149,9 +150,10 @@ class BookingControllerTest {
 
     @Test
     void anonymousShouldBeRedirectedToLogin() throws Exception {
-        mvc.perform(get("/bookings"))
+        mvc.perform(get("/bookings")
+                        .accept(MediaType.TEXT_HTML))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
+                .andExpect(redirectedUrl("/login"));
 
         verifyNoInteractions(bookingService);
     }
