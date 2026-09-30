@@ -6,6 +6,7 @@
   <title>ค้นหาห้องว่าง | PetStay</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
+<script th:src="@{/js/date-range.js}" defer></script>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
   <div class="layout">
@@ -15,14 +16,14 @@
 
 
     <section class="panel">
-      <form class="form-grid" th:action="@{/rooms/available}" method="get">
+      <form class="form-grid" th:action="@{/rooms/available}" method="get" data-date-range>
         <label class="field">
           เช็กอิน
-          <input type="date" name="checkIn" th:value="${search.checkIn}" required>
+          <input type="date" name="checkIn" th:value="${search.checkIn}" required data-check-in>
         </label>
         <label class="field">
           เช็กเอาต์
-          <input type="date" name="checkOut" th:value="${search.checkOut}" required>
+          <input type="date" name="checkOut" th:value="${search.checkOut}" required data-check-out>
         </label>
         <label class="field">
           จำนวนสัตว์เลี้ยง
