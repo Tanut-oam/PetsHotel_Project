@@ -158,7 +158,7 @@ class PetServiceTest {
         .thenReturn(Optional.of(pet));
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.getPetById(10L, 2L)
     );
 
@@ -344,7 +344,7 @@ class PetServiceTest {
         .thenReturn(Optional.of(pet));
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.updatePet(10L, 2L, request)
     );
 
@@ -430,7 +430,7 @@ void deactivatePetShouldRejectDifferentOwner() {
         .thenReturn(Optional.of(pet));
 
     assertThrows(
-        IllegalArgumentException.class,
+        ResourceNotFoundException.class,
         () -> petService.deactivatePet(10L, 2L)
     );
 

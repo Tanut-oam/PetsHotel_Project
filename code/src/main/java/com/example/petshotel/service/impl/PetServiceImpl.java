@@ -86,7 +86,7 @@ public class PetServiceImpl implements PetService {
             .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
 
         if (!pet.getOwner().getId().equals(ownerId)) {
-            throw new IllegalArgumentException("Pet not found: " + petId);
+            throw new ResourceNotFoundException("Pet", petId);
         }
         return petMapper.toResponse(pet);
     }
@@ -98,7 +98,7 @@ public class PetServiceImpl implements PetService {
             .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
         
         if (!pet.getOwner().getId().equals(ownerId)) {
-            throw new IllegalArgumentException("Pet not found: " +petId);
+            throw new ResourceNotFoundException("Pet", petId);
         }
         pet.setName(request.name());
         pet.setType(request.type());
@@ -119,7 +119,7 @@ public class PetServiceImpl implements PetService {
         Pet pet = petRepository.findById(petId)
             .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
         if (!pet.getOwner().getId().equals(ownerId)) {
-            throw new IllegalArgumentException("Pet not found: " +petId);
+            throw new ResourceNotFoundException("Pet", petId);
         }
         pet.setActive(false);
         petRepository.save(pet);    
