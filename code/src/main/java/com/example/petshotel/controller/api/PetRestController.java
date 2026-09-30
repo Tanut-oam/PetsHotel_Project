@@ -20,20 +20,20 @@ import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.request.CreatePetRequest;
 import com.example.petshotel.dto.request.UpdatePetRequest;
 import com.example.petshotel.dto.response.PetResponse;
-import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.PetService;
-
+import com.example.petshotel.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 
 @RestController 
 @RequestMapping("/api/owners/{ownerId}/pets")
 public class PetRestController {
     private  final PetService petService;
-    private  final UserRepository userRepository;
+    private final CurrentUserService currentUserService;
 
-    public PetRestController(PetService petService,UserRepository userRepository) {
+    public PetRestController(PetService petService,CurrentUserService currentUserService) {
         this.petService = petService;
-        this.userRepository = userRepository;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping 
@@ -73,14 +73,21 @@ public class PetRestController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        User currentUser = userRepository.findByEmail(principal.getName()).orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        
-        if(!Boolean.TRUE.equals(currentUser.getActive())){
+        User currentUser;
+        try {
+            currentUser = currentUserService.getByEmail(
+                    principal.getName());
+        } catch (ResourceNotFoundException exception) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        if (!Boolean.TRUE.equals(currentUser.getActive())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
-        if(!ownerId.equals(currentUser.getId())){
-            throw new AccessDeniedException("Cannot access another owner's pets");
+        if (!ownerId.equals(currentUser.getId())) {
+            throw new AccessDeniedException(
+                    "Cannot access another owner's pets");
         }
     }
 }
