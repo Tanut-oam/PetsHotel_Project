@@ -14,7 +14,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,30 +27,31 @@ import com.example.petshotel.dto.request.CreatePetRequest;
 import com.example.petshotel.dto.request.UpdatePetRequest;
 import com.example.petshotel.dto.response.PetResponse;
 import com.example.petshotel.exception.GlobalExceptionHandler;
-import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.PetService;
 
 class PetRestControllerTest {
 
     private PetService petService;
-    private UserRepository userRepository;
+    private CurrentUserService currentUserService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         petService = mock(PetService.class);
-        userRepository = mock(UserRepository.class);
+        currentUserService = mock(CurrentUserService.class);
 
         User owner = new User();
         owner.setId(1L);
         owner.setEmail("owner@example.com");
         owner.setActive(true);
 
-        when(userRepository.findByEmail("owner@example.com"))
-                .thenReturn(Optional.of(owner));
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
 
         PetRestController controller =
-                new PetRestController(petService, userRepository);
+                new PetRestController(petService, currentUserService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
@@ -197,6 +197,35 @@ class PetRestControllerTest {
     void getPetsByOwnerShouldRejectMissingPrincipal() throws Exception {
         mockMvc.perform(get("/api/owners/1/pets"))
                 .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(currentUserService, petService);
+    }
+
+    @Test
+    void getPetsByOwnerShouldRejectUnknownUser() throws Exception {
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenThrow(new ResourceNotFoundException(
+                        "User", "owner@example.com"));
+
+        mockMvc.perform(get("/api/owners/1/pets")
+                .principal(() -> "owner@example.com"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(petService);
+    }
+
+    @Test
+    void getPetsByOwnerShouldRejectInactiveUser() throws Exception {
+        User inactiveOwner = new User();
+        inactiveOwner.setId(1L);
+        inactiveOwner.setActive(false);
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(inactiveOwner);
+
+        mockMvc.perform(get("/api/owners/1/pets")
+                .principal(() -> "owner@example.com"))
+                .andExpect(status().isForbidden());
 
         verifyNoInteractions(petService);
     }

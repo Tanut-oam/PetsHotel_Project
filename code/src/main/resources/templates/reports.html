@@ -7,96 +7,16 @@
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a href="index.html">หน้าแรก</a>
-      <a href="rooms.html">ห้องพัก</a>
-      <a th:href="@{/pets}">สัตว์เลี้ยง</a>
-      <a href="my-bookings.html">การจอง</a>
-    </nav>
-
-    <div class="top-actions">
-      <a class="btn btn-small" href="admin/index.html">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" href="profile.html">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
-
+  <header th:replace="~{fragments/layout :: topbar}"></header>
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">⌂ หน้าแรก</a>
-      <a href="rooms.html">▣ ห้องพัก</a>
-      <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
-      <a href="my-bookings.html">▤ การจองของฉัน</a>
-      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
-      <a href="profile.html">♙ บัญชีของฉัน</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
-        <h1>รายงานการดูแลรายวัน</h1>
-            <div class="panel" style="margin-bottom: 20px;">
-            <div class="grid cols-2">
-              <label class="field">
-                การจองของฉัน
-                <select name="bookingId" id="customer-booking">
-                  <option value="">เลือกการจอง</option>
-                  <option value="1025">#1025 · Deluxe Room (ข้อมูลตัวอย่าง)</option>
-                </select>
-              </label>
+      <h1>รายงานการดูแลรายวัน</h1>
 
-              <label class="field">
-                สัตว์ในการจอง
-                <select name="bookingPetId" id="customer-booking-pet">
-                  <option value="">เลือกสัตว์เลี้ยง</option>
-                  <option value="1">Mochi (ข้อมูลตัวอย่าง)</option>
-                </select>
-              </label>
-
-              <label class="field">
-                วันที่รายงาน
-                <input type="date" name="reportDate">
-              </label>
-            </div>
-            </div>
-
-            <article class="panel report">
-              <div class="row">
-                <h2>25 กันยายน 2569</h2>
-                <span class="badge">Mochi · การจอง #1025</span>
-              </div>
-
-              <div class="grid cols-3">
-                <div>
-                  <h3>🍽 อาหาร</h3>
-                  <p>เช้า: กินหมด</p>
-                  <p>เย็น: ยังไม่บันทึก</p>
-                </div>
-
-                <div>
-                  <h3>🦮 กิจกรรม</h3>
-                  <p>เดินเล่นรวม 15 นาที</p>
-                  <p>แปรงขนแล้ว</p>
-                </div>
-
-                <div>
-                  <h3>♡ สุขภาพ</h3>
-                  <p>อารมณ์: ร่าเริง</p>
-                  <p>สุขภาพ: ปกติ</p>
-                </div>
-              </div>
-
-              <p><strong>หมายเหตุ:</strong> วันนี้ Mochi พักผ่อนได้ดี</p>
-            </article>
-
-            <article class="panel report">
-              <div class="row">
-                <h2>24 กันยายน 2569</h2>
-                <span class="badge">Mochi · การจอง #1025</span>
-              </div>
-
-              <p>🍽 เช้า: กินหมด / เย็น: กินหมด · 🦮 เดินเล่นรวม 20 นาที · ♡ สุขภาพปกติ</p>
-            </article>
+      <div class="panel">
+        <p>รายงานการดูแลยังไม่พร้อมแสดงในหน้านี้</p>
+      </div>
     </main>
   </div>
 
