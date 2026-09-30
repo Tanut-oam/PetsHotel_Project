@@ -1,103 +1,131 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel Admin</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>จัดการห้องพัก | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
+
 <body class="admin">
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
-    <div class="top-actions">
-      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
-      <span>ผู้ดูแลระบบ</span>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">▦ ภาพรวม</a>
-      <a href="bookings.html">▤ จัดการการจอง</a>
-      <a href="rooms.html">▣ จัดการห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยง</a>
-      <a href="services.html">✿ บริการเสริม</a>
-      <a href="promotions.html">◇ โปรโมชัน</a>
-      <a href="reports.html">▤ รายงานการดูแล</a>
-      <a href="users.html">♙ สมาชิก</a>
-      <a href="settings.html">⚙ ตั้งค่า</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content">
-        <div class="section-title">
-            <h1>จัดการห้องพัก</h1>
-            <button class="btn btn-primary" type="button">+ เพิ่มห้อง</button>
-            </div>
+      <div class="section-title">
+        <h1>จัดการห้องพัก</h1>
 
-            <div class="panel table-scroll">
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>หมายเลข</th>
-                    <th>ประเภท</th>
-                    <th>ราคา/คืน</th>
-                    <th>รองรับ</th>
-                    <th>สถานะ</th>
-                    <th>จัดการ</th>
-                </tr>
-                </thead>
+        <a class="btn btn-primary"
+           th:href="@{/admin/rooms/new}">
+          + เพิ่มห้อง
+        </a>
+      </div>
 
-                <tbody>
-                <tr>
-                    <td>101</td>
-                    <td>Deluxe Room</td>
-                    <td>฿500</td>
-                    <td>3 ตัว</td>
-                    <td><span class="badge">เปิดให้จอง</span></td>
-                    <td>
-                    <button class="btn btn-small">แก้ไข</button>
-                    <button class="btn btn-small">ปิดห้อง</button>
-                    </td>
-                </tr>
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+      </div>
 
-                <tr>
-                    <td>302</td>
-                    <td>Family Room</td>
-                    <td>฿700</td>
-                    <td>4 ตัว</td>
-                    <td><span class="badge badge-danger">ปิดซ่อม</span></td>
-                    <td>
-                    <button class="btn btn-small">แก้ไข</button>
-                    <button class="btn btn-small">เปิดห้อง</button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-            </div>
+      <div th:if="${error}"
+           class="flash-notice flash-error"
+           role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
 
-            <div class="section-title">
-            <h2>ฟอร์มเพิ่ม/แก้ไขห้อง</h2>
-            </div>
+      <div class="panel table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>หมายเลขห้อง</th>
+              <th>ชื่อห้อง</th>
+              <th>ราคา/ตัว/คืน</th>
+              <th>รองรับ</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
 
-            <form class="panel grid cols-2">
-            <label class="field">หมายเลขห้อง<input name="roomNumber" required></label>
-            <label class="field">ชื่อห้อง<input name="roomName" required></label>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(rooms)}">
+              <td colspan="6">ยังไม่มีห้องพัก</td>
+            </tr>
 
-            <label class="field">
-                ประเภท
-                <select name="roomType">
-                <option value="DELUXE">Deluxe</option>
-                <option value="STANDARD">Standard</option>
-                <option value="FAMILY">Family</option>
-                </select>
-            </label>
+            <tr th:each="room : ${rooms}">
+              <td th:text="${room.roomNumber}">A101</td>
 
-            <label class="field">ราคา/คืน<input type="number" name="price" min="0"></label>
-            <label class="field">รองรับสัตว์เลี้ยง<input type="number" name="capacity" min="1"></label>
-            <label class="field">รูปห้อง<input type="file" name="image" accept="image/*"></label>
+              <td th:text="${room.name}">Deluxe Room</td>
 
-            <button class="btn btn-primary" type="submit">บันทึกห้องพัก</button>
-            </form>
+              <td>
+                ฿<span th:text="${#numbers.formatDecimal(
+                    room.pricePerPetPerNight,
+                    1, 'COMMA', 2, 'POINT')}">
+                  500.00
+                </span>
+              </td>
+
+              <td th:text="|${room.capacity} ตัว|">
+                3 ตัว
+              </td>
+
+              <td>
+                <span class="badge"
+                      th:if="${room.status.name() == 'ACTIVE'}">
+                  เปิดให้จอง
+                </span>
+
+                <span class="badge badge-warning"
+                      th:if="${room.status.name() == 'MAINTENANCE'}">
+                  ปิดซ่อม
+                </span>
+
+                <span class="badge badge-danger"
+                      th:if="${room.status.name() == 'INACTIVE'}">
+                  ปิดใช้งาน
+                </span>
+              </td>
+
+              <td>
+                <a class="btn btn-small"
+                   th:href="@{/admin/rooms/{id}/edit(id=${room.id})}">
+                  แก้ไข
+                </a>
+
+                <form th:action="@{/admin/rooms/{id}/status(id=${room.id})}"
+                      method="post"
+                      style="display:inline">
+
+                  <select name="status"
+                          th:attr="aria-label=|สถานะห้อง ${room.roomNumber}|">
+                    <option value="ACTIVE"
+                            th:selected="${room.status.name() == 'ACTIVE'}">
+                      เปิดให้จอง
+                    </option>
+
+                    <option value="MAINTENANCE"
+                            th:selected="${room.status.name() == 'MAINTENANCE'}">
+                      ปิดซ่อม
+                    </option>
+
+                    <option value="INACTIVE"
+                            th:selected="${room.status.name() == 'INACTIVE'}">
+                      ปิดใช้งาน
+                    </option>
+                  </select>
+
+                  <button class="btn btn-small" type="submit">
+                    เปลี่ยนสถานะ
+                  </button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </main>
   </div>
 </body>
