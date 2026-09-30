@@ -7,8 +7,12 @@
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-  <main class="content">
-    <h1>ค้นหาห้องว่าง</h1>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <main class="content">
+      <h1>ค้นหาห้องว่าง</h1>
+
 
     <section class="panel">
       <form class="form-grid" th:action="@{/rooms/available}" method="get">
@@ -60,5 +64,6 @@
       </table>
     </section>
   </main>
+  </div>
 </body>
 </html>
