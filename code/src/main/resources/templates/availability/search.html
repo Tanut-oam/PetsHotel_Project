@@ -52,6 +52,7 @@
             <th>ชื่อห้อง</th>
             <th>รับได้ (ตัว)</th>
             <th>ราคา/ตัว/คืน</th>
+            <th>การดำเนินการ</th>
           </tr>
         </thead>
         <tbody>
@@ -60,6 +61,10 @@
             <td th:text="${room.name}">Deluxe</td>
             <td th:text="${room.capacity}">3</td>
             <td th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')} + ' บาท'">500.00 บาท</td>
+            <td>
+              <a class="btn btn-small btn-primary"
+                 th:href="@{/bookings/new(roomId=${room.id}, checkIn=${result.checkIn}, checkOut=${result.checkOut})}">จองห้องนี้</a>
+            </td>
           </tr>
         </tbody>
       </table>
