@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>รายงานการดูแลสัตว์ | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/admin-reports.css}">
+</head>
+<body class="admin">
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
+
+    <main class="content report-detail" th:attr="data-open-write=${openWrite == true}">
+      <a class="report-back" th:href="@{/admin/reports}">← กลับไปรายการจอง</a>
+
+      <div class="section-title">
+        <h1>รายงานการดูแลของสัตว์ในการจองนี้</h1>
+      </div>
+
+      <div th:if="${message}" class="flash-notice flash-success"
+           th:text="${message}" role="status"></div>
+      <div th:if="${error}" class="flash-notice flash-error"
+           th:text="${error}" role="alert"></div>
+
+      <section class="care-pet-card" aria-label="ข้อมูลสัตว์เลี้ยง">
+        <div class="care-pet-card-heading">
+          <h2 th:text="${pet.petName}">ชื่อสัตว์</h2>
+          <span class="care-pet-warning"
+                th:if="${!#strings.isEmpty(pet.medicalNote) and pet.medicalNote != 'ไม่มี'}">
+            มีข้อควรระวัง
+          </span>
+        </div>
+
+        <p class="care-pet-meta">
+          <span th:switch="${pet.type.name()}">
+            <span th:case="'DOG'">สุนัข</span>
+            <span th:case="'CAT'">แมว</span>
+            <span th:case="*">สัตว์ชนิดอื่น</span>
+          </span>
+          <span th:text="${#strings.isEmpty(pet.breed) ? 'ไม่ระบุสายพันธุ์' : pet.breed}">สายพันธุ์</span>
+          <span th:text="${pet.age == null ? 'ไม่ระบุอายุ' : pet.age + ' ปี'}">อายุ</span>
+          <span th:text="${pet.weight == null ? 'ไม่ระบุน้ำหนัก' : pet.weight + ' กก.'}">น้ำหนัก</span>
+        </p>
+
+        <p class="care-pet-stay"
+           th:text="|เจ้าของ: ${pet.ownerName} · เข้าพัก ${pet.checkInDate} ถึง ${pet.checkOutDate}|">
+          ข้อมูลการจอง
+        </p>
+
+        <details class="care-pet-profile">
+          <summary>ดูข้อมูลสัตว์เพิ่มเติม</summary>
+          <dl class="care-pet-facts">
+            <div>
+              <dt>ประเภท</dt>
+              <dd th:switch="${pet.type.name()}">
+                <span th:case="'DOG'">สุนัข</span>
+                <span th:case="'CAT'">แมว</span>
+                <span th:case="*">สัตว์ชนิดอื่น</span>
+              </dd>
+            </div>
+            <div>
+              <dt>สายพันธุ์</dt>
+              <dd th:text="${#strings.isEmpty(pet.breed) ? '—' : pet.breed}">—</dd>
+            </div>
+            <div>
+              <dt>อายุ</dt>
+              <dd th:text="${pet.age == null ? '—' : pet.age + ' ปี'}">—</dd>
+            </div>
+            <div>
+              <dt>น้ำหนัก</dt>
+              <dd th:text="${pet.weight == null ? '—' : pet.weight + ' กก.'}">—</dd>
+            </div>
+            <div>
+              <dt>ข้อควรระวัง</dt>
+              <dd th:text="${#strings.isEmpty(pet.medicalNote) ? 'ไม่มี' : pet.medicalNote}">ไม่มี</dd>
+            </div>
+            <div>
+              <dt>คำแนะนำการให้อาหาร</dt>
+              <dd th:text="${#strings.isEmpty(pet.feedingInstruction) ? 'ไม่มี' : pet.feedingInstruction}">ไม่มี</dd>
+            </div>
+          </dl>
+        </details>
+      </section>
+
+      <section class="care-reports" aria-labelledby="care-reports-heading">
+        <div class="section-title">
+          <h2 id="care-reports-heading">รายงานการดูแล</h2>
+          <button class="btn btn-primary" type="button" data-show-write>
+            ＋ เขียนรายงาน
+          </button>
+        </div>
+
+        <div class="care-report-tabs" role="tablist" aria-label="รายงานการดูแล">
+          <button class="care-report-tab" type="button" role="tab"
+                  id="care-history-tab"
+                  aria-controls="care-history-panel"
+                  aria-selected="true"
+                  data-report-tab="history"
+                  th:text="|รายงานที่บันทึกแล้ว (${#lists.size(reports)})|">
+            รายงานที่บันทึกแล้ว
+          </button>
+          <button class="care-report-tab" type="button" role="tab"
+                  id="care-write-tab"
+                  aria-controls="care-write-panel"
+                  aria-selected="false"
+                  data-report-tab="write"
+                  hidden>
+            เขียนรายงานใหม่
+          </button>
+        </div>
+
+        <div id="care-history-panel"
+             role="tabpanel"
+             aria-labelledby="care-history-tab"
+             data-report-panel="history">
+          <div class="panel" th:if="${reports.isEmpty()}" role="status">
+            ยังไม่มีรายงานสำหรับสัตว์ตัวนี้
+          </div>
+
+          <div class="care-report-history" th:unless="${reports.isEmpty()}">
+            <article class="care-report-entry"
+                     th:each="report : ${reports}"
+                     th:attr="data-open-edit=${openReportId == report.id}">
+              <div class="care-report-entry-heading">
+                <h3 th:text="|วันที่ ${report.reportDate}|">วันที่รายงาน</h3>
+                <button class="btn btn-small care-report-edit-button"
+                        type="button"
+                        data-edit-report
+                        aria-expanded="false">
+                  <svg aria-hidden="true" focusable="false"
+                       viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2"
+                       stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                  </svg>
+                  แก้ไขรายงาน
+                </button>
+              </div>
+
+              <form th:action="@{/admin/reports/{reportId}/edit(reportId=${report.id})}"
+                    method="post">
+                <input type="hidden" name="bookingPetId"
+                       th:value="${pet.bookingPetId}">
+                <input type="hidden" name="reportDate"
+                       th:value="${report.reportDate}">
+
+                <dl class="care-report-details">
+                  <div>
+                    <dt>อาหารมื้อเช้า</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${#strings.isEmpty(report.feedingMorning) ? '—' : report.feedingMorning}">—</span>
+                      <textarea class="care-report-input"
+                                name="feedingMorning" rows="2"
+                                aria-label="แก้ไขอาหารมื้อเช้า"
+                                th:text="${report.feedingMorning}"></textarea>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>อาหารมื้อเย็น</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${#strings.isEmpty(report.feedingEvening) ? '—' : report.feedingEvening}">—</span>
+                      <textarea class="care-report-input"
+                                name="feedingEvening" rows="2"
+                                aria-label="แก้ไขอาหารมื้อเย็น"
+                                th:text="${report.feedingEvening}"></textarea>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>เดินเล่น</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${report.walkingMinutes == null ? '—' : report.walkingMinutes + ' นาที'}">—</span>
+                      <input class="care-report-input" type="number"
+                             name="walkingMinutes" min="0" step="1"
+                             aria-label="แก้ไขเวลาเดินเล่นเป็นนาที"
+                             th:value="${report.walkingMinutes}">
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>ความสะอาด</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${#strings.isEmpty(report.grooming) ? '—' : report.grooming}">—</span>
+                      <textarea class="care-report-input"
+                                name="grooming" rows="2"
+                                aria-label="แก้ไขการดูแลความสะอาด"
+                                th:text="${report.grooming}"></textarea>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>อารมณ์</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${#strings.isEmpty(report.mood) ? '—' : report.mood}">—</span>
+                      <textarea class="care-report-input"
+                                name="mood" rows="2"
+                                aria-label="แก้ไขอารมณ์"
+                                th:text="${report.mood}"></textarea>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>สุขภาพ</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${#strings.isEmpty(report.healthNote) ? '—' : report.healthNote}">—</span>
+                      <textarea class="care-report-input"
+                                name="healthNote" rows="2"
+                                aria-label="แก้ไขข้อมูลสุขภาพ"
+                                th:text="${report.healthNote}"></textarea>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>หมายเหตุ</dt>
+                    <dd>
+                      <span class="care-report-value"
+                            th:text="${#strings.isEmpty(report.generalNote) ? '—' : report.generalNote}">—</span>
+                      <textarea class="care-report-input"
+                                name="generalNote" rows="2"
+                                aria-label="แก้ไขหมายเหตุ"
+                                th:text="${report.generalNote}"></textarea>
+                    </dd>
+                  </div>
+                </dl>
+
+                <div class="care-report-save">
+                  <button class="btn btn-primary" type="submit">
+                    บันทึกการแก้ไข
+                  </button>
+                  <button class="btn" type="button" data-cancel-edit>
+                    ยกเลิก
+                  </button>
+                </div>
+              </form>
+            </article>
+          </div>
+        </div>
+
+        <div id="care-write-panel"
+             role="tabpanel"
+             aria-labelledby="care-write-tab"
+             data-report-panel="write"
+             hidden>
+          <h3>เขียนรายงานการดูแล</h3>
+
+          <form class="grid cols-2"
+                th:action="@{/admin/reports}"
+                method="post">
+            <input type="hidden" name="bookingPetId"
+                   th:value="${pet.bookingPetId}">
+
+            <label class="field">
+              วันที่รายงาน
+              <input type="date" name="reportDate" required
+                     th:attr="min=${pet.checkInDate},max=${pet.checkOutDate}">
+            </label>
+
+            <label class="field">
+              เวลาเดินเล่น (นาที)
+              <input type="number" name="walkingMinutes" min="0" step="1">
+            </label>
+
+            <label class="field">
+              อาหารมื้อเช้า
+              <textarea name="feedingMorning"></textarea>
+            </label>
+
+            <label class="field">
+              อาหารมื้อเย็น
+              <textarea name="feedingEvening"></textarea>
+            </label>
+
+            <label class="field">
+              การดูแลความสะอาด
+              <textarea name="grooming"></textarea>
+            </label>
+
+            <label class="field">
+              อารมณ์
+              <textarea name="mood"></textarea>
+            </label>
+
+            <label class="field">
+              ข้อมูลสุขภาพ
+              <textarea name="healthNote"></textarea>
+            </label>
+
+            <label class="field">
+              หมายเหตุเพิ่มเติม
+              <textarea name="generalNote"></textarea>
+            </label>
+
+            <div class="care-report-save admin-dialog-full">
+              <button class="btn btn-primary" type="submit">
+                บันทึกรายงาน
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script th:src="@{/js/admin-reports.js}" defer></script>
+</body>
+</html>
