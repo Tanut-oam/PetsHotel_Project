@@ -38,4 +38,7 @@ public class Room {
     @Column(nullable = false)
     private RoomStatus status;
 
+    @Column(length = 500)
+    private String imageUrl;
+
 }

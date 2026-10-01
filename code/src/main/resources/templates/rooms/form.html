@@ -29,7 +29,8 @@
 
       <form class="panel grid cols-2"
             th:action="@{/admin/rooms}"
-            method="post">
+            method="post"
+            enctype="multipart/form-data">
 
         <label class="field">
           เลขห้อง
@@ -48,6 +49,13 @@
         <label class="field" style="grid-column:1 / -1">
           รายละเอียด
           <textarea name="description"></textarea>
+        </label>
+
+        <label class="field" style="grid-column:1 / -1">
+          รูปห้อง (ไม่บังคับ · JPG/PNG ไม่เกิน 5 MB)
+          <input type="file"
+                name="image"
+                accept="image/jpeg,image/png">
         </label>
 
         <label class="field">

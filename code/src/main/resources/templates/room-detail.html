@@ -26,6 +26,7 @@
         ห้อง <span th:text="${room.roomNumber}">101</span> ·
         รองรับสัตว์เลี้ยงสูงสุด <span th:text="${room.capacity}">3</span> ตัว
       </p>
+      <img th:if="${room.imageUrl}"class="room-image large"th:src="@{${room.imageUrl}}"th:alt="${room.name}">
 
       <div class="detail-layout">
         <div>
