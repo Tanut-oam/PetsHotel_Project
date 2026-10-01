@@ -235,4 +235,19 @@ class RoomControllerTest {
 
                 verify(roomService, never()).setRoomStatus(any(), any());
         }
+
+        @Test
+        void createRoom_invalidCapacity_redirectsBackWithError() throws Exception {
+                mockMvc.perform(post("/admin/rooms")
+                                .with(csrf())
+                                .param("roomNumber", "101")
+                                .param("name", "Deluxe")
+                                .param("capacity", "0")
+                                .param("pricePerPetPerNight", "500"))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/admin/rooms/new"))
+                        .andExpect(flash().attribute("error", "The room must accommodate at least one animal."));
+
+                verify(roomService, never()).createRoom(any());
+        }
 }

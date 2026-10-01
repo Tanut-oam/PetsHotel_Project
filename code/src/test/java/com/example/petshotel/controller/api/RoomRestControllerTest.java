@@ -2,9 +2,7 @@ package com.example.petshotel.controller.api;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -150,5 +148,31 @@ class RoomRestControllerTest {
                 new BigDecimal("500"),
                 RoomStatus.ACTIVE
         );
+    }
+
+        @Test
+    void createRoomShouldReturnBadRequestWhenCapacityIsZero() throws Exception {
+        mockMvc.perform(post("/api/room")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "roomNumber": "101", "name": "Deluxe",
+                    "capacity": 0, "pricePerPetPerNight": 500 }
+                    """))
+                .andExpect(status().isBadRequest());
+
+        verify(roomService, never()).createRoom(any());
+    }
+
+    @Test
+    void createRoomShouldReturnBadRequestWhenPriceIsNegative() throws Exception {
+        mockMvc.perform(post("/api/room")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "roomNumber": "101", "name": "Deluxe",
+                    "capacity": 3, "pricePerPetPerNight": -1 }
+                    """))
+                .andExpect(status().isBadRequest());
+
+        verify(roomService, never()).createRoom(any());
     }
 }

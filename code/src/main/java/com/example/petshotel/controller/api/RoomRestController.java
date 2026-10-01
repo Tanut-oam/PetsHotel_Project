@@ -7,6 +7,9 @@ import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.dto.response.RoomResponse;
 import com.example.petshotel.service.RoomService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,19 +46,19 @@ public class RoomRestController {
     }
 
     @PatchMapping("/{id}/status")
-    public RoomResponse setRoomStatus(@PathVariable Long id,@RequestBody UpdateStatusRequest request){
+    public RoomResponse setRoomStatus(@PathVariable Long id,@Valid @RequestBody UpdateStatusRequest request){
         return  roomService.setRoomStatus(id, request);
     }
 
 
     @PostMapping("")
-    public RoomResponse createRoom(@RequestBody CreateRoomRequest request) {
+    public RoomResponse createRoom(@Valid @RequestBody CreateRoomRequest request) {
         return roomService.createRoom(request);
     }
     
 
     @PutMapping("/{id}")
-    public RoomResponse updateRoom(@PathVariable Long id, @RequestBody UpdateRoomRequest request) {
+    public RoomResponse updateRoom(@PathVariable Long id,@Valid @RequestBody UpdateRoomRequest request) {
 
         return roomService.updateRoom(id, request);
     }
