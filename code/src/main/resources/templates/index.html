@@ -61,121 +61,63 @@
         </form>
       </section>
 
-      <div class="section-title">
-        <h2>ตัวอย่างห้องพัก</h2>
-        <a th:href="@{/rooms/available}">ค้นหาห้องทั้งหมด →</a>
+            <div class="section-title">
+        <h2>ห้องพักแนะนำ</h2>
+        <a th:href="@{/rooms}">ดูห้องพักทั้งหมด →</a>
       </div>
-
-      <p class="muted">
-        ข้อมูลด้านล่างเป็นตัวอย่าง กรุณาค้นหาห้องว่าง
-        เพื่อตรวจสอบห้องและราคาที่เปิดให้จองจริง
-      </p>
 
       <div class="grid cols-3">
-        <article class="card">
-          <img class="room-image"
-               src="assets/room-deluxe.jpg"
-               alt="Deluxe Room">
-
+        <article class="card" th:each="r : ${rooms}">
           <div class="card-body">
             <div class="row">
-              <h3>Deluxe Room</h3>
-              <span class="badge">ตัวอย่าง</span>
+              <h3 th:text="${r.name}">Deluxe Room</h3>
+              <span class="badge">เปิดให้จอง</span>
             </div>
 
-            <p class="muted">ห้อง 101 · พักได้ 3 ตัว</p>
+            <p class="muted">
+              ห้อง <span th:text="${r.roomNumber}">101</span> ·
+              พักได้ <span th:text="${r.capacity}">3</span> ตัว
+            </p>
 
             <div class="row">
-              <span class="price">฿500 / คืน</span>
+              <span class="price">
+                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 0, 'POINT')}">500</span> / ตัว / คืน
+              </span>
 
               <a class="btn btn-small"
-                 th:href="@{/rooms/available}">
-                ค้นหาห้องว่าง
-              </a>
-            </div>
-          </div>
-        </article>
-
-        <article class="card">
-          <img class="room-image"
-               src="assets/room-standard.jpg"
-               alt="Standard Room">
-
-          <div class="card-body">
-            <div class="row">
-              <h3>Standard Room</h3>
-              <span class="badge">ตัวอย่าง</span>
-            </div>
-
-            <p class="muted">ห้อง 201 · พักได้ 2 ตัว</p>
-
-            <div class="row">
-              <span class="price">฿400 / คืน</span>
-
-              <a class="btn btn-small"
-                 th:href="@{/rooms/available}">
-                ค้นหาห้องว่าง
-              </a>
-            </div>
-          </div>
-        </article>
-
-        <article class="card">
-          <img class="room-image"
-               src="assets/room-family.jpg"
-               alt="Family Room">
-
-          <div class="card-body">
-            <div class="row">
-              <h3>Family Room</h3>
-              <span class="badge">ตัวอย่าง</span>
-            </div>
-
-            <p class="muted">ห้อง 301 · พักได้ 4 ตัว</p>
-
-            <div class="row">
-              <span class="price">฿700 / คืน</span>
-
-              <a class="btn btn-small"
-                 th:href="@{/rooms/available}">
-                ค้นหาห้องว่าง
+                 th:href="@{/rooms/{id}(id=${r.id})}">
+                ดูห้อง
               </a>
             </div>
           </div>
         </article>
       </div>
 
-      <div class="section-title">
-        <h2>ตัวอย่างบริการเสริม</h2>
+      <p class="muted" th:if="${#lists.isEmpty(rooms)}">ยังไม่มีห้องพักที่เปิดให้จอง</p>
+
+            <div class="section-title">
+        <h2>บริการเสริม</h2>
       </div>
 
       <p class="muted">
-        ตรวจสอบบริการและราคาปัจจุบันได้ในหน้าสร้างการจอง
+        เลือกบริการเสริมเพิ่มได้ในหน้าสร้างการจอง
       </p>
 
       <div class="grid cols-4">
-        <div class="panel">
-          <h3>🍽 อาหารเสริม</h3>
-          <p>฿50 / วัน</p>
-        </div>
-
-        <div class="panel">
-          <h3>🛁 อาบน้ำ</h3>
-          <p>฿300 / ครั้ง</p>
-        </div>
-
-        <div class="panel">
-          <h3>🦮 พาเดินเล่น</h3>
-          <p>฿100 / วัน</p>
-        </div>
-
-        <div class="panel">
-          <h3>♡ ดูแลสุขภาพ</h3>
-          <p>฿150 / วัน</p>
+        <div class="panel" th:each="s : ${services}">
+          <h3 th:text="${s.name}">อาบน้ำ</h3>
+          <p class="muted"
+            th:if="${s.description != null and !#strings.isEmpty(s.description)}"
+            th:text="${s.description}">รายละเอียดบริการ</p>
+          <p>
+            ฿<span th:text="${#numbers.formatDecimal(s.price, 1, 'COMMA', 0, 'POINT')}">300</span> / ครั้ง
+          </p>
         </div>
       </div>
+
+      <p class="muted" th:if="${#lists.isEmpty(services)}">ยังไม่มีบริการเสริมที่เปิดให้บริการ</p>
     </main>
-  </div>
+    </div>
 
   <footer class="footer">
     PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด
