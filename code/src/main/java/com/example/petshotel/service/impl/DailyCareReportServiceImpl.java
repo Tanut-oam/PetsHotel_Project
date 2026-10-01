@@ -96,6 +96,17 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
     
     @Override
     @Transactional(readOnly = true)
+    public List<DailyCareReportResponse> getReportsForOwner(Long currentUserId) {
+        User user = findUser(currentUserId);
+
+        return reportRepository.findAllForOwner(user.getId())
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public  List<DailyCareReportResponse> getAllReportsForStaffAndAdmin(Long currentUserId){
         User currentUser = findUser(currentUserId);
         requireStaffOrAdmin(currentUser);
