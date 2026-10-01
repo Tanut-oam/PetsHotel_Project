@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record DashboardResponse(
-    BigDecimal totalRevenue,
+    BigDecimal revenueThisMonth,
     long bookingsThisMonth,
     long checkedInPets,
     String topRoom,
