@@ -31,6 +31,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class BookingServiceTest {
@@ -89,6 +92,7 @@ class BookingServiceTest {
 
         pet = new Pet();
         pet.setId(30L);
+        pet.setName("มอคอ");
         pet.setOwner(user);
         pet.setActive(true);
     }
@@ -292,7 +296,21 @@ class BookingServiceTest {
                 () -> bookingService.createBooking(request)
         );
 
-        assertTrue(exception.getMessage().contains("30"));
+        assertTrue(
+        exception.getMessage().contains("มอคอ")
+        );
+
+        assertTrue(
+        exception.getMessage().contains(
+                "10 ตุลาคม 2026"
+        )
+        );
+
+        assertTrue(
+                exception.getMessage().contains(
+                        "12 ตุลาคม 2026"
+                )
+        );
         verifyNoInteractions(availabilityService);
         verify(pricingService, never()).calculate(any(PricingContext.class));
         verifyNoSave();

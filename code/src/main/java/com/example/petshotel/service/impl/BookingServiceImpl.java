@@ -151,7 +151,6 @@ public class BookingServiceImpl implements BookingService {
         }
 
         // Preview is only a quote, not a reservation.
-        // Preview is only a quote, not a reservation.
         if (creating) {
         List<Long> overlappingPetIds =
                 bookingPetRepository.findOverlappingPetIds(
@@ -162,8 +161,21 @@ public class BookingServiceImpl implements BookingService {
                 );
 
         if (!overlappingPetIds.isEmpty()) {
+                Set<Long> overlappingPetIdSet =
+                        new HashSet<>(overlappingPetIds);
+
+                List<String> overlappingPetNames =
+                        pets.stream()
+                                .filter(pet ->
+                                        overlappingPetIdSet.contains(
+                                                pet.getId()
+                                        )
+                                )
+                                .map((Pet pet) -> pet.getName())
+                                .toList();
+
                 throw new PetNotAvailableException(
-                        overlappingPetIds,
+                        overlappingPetNames,
                         request.getCheckInDate(),
                         request.getCheckOutDate()
                 );
