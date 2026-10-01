@@ -7,6 +7,8 @@ import org.springframework.ui.Model;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
@@ -63,7 +65,7 @@ public class RoomController {
         try{
             roomService.createRoom(request);
             redirectAttributes.addFlashAttribute("message", "สร้างห้องสำเร็จ");
-        } catch (IllegalArgumentException e){
+        } catch (ResourceNotFoundException | DuplicateResourceException e){
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/rooms";
@@ -85,7 +87,7 @@ public class RoomController {
         try{
             roomService.updateRoom(id, request);
             redirectAttributes.addFlashAttribute("message", "แก้ไขห้องสำเร็จ");
-        } catch(IllegalArgumentException e){
+        } catch(ResourceNotFoundException | DuplicateResourceException e){
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/rooms";
@@ -100,7 +102,7 @@ public class RoomController {
         try{
             roomService.setRoomStatus(id, request);
             redirectAttributes.addFlashAttribute("message", "เปลี่ยนสถานะห้องสำเร็จ");
-        } catch(IllegalArgumentException e) {
+        } catch(ResourceNotFoundException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/rooms";
@@ -115,7 +117,7 @@ public class RoomController {
         try{
             roomService.deactivateRoom(id);
             redirectAttributes.addFlashAttribute("message", "ปิดใช้งานห้องสำเร็จ");
-        } catch(IllegalArgumentException e){
+        } catch(ResourceNotFoundException e){
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         
