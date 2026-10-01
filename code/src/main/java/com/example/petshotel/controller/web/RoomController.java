@@ -7,6 +7,8 @@ import org.springframework.ui.Model;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +19,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.annotation.PostMapping;
 
-
+import org.springframework.validation.BindingResult;
+import jakarta.validation.Valid;
 
 
 @Controller
@@ -52,16 +55,22 @@ public class RoomController {
     }
 
     @PostMapping("/admin/rooms")
-    public String createRoom(@ModelAttribute CreateRoomRequest request,RedirectAttributes redirectAttributes) {
+    public String createRoom(@Valid @ModelAttribute CreateRoomRequest request,
+        BindingResult bindingResult,
+        RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", firstError(bindingResult));
+            return "redirect:/admin/rooms/new";
+        }
         try{
             roomService.createRoom(request);
             redirectAttributes.addFlashAttribute("message", "สร้างห้องสำเร็จ");
-        } catch (IllegalArgumentException e){
+        } catch (ResourceNotFoundException | DuplicateResourceException e){
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        
         return "redirect:/admin/rooms";
     }
+
     
     @GetMapping("/admin/rooms/{id}/edit")
     public String editRoomForm(@PathVariable Long id,Model model) {
@@ -70,26 +79,37 @@ public class RoomController {
     }
     
     @PostMapping("/admin/rooms/{id}")
-    public String updateRoom(@PathVariable Long id,@ModelAttribute UpdateRoomRequest request,RedirectAttributes redirectAttributes) {
+    public String updateRoom(@PathVariable Long id,@Valid @ModelAttribute UpdateRoomRequest request,BindingResult bindingResult,RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", firstError(bindingResult));
+            return "redirect:/admin/rooms/" + id + "/edit";
+        }
         try{
             roomService.updateRoom(id, request);
             redirectAttributes.addFlashAttribute("message", "แก้ไขห้องสำเร็จ");
-        } catch(IllegalArgumentException e){
+        } catch(ResourceNotFoundException | DuplicateResourceException e){
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        
         return "redirect:/admin/rooms";
     }
     
     @PostMapping("/admin/rooms/{id}/status")
-    public String updateStatus(@PathVariable Long id,@ModelAttribute UpdateStatusRequest request,RedirectAttributes redirectAttributes) {
+    public String updateStatus(@PathVariable Long id,@Valid @ModelAttribute UpdateStatusRequest request,BindingResult bindingResult,RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", firstError(bindingResult));
+            return "redirect:/admin/rooms";
+        }
         try{
             roomService.setRoomStatus(id, request);
             redirectAttributes.addFlashAttribute("message", "เปลี่ยนสถานะห้องสำเร็จ");
-        } catch(IllegalArgumentException e) {
+        } catch(ResourceNotFoundException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/admin/rooms";
+    }
+
+    private String firstError(BindingResult bindingResult) {
+        return bindingResult.getAllErrors().get(0).getDefaultMessage();
     }
     
     @PostMapping("/admin/rooms/{id}/deactivate")
@@ -97,7 +117,7 @@ public class RoomController {
         try{
             roomService.deactivateRoom(id);
             redirectAttributes.addFlashAttribute("message", "ปิดใช้งานห้องสำเร็จ");
-        } catch(IllegalArgumentException e){
+        } catch(ResourceNotFoundException e){
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         

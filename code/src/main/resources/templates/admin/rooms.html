@@ -89,38 +89,40 @@
                 </span>
               </td>
 
-              <td>
-                <a class="btn btn-small"
-                   th:href="@{/admin/rooms/{id}/edit(id=${room.id})}">
-                  แก้ไข
-                </a>
+                            <td>
+                <div class="table-actions">
+                  <a class="btn btn-small"
+                     th:href="@{/admin/rooms/{id}/edit(id=${room.id})}">
+                    แก้ไข
+                  </a>
 
-                <form th:action="@{/admin/rooms/{id}/status(id=${room.id})}"
-                      method="post"
-                      style="display:inline">
+                  <form th:action="@{/admin/rooms/{id}/status(id=${room.id})}"
+                        method="post">
 
-                  <select name="status"
-                          th:attr="aria-label=|สถานะห้อง ${room.roomNumber}|">
-                    <option value="ACTIVE"
-                            th:selected="${room.status.name() == 'ACTIVE'}">
-                      เปิดให้จอง
-                    </option>
+                    <select name="status"
+                            class="btn-select"
+                            th:attr="aria-label=|สถานะห้อง ${room.roomNumber}|">
+                      <option value="ACTIVE"
+                              th:selected="${room.status.name() == 'ACTIVE'}">
+                        เปิดให้จอง
+                      </option>
 
-                    <option value="MAINTENANCE"
-                            th:selected="${room.status.name() == 'MAINTENANCE'}">
-                      ปิดซ่อม
-                    </option>
+                      <option value="MAINTENANCE"
+                              th:selected="${room.status.name() == 'MAINTENANCE'}">
+                        ปิดซ่อม
+                      </option>
 
-                    <option value="INACTIVE"
-                            th:selected="${room.status.name() == 'INACTIVE'}">
-                      ปิดใช้งาน
-                    </option>
-                  </select>
+                      <option value="INACTIVE"
+                              th:selected="${room.status.name() == 'INACTIVE'}">
+                        ปิดใช้งาน
+                      </option>
+                    </select>
 
-                  <button class="btn btn-small" type="submit">
-                    เปลี่ยนสถานะ
-                  </button>
-                </form>
+                    <button class="btn btn-small" type="submit">
+                      เปลี่ยนสถานะ
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
           </tbody>

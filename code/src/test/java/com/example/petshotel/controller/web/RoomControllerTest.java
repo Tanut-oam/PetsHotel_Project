@@ -28,6 +28,8 @@ import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.RoomService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -125,7 +127,7 @@ class RoomControllerTest {
 
         @Test
         void createRoom_duplicateNumber_redirectsWithError() throws Exception {
-                doThrow(new IllegalArgumentException("Room number already exists: 101"))
+                doThrow(new DuplicateResourceException("Room number already exists: 101"))
                         .when(roomService).createRoom(any(CreateRoomRequest.class));
 
                 mockMvc.perform(post("/admin/rooms")
@@ -175,7 +177,7 @@ class RoomControllerTest {
 
         @Test
         void updateRoom_roomNotFound_redirectsWithError() throws Exception {
-                doThrow(new IllegalArgumentException("Room not found: 99"))
+                doThrow(new ResourceNotFoundException("Room", 99L))
                         .when(roomService).updateRoom(eq(99L), any(UpdateRoomRequest.class));
 
                 mockMvc.perform(post("/admin/rooms/99")
@@ -215,7 +217,7 @@ class RoomControllerTest {
 
         @Test
         void deactivateRoom_roomNotFound_redirectsWithError() throws Exception {
-                doThrow(new IllegalArgumentException("Room not found: 99"))
+                doThrow(new ResourceNotFoundException("Room", 99L))
                         .when(roomService).deactivateRoom(99L);
 
                 mockMvc.perform(post("/admin/rooms/99/deactivate").with(csrf()))
@@ -234,5 +236,20 @@ class RoomControllerTest {
                         .andExpect(status().isForbidden());
 
                 verify(roomService, never()).setRoomStatus(any(), any());
+        }
+
+        @Test
+        void createRoom_invalidCapacity_redirectsBackWithError() throws Exception {
+                mockMvc.perform(post("/admin/rooms")
+                                .with(csrf())
+                                .param("roomNumber", "101")
+                                .param("name", "Deluxe")
+                                .param("capacity", "0")
+                                .param("pricePerPetPerNight", "500"))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/admin/rooms/new"))
+                        .andExpect(flash().attribute("error", "The room must accommodate at least one animal."));
+
+                verify(roomService, never()).createRoom(any());
         }
 }
