@@ -14,6 +14,7 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.mapper.DailyCareReportMapper;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.DailyCareReportRepository;
@@ -100,6 +101,32 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         requireStaffOrAdmin(currentUser);
 
         return  reportRepository.findAllByOrderByReportDateDescIdDesc().stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReportableBookingPetResponse> getReportableBookingPetsForStaffAndAdmin(
+            Long currentUserId) {
+        User currentUser = findUser(currentUserId);
+        requireStaffOrAdmin(currentUser);
+
+        return bookingPetRepository.findReportableBookingPets(
+                List.of(BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT))
+                .stream()
+                .map(bookingPet -> {
+                    Booking booking = bookingPet.getBooking();
+                    User owner = booking.getUser();
+
+                    return new ReportableBookingPetResponse(
+                            bookingPet.getId(),
+                            booking.getId(),
+                            bookingPet.getPet().getName(),
+                            owner.getFirstName() + " " + owner.getLastName(),
+                            booking.getCheckInDate(),
+                            booking.getCheckOutDate()
+                    );
+                })
+                .toList();
     }
 
     @Override
