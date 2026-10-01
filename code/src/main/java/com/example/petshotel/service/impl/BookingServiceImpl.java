@@ -117,7 +117,7 @@ public class BookingServiceImpl implements BookingService {
 
         List<Pet> pets = petRepository.findAllById(request.getPetIds());
         Set<Long> foundPetIds = pets.stream()
-                .map(Pet::getId).collect(Collectors.toSet());
+                .map(pet -> pet.getId()).collect(Collectors.toSet());
 
         for (Long petId : request.getPetIds()) {
             if (!foundPetIds.contains(petId)) {
