@@ -720,3 +720,49 @@ small {
 .flash-error .flash-icon {
   background: var(--red);
 }
+
+.revenue-panel {
+  padding: 0;
+}
+
+.revenue-scroll {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.revenue-scroll .table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.revenue-scroll .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fafcf9;
+}
+
+.revenue-scroll .table th:first-child,
+.revenue-scroll .table td:first-child {
+  width: 50%;
+}
+
+.revenue-scroll .table th:last-child,
+.revenue-scroll .table td:last-child {
+  text-align: right;
+}
+
+.revenue-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+  background: #fafcf9;
+}
+
+.revenue-scroll:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
