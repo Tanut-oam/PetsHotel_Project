@@ -14,7 +14,42 @@
     <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content">
-      <h1>สมาชิก</h1>
+      <div class="section-title">
+        <h1>สมาชิก</h1>
+
+        <form class="table-actions" th:action="@{/admin/users}" method="get">
+          <input type="search"
+                name="keyword"
+                class="search-input"
+                placeholder="ค้นหาชื่อ อีเมล หรือเบอร์โทร"
+                aria-label="ค้นหาสมาชิก"
+                th:value="${keyword}">
+
+          <select name="sort"
+                  class="btn-select"
+                  aria-label="เรียงลำดับ"
+                  onchange="this.form.submit()">
+            <option value="id"     th:selected="${sort == 'id'}">เรียงตามลำดับสมัคร</option>
+            <option value="newest" th:selected="${sort == 'newest'}">สมัครล่าสุด</option>
+            <option value="oldest" th:selected="${sort == 'oldest'}">สมัครเก่าสุด</option>
+            <option value="name"   th:selected="${sort == 'name'}">ชื่อ ก-ฮ / A-Z</option>
+            <option value="email"  th:selected="${sort == 'email'}">อีเมล</option>
+            <option value="role"   th:selected="${sort == 'role'}">บทบาท</option>
+          </select>
+
+          <button class="btn btn-small" type="submit">ค้นหา</button>
+        </form>
+      </div>
+
+      <div th:if="${message}" class="flash-notice flash-success" role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+      </div>
+
+      <div th:if="${error}" class="flash-notice flash-error" role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
 
       <div class="panel table-scroll">
         <table class="table">
@@ -24,12 +59,17 @@
               <th>อีเมล</th>
               <th>เบอร์โทร</th>
               <th>บทบาท</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
             </tr>
           </thead>
 
           <tbody>
             <tr th:if="${#lists.isEmpty(users)}">
-              <td colspan="4">ยังไม่มีสมาชิก</td>
+              <td colspan="6"
+                  th:text="${keyword != null and !#strings.isEmpty(keyword)} ? 'ไม่พบสมาชิกที่ค้นหา' : 'ยังไม่มีสมาชิก'">
+                ยังไม่มีสมาชิก
+              </td>
             </tr>
 
             <tr th:each="user : ${users}">
@@ -37,12 +77,19 @@
               <td th:text="${user.email}">demo@petshotel.test</td>
               <td th:text="${user.phoneNumber}">0812345678</td>
               <td>
-                <span class="badge"
-                      th:if="${user.role.name() == 'CUSTOMER'}">ลูกค้า</span>
-                <span class="badge badge-warning"
-                      th:if="${user.role.name() == 'STAFF'}">พนักงาน</span>
-                <span class="badge badge-danger"
-                      th:if="${user.role.name() == 'ADMIN'}">แอดมิน</span>
+                <span class="badge" th:if="${user.role.name() == 'CUSTOMER'}">ลูกค้า</span>
+                <span class="badge badge-warning" th:if="${user.role.name() == 'STAFF'}">พนักงาน</span>
+                <span class="badge badge-danger" th:if="${user.role.name() == 'ADMIN'}">แอดมิน</span>
+              </td>
+              <td>
+                <span class="badge" th:if="${user.active}">ใช้งาน</span>
+                <span class="badge badge-danger" th:unless="${user.active}">ระงับ</span>
+              </td>
+              <td>
+                <a class="btn btn-small"
+                  th:href="@{/admin/users/{id}/edit(id=${user.id})}">
+                  แก้ไข
+                </a>
               </td>
             </tr>
           </tbody>
