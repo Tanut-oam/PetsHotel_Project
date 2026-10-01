@@ -24,6 +24,12 @@
           กลับหน้าจัดการห้องพัก
         </a>
       </div>
+      <div th:if="${error}"
+          class="flash-notice flash-error"
+          role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
 
       <form class="panel grid cols-2"
             th:action="@{/admin/rooms/{id}(id=${room.id})}"
@@ -76,9 +82,10 @@
             บันทึกการแก้ไข
           </button>
 
-          <a class="btn" th:href="@{/admin/rooms}">
-            ยกเลิก
-          </a>
+          <form th:action="@{/admin/rooms/{id}/deactivate(id=${room.id})}"
+            method="post"
+            style="margin-top:20px"
+            onsubmit="return confirm('ยืนยันปิดใช้งานห้องนี้?');">
         </div>
       </form>
 
