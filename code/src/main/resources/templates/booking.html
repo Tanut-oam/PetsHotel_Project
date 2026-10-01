@@ -138,6 +138,33 @@
       border-top: 1px solid var(--line);
     }
 
+        .pet-booking-choice {
+      min-height: 88px;
+    }
+
+    .pet-booking-photo,
+    .pet-booking-photo-placeholder {
+      width: 64px;
+      height: 64px;
+      flex: 0 0 64px;
+      border-radius: 50%;
+    }
+
+    .pet-booking-photo {
+      object-fit: cover;
+      border: 2px solid #d9e7df;
+      background: #f4f8f5;
+    }
+
+    .pet-booking-photo-placeholder {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #eaf4ee;
+      color: #245e47;
+      font-size: 1.8rem;
+    }
+
     @media (max-width: 600px) {
       .review-grid {
         grid-template-columns: 1fr;
@@ -294,16 +321,36 @@
               <a th:href="@{/pets}">ไปเพิ่มสัตว์เลี้ยง</a>
             </p>
 
-            <label th:each="pet : ${pets}" class="choice">
+            <label th:each="pet : ${pets}"
+                  class="choice pet-booking-choice">
+
               <input type="checkbox"
-                     th:field="*{petIds}"
-                     th:value="${pet.id}"
-                     th:attr="data-name=${pet.name}">
+                    th:field="*{petIds}"
+                    th:value="${pet.id}"
+                    th:attr="data-name=${pet.name}">
+
+              <img th:if="${!#strings.isEmpty(pet.imageUrl)}"
+                  class="pet-booking-photo"
+                  th:src="@{${pet.imageUrl}}"
+                  th:alt="|รูปของ ${pet.name}|"
+                  width="64"
+                  height="64"
+                  loading="lazy">
+
+              <span th:unless="${!#strings.isEmpty(pet.imageUrl)}"
+                    class="pet-booking-photo-placeholder"
+                    aria-hidden="true">
+                🐾
+              </span>
 
               <span class="choice-text">
-                <strong th:text="${pet.name}"></strong>
+                <strong th:text="${pet.name}">
+                  ชื่อสัตว์เลี้ยง
+                </strong>
                 <br>
-                <small th:text="${pet.type}"></small>
+                <small th:text="${pet.type}">
+                  ประเภทสัตว์
+                </small>
               </span>
             </label>
 
