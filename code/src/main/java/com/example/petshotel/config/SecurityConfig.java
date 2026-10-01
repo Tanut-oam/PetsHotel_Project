@@ -40,7 +40,9 @@ public class SecurityConfig {
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/room/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
-                .requestMatchers(
+                .requestMatchers(HttpMethod.PATCH, "/api/room/**",
+                        "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
+                        .requestMatchers(
                         HttpMethod.GET,
                         "/rooms",
                         "/rooms/{id:[0-9]+}"

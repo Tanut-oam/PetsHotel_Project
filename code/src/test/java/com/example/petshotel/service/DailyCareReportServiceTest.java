@@ -19,6 +19,7 @@ import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.mapper.DailyCareReportMapper;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.DailyCareReportRepository;
@@ -610,5 +611,57 @@ public class DailyCareReportServiceTest {
         ResourceNotFoundException.class,
         () -> reportService.getReportById(99L, 5L)
     );
+    }
+
+    @Test
+void getReportableBookingPetsShouldReturnOptionsForAdmin() {
+    User admin = new User();
+    admin.setId(6L);
+    admin.setRole(UserRole.ADMIN);
+
+    User owner = new User();
+    owner.setFirstName("กานต์");
+    owner.setLastName("ใจดี");
+    bookingPet.getBooking().setUser(owner);
+
+    List<BookingStatus> statuses =
+            List.of(BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT);
+
+    when(userRepository.findById(6L))
+            .thenReturn(Optional.of(admin));
+    when(bookingPetRepository.findReportableBookingPets(statuses))
+            .thenReturn(List.of(bookingPet));
+
+    List<ReportableBookingPetResponse> options =
+            reportService.getReportableBookingPetsForStaffAndAdmin(6L);
+
+    assertEquals(1, options.size());
+
+    ReportableBookingPetResponse option = options.get(0);
+    assertEquals(21L, option.bookingPetId());
+    assertEquals(10L, option.bookingId());
+    assertEquals("โมจิ", option.petName());
+    assertEquals("กานต์ ใจดี", option.ownerName());
+    assertEquals(LocalDate.of(2026, 9, 23), option.checkInDate());
+    assertEquals(LocalDate.of(2026, 9, 25), option.checkOutDate());
+
+    verify(bookingPetRepository).findReportableBookingPets(statuses);
+}
+
+    @Test
+    void getReportableBookingPetsShouldRejectCustomer() {
+        User customer = new User();
+        customer.setId(8L);
+        customer.setRole(UserRole.CUSTOMER);
+
+        when(userRepository.findById(8L))
+                .thenReturn(Optional.of(customer));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> reportService.getReportableBookingPetsForStaffAndAdmin(8L)
+        );
+
+        verifyNoInteractions(bookingPetRepository);
     }
 }

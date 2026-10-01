@@ -3,23 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel</title>
+  <title>รายงานการดูแล | PetsHotel</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
+
   <div class="layout">
     <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
-      <h1>รายงานการดูแลรายวัน</h1>
+      <div class="section-title">
+        <h1>รายงานการดูแลรายวัน</h1>
+      </div>
 
-      <div class="panel">
-        <p>รายงานการดูแลยังไม่พร้อมแสดงในหน้านี้</p>
+      <div class="panel"
+           th:if="${#lists.isEmpty(reports)}"
+           role="status">
+        ยังไม่มีรายงานการดูแลสำหรับการจองของคุณ
+      </div>
+
+      <div class="grid"
+           th:unless="${#lists.isEmpty(reports)}">
+        <article class="panel"
+                 th:each="report : ${reports}">
+          <div class="row">
+            <h2 th:text="${report.petName}">ชื่อสัตว์เลี้ยง</h2>
+            <span class="badge"
+                  th:text="|การจอง #${report.bookingId}|">
+              เลขการจอง
+            </span>
+          </div>
+
+          <p class="muted">
+            วันที่รายงาน:
+            <time th:datetime="${report.reportDate}"
+                  th:text="${report.reportDate}">
+              วันที่
+            </time>
+          </p>
+
+          <div class="grid cols-3">
+            <section>
+              <h3>อาหาร</h3>
+              <p>
+                เช้า:
+                <span th:text="${#strings.isEmpty(report.feedingMorning) ? '—' : report.feedingMorning}">—</span>
+              </p>
+              <p>
+                เย็น:
+                <span th:text="${#strings.isEmpty(report.feedingEvening) ? '—' : report.feedingEvening}">—</span>
+              </p>
+            </section>
+
+            <section>
+              <h3>กิจกรรมและความสะอาด</h3>
+              <p>
+                เดินเล่น:
+                <span th:text="${report.walkingMinutes == null ? '—' : report.walkingMinutes + ' นาที'}">—</span>
+              </p>
+              <p>
+                ดูแลความสะอาด:
+                <span th:text="${#strings.isEmpty(report.grooming) ? '—' : report.grooming}">—</span>
+              </p>
+            </section>
+
+            <section>
+              <h3>อารมณ์และสุขภาพ</h3>
+              <p>
+                อารมณ์:
+                <span th:text="${#strings.isEmpty(report.mood) ? '—' : report.mood}">—</span>
+              </p>
+              <p>
+                สุขภาพ:
+                <span th:text="${#strings.isEmpty(report.healthNote) ? '—' : report.healthNote}">—</span>
+              </p>
+            </section>
+          </div>
+
+          <p>
+            <strong>หมายเหตุเพิ่มเติม:</strong>
+            <span th:text="${#strings.isEmpty(report.generalNote) ? 'ไม่มี' : report.generalNote}">
+              ไม่มี
+            </span>
+          </p>
+        </article>
       </div>
     </main>
   </div>
 
-  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
+  <footer class="footer">
+    PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด
+  </footer>
 </body>
 </html>

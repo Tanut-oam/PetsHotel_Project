@@ -13,59 +13,48 @@
     <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content">
-        <div class="section-title">
+      <div class="section-title">
         <h1>รายงานการดูแล</h1>
-        <button class="btn btn-primary" type="button">+ เขียนรายงาน</button>
-        </div>
+      </div>
 
-        <div class="panel table-scroll">
-        <table class="table">
-            <thead>
-            <tr>
-              <th>วันที่</th>
-              <th>การจอง</th>
-              <th>เจ้าของ</th>
-              <th>สัตว์เลี้ยง</th>
-              <th>อาหาร</th>
-              <th>กิจกรรม</th>
-              <th>สุขภาพ</th>
-              <th>จัดการ</th>
-            </tr>
-            </thead>
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}">บันทึกสำเร็จ</span>
+      </div>
 
-            <tbody>
-            <tr>
-              <td>25 ก.ย. 2569</td>
-              <td>#1025</td>
-              <td>คุณกานต์</td>
-              <td>Mochi</td>
-              <td>เช้า: กินหมด / เย็น: ยังไม่บันทึก</td>
-              <td>เดินรวม 15 นาที</td>
-              <td>ปกติ</td>
-              <td><button class="btn btn-small" type="button">แก้ไข</button></td>
-            </tr>
-            </tbody>
-        </table>
-        </div>
+      <div th:if="${error}"
+           class="flash-notice flash-error"
+           role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}">ไม่สามารถบันทึกได้</span>
+      </div>
 
+      <section aria-labelledby="create-report-heading">
         <div class="section-title">
-        <h2>ฟอร์มรายงานประจำวัน</h2>
+          <h2 id="create-report-heading">บันทึกรายงานการดูแล</h2>
         </div>
 
-        <form class="panel grid cols-2" id="care-report-form">
-          <label class="field">
-            การจองที่กำลังเข้าพัก
-            <select name="bookingId" required>
-              <option value="">เลือกการจอง</option>
-              <option value="1025">#1025 · คุณกานต์ (ข้อมูลตัวอย่าง)</option>
-            </select>
-          </label>
+        <div class="panel"
+             th:if="${#lists.isEmpty(bookingPetOptions)}">
+          ยังไม่มีสัตว์ในการจองที่พร้อมให้บันทึกรายงาน
+        </div>
+
+        <form class="panel grid cols-2"
+              th:unless="${#lists.isEmpty(bookingPetOptions)}"
+              th:action="@{/admin/reports}"
+              method="post">
 
           <label class="field">
             สัตว์ในการจอง
             <select name="bookingPetId" required>
-              <option value="">เลือกสัตว์เลี้ยง</option>
-              <option value="1">Mochi (ข้อมูลตัวอย่าง)</option>
+              <option value="" selected disabled>เลือกสัตว์ในการจอง</option>
+              <option th:each="option : ${bookingPetOptions}"
+                      th:value="${option.bookingPetId}"
+                      th:text="|การจอง #${option.bookingId} · ${option.petName} (${option.ownerName}) · ${option.checkInDate} ถึง ${option.checkOutDate}|">
+                สัตว์ในการจอง
+              </option>
             </select>
           </label>
 
@@ -75,32 +64,35 @@
           </label>
 
           <label class="field">
-            อาหารเช้า
-            <input name="feedingMorning">
+            อาหารมื้อเช้า
+            <textarea name="feedingMorning"></textarea>
           </label>
 
           <label class="field">
-            อาหารเย็น
-            <input name="feedingEvening">
+            อาหารมื้อเย็น
+            <textarea name="feedingEvening"></textarea>
           </label>
 
           <label class="field">
-            เวลาเดินเล่นรวม (นาที)
-            <input type="number" name="walkingMinutes" min="0">
+            เวลาเดินเล่น (นาที)
+            <input type="number"
+                   name="walkingMinutes"
+                   min="0"
+                   step="1">
           </label>
 
           <label class="field">
-            การอาบน้ำ/ดูแลความสะอาด
-            <input name="grooming">
+            การดูแลความสะอาด
+            <textarea name="grooming"></textarea>
           </label>
 
           <label class="field">
             อารมณ์
-            <input name="mood">
+            <textarea name="mood"></textarea>
           </label>
 
           <label class="field">
-            สุขภาพ
+            ข้อมูลสุขภาพ
             <textarea name="healthNote"></textarea>
           </label>
 
@@ -109,15 +101,64 @@
             <textarea name="generalNote"></textarea>
           </label>
 
-          <label class="field">
-            รูปภาพประจำวัน
-            <input type="file" name="photos" accept="image/*" multiple>
-          </label>
-
           <div>
-            <button class="btn btn-primary" type="submit">บันทึกรายงาน</button>
+            <button class="btn btn-primary" type="submit">
+              บันทึกรายงาน
+            </button>
           </div>
         </form>
+      </section>
+
+      <div class="section-title">
+        <h2>รายงานที่บันทึกแล้ว</h2>
+      </div>
+
+      <div class="panel"
+           th:if="${#lists.isEmpty(reports)}"
+           role="status">
+        ยังไม่มีรายงานการดูแลในระบบ
+      </div>
+
+      <div class="panel table-scroll"
+           th:unless="${#lists.isEmpty(reports)}">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>วันที่</th>
+              <th>การจอง</th>
+              <th>สัตว์เลี้ยง</th>
+              <th>อาหาร</th>
+              <th>เดินเล่น</th>
+              <th>ความสะอาด</th>
+              <th>อารมณ์</th>
+              <th>สุขภาพ</th>
+              <th>หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="report : ${reports}">
+              <td th:text="${report.reportDate}">—</td>
+              <td th:text="${'#' + report.bookingId}">—</td>
+              <td th:text="${report.petName}">—</td>
+              <td>
+                <div>
+                  เช้า:
+                  <span th:text="${#strings.isEmpty(report.feedingMorning) ? '—' : report.feedingMorning}">—</span>
+                </div>
+                <div>
+                  เย็น:
+                  <span th:text="${#strings.isEmpty(report.feedingEvening) ? '—' : report.feedingEvening}">—</span>
+                </div>
+              </td>
+              <td th:text="${report.walkingMinutes == null ? '—' : report.walkingMinutes + ' นาที'}">—</td>
+              <td th:text="${#strings.isEmpty(report.grooming) ? '—' : report.grooming}">—</td>
+              <td th:text="${#strings.isEmpty(report.mood) ? '—' : report.mood}">—</td>
+              <td th:text="${#strings.isEmpty(report.healthNote) ? '—' : report.healthNote}">—</td>
+              <td th:text="${#strings.isEmpty(report.generalNote) ? '—' : report.generalNote}">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </main>
   </div>
 </body>
