@@ -7,38 +7,17 @@
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" th:href="@{/}">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a th:href="@{/}">หน้าแรก</a>
-      <a th:href="@{/rooms}">ห้องพัก</a>
-      <a th:href="@{/pets}">สัตว์เลี้ยง</a>
-      <a th:href="@{/my-bookings}">การจอง</a>
-    </nav>
-
-    <div class="top-actions">
-      <a class="btn btn-small" th:href="@{/admin/rooms}">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" th:href="@{/profile}">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a th:href="@{/}">⌂ หน้าแรก</a>
-      <a th:href="@{/rooms}">▣ ห้องพัก</a>
-      <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
-      <a th:href="@{/my-bookings}">▤ การจองของฉัน</a>
-      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
-      <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
       <h1>ห้องพักทั้งหมด</h1>
 
       <!-- ฟอร์มค้นหาห้องว่าง: ต้องรอ endpoint ของ Availability (ธเนศ) -->
       <section class="panel">
-        <form class="form-grid" th:action="@{/rooms/search}" method="get">
+        <form class="form-grid" th:action="@{/rooms/available}" method="get">
           <label class="field">
             เช็กอิน
             <input type="date" name="checkIn" required>

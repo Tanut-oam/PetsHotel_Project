@@ -3,6 +3,7 @@ package com.example.petshotel.controller.web;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Objects;
+import java.time.LocalDate;
 
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -63,15 +65,21 @@ public class BookingController {
     @GetMapping("/new")
     public String showForm(
             @RequestParam(required = false) Long roomId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate checkIn,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate checkOut,
             Principal principal,
             Model model) {
 
         User user = currentUser(principal);
 
-        CreateBookingRequest form =
-                new CreateBookingRequest();
-
+        CreateBookingRequest form = new CreateBookingRequest();
         form.setRoomId(roomId);
+        form.setCheckInDate(checkIn);
+        form.setCheckOutDate(checkOut);
 
         loadChoices(model, user, form);
         model.addAttribute("bookingForm", form);

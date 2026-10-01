@@ -72,10 +72,10 @@
           </h2>
 
           <div th:if="${room.status.name() == 'ACTIVE'}">
-            <p>เลือกวันที่เข้าพักเพื่อดูห้องว่างและยอดรวม</p>
+            <p>เลือกวันที่เข้าพักเพื่อไปกรอกข้อมูลการจอง</p>
 
             <!-- ส่งค่าไปหน้าจองของ Booking (กิตติญาดา) ผ่าน query string -->
-            <form th:action="@{/booking}" method="get">
+            <form th:action="@{/bookings/new}" method="get">
               <input type="hidden" name="roomId" th:value="${room.id}">
 
               <label class="field">
