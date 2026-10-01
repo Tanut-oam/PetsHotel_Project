@@ -7,7 +7,7 @@ import com.example.petshotel.dto.response.DashboardResponse;
 import com.example.petshotel.dto.response.RecentBookingResponse;
 
 public interface DashboardService {
-    BigDecimal getTotalRevenue();
+    BigDecimal getRevenueThisMonth();
     long getBookingsThisMonth();
     long getCheckedInPets();
     String getTopRoom();

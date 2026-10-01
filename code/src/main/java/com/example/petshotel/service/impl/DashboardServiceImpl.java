@@ -23,6 +23,7 @@ import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.AvailabilityService;
 import com.example.petshotel.service.DashboardService;
+import com.example.petshotel.domain.enums.PaymentStatus;
 
 @Service 
 public class DashboardServiceImpl implements DashboardService{
@@ -44,29 +45,49 @@ public class DashboardServiceImpl implements DashboardService{
     }
 
 
-    @Override 
+    @Override
     @Transactional(readOnly = true)
-    public BigDecimal getTotalRevenue() {
+    public BigDecimal getRevenueThisMonth() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
+
         BigDecimal total = BigDecimal.ZERO;
+
         for (Receipt receipt : receiptRepository.findAll()) {
-            total = total.add(receipt.getTotalAmount());
+            Booking booking = receipt.getBooking();
+
+            if (booking == null
+                    || booking.getPaymentStatus() != PaymentStatus.PAID
+                    || booking.getPaidAt() == null) {
+                continue;
+            }
+
+            LocalDate paidDate = booking.getPaidAt().toLocalDate();
+
+            if (!paidDate.isBefore(monthStart)
+                    && paidDate.isBefore(nextMonthStart)) {
+                total = total.add(receipt.getTotalAmount());
+            }
         }
+
         return total;
     }
 
-    @Override 
+    @Override
     @Transactional(readOnly = true)
-    public long getBookingsThisMonth(){
+    public long getBookingsThisMonth() {
         LocalDate today = LocalDate.now();
         long count = 0;
 
-        for(Booking booking : bookingRepository.findAll()){
-            if (booking.getCreatedAt() != null
-                && booking.getCreatedAt().getYear() == today.getYear()
-                && booking.getCreatedAt().getMonth() == today.getMonth()) {
+        for (Booking booking : bookingRepository.findAll()) {
+            if (booking.getStatus() != BookingStatus.CANCELLED
+                    && booking.getCreatedAt() != null
+                    && booking.getCreatedAt().getYear() == today.getYear()
+                    && booking.getCreatedAt().getMonth() == today.getMonth()) {
                 count++;
             }
         }
+
         return count;
     }
 
@@ -153,7 +174,7 @@ public class DashboardServiceImpl implements DashboardService{
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard(){
         return new DashboardResponse(
-            getTotalRevenue(),
+            getRevenueThisMonth(),
             getBookingsThisMonth(),
             getCheckedInPets(),
             getTopRoom(),
