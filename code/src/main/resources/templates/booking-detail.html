@@ -23,6 +23,96 @@
     dialog::backdrop {
       background: rgb(0 0 0 / 40%);
     }
+
+    [data-booking-page="detail"] {
+      max-width: 1100px;
+    }
+
+    #booking-detail {
+      padding: 24px;
+    }
+
+    .booking-detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .booking-detail-grid > section {
+      min-width: 0;
+    }
+
+    .booking-detail-grid h2 {
+      margin: 0 0 18px;
+    }
+
+    .booking-detail-grid dl {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.85fr) minmax(0, 1.15fr);
+      gap: 12px 16px;
+      margin: 0;
+    }
+
+    .booking-detail-grid dt {
+      color: #657770;
+    }
+
+    .booking-detail-grid dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .booking-price {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f6faf7;
+    }
+
+    .booking-price dt:last-of-type,
+    .booking-price dd:last-of-type {
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: #245e47;
+      font-weight: 700;
+    }
+
+    #booking-detail > section {
+      margin-top: 24px;
+    }
+
+    #booking-detail > .row {
+      margin-top: 24px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    #booking-detail > .row form {
+      margin: 0;
+    }
+
+    @media (max-width: 800px) {
+      .booking-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      #booking-detail {
+        padding: 18px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .booking-detail-grid dl {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      .booking-detail-grid dd {
+        margin-bottom: 10px;
+      }
+    }
   </style>
 </head>
 
@@ -46,75 +136,81 @@
          role="alert"></p>
 
       <section id="booking-detail" class="panel">
-        <h2>ข้อมูลการจอง</h2>
+        <div class="booking-detail-grid">
+          <section class="booking-information">
+            <h2>ข้อมูลการจอง</h2>
 
-        <dl>
-          <dt>เลขที่การจอง</dt>
-          <dd th:text="${booking.id}"></dd>
+            <dl>
+              <dt>เลขที่การจอง</dt>
+              <dd th:text="${booking.id}"></dd>
 
-          <dt>ห้องพัก</dt>
-          <dd th:text="${booking.roomName}"></dd>
+              <dt>ห้องพัก</dt>
+              <dd th:text="${booking.roomName}"></dd>
 
-          <dt>สัตว์เลี้ยง</dt>
-          <dd>
-            <span th:if="${#lists.isEmpty(booking.petNames)}">
-              ไม่มีข้อมูล
-            </span>
+              <dt>สัตว์เลี้ยง</dt>
+              <dd>
+                <span th:if="${#lists.isEmpty(booking.petNames)}">
+                  ไม่มีข้อมูล
+                </span>
 
-            <span th:each="petName, item : ${booking.petNames}"
-                  th:text="${petName + (item.last ? '' : ', ')}"></span>
-          </dd>
+                <span th:each="petName, item : ${booking.petNames}"
+                      th:text="${petName + (item.last ? '' : ', ')}"></span>
+              </dd>
 
-          <dt>วันเช็กอิน</dt>
-          <dd th:text="${booking.checkInDate}"></dd>
+              <dt>วันเช็กอิน</dt>
+              <dd th:text="${booking.checkInDate}"></dd>
 
-          <dt>วันเช็กเอาต์</dt>
-          <dd th:text="${booking.checkOutDate}"></dd>
+              <dt>วันเช็กเอาต์</dt>
+              <dd th:text="${booking.checkOutDate}"></dd>
 
-          <dt>สถานะ</dt>
-          <dd>
-            <span data-status-label
-                  th:attr="data-status-label=${booking.status}"
-                  th:text="${booking.status}"></span>
-          </dd>
+              <dt>สถานะ</dt>
+              <dd>
+                <span data-status-label
+                      th:attr="data-status-label=${booking.status}"
+                      th:text="${booking.status}"></span>
+              </dd>
 
-          <dt>การชำระเงิน</dt>
-          <dd>
-            <span data-payment-label
-                  th:attr="data-payment-label=${booking.paymentStatus}"
-                  th:text="${booking.paymentStatus}"></span>
-          </dd>
+              <dt>การชำระเงิน</dt>
+              <dd>
+                <span data-payment-label
+                      th:attr="data-payment-label=${booking.paymentStatus}"
+                      th:text="${booking.paymentStatus}"></span>
+              </dd>
 
-          <dt>โปรโมชันตอนจอง</dt>
-          <dd th:text="${booking.promotionName != null
-            ? booking.promotionName : 'ไม่ใช้โปรโมชัน'}"></dd>
-        </dl>
+              <dt>โปรโมชันตอนจอง</dt>
+              <dd th:text="${booking.promotionName != null
+                ? booking.promotionName : 'ไม่ใช้โปรโมชัน'}"></dd>
+            </dl>
+          </section>
 
-        <h2>รายละเอียดราคา</h2>
+          <section class="booking-price">
+            <h2>รายละเอียดราคา</h2>
 
-        <dl>
-          <dt>ค่าห้องพัก</dt>
-          <dd th:text="${booking.roomAmount != null
-            ? booking.roomAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+            <dl>
+              <dt>ค่าห้องพัก</dt>
+              <dd th:text="${booking.roomAmount != null
+                ? booking.roomAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
 
-          <dt>ค่าบริการเสริม</dt>
-          <dd th:text="${booking.serviceAmount != null
-            ? booking.serviceAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+              <dt>ค่าบริการเสริม</dt>
+              <dd th:text="${booking.serviceAmount != null
+                ? booking.serviceAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
 
-          <dt>ค่าธรรมเนียมเพิ่มเติม</dt>
-          <dd th:text="${booking.surchargeAmount != null
-            ? booking.surchargeAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+              <dt>ค่าธรรมเนียมเพิ่มเติม</dt>
+              <dd th:text="${booking.surchargeAmount != null
+                ? booking.surchargeAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
 
-          <dt>ส่วนลด</dt>
-          <dd th:text="${booking.discountAmount != null
-            ? booking.discountAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+              <dt>ส่วนลด</dt>
+              <dd th:text="${booking.discountAmount != null
+                ? booking.discountAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
 
-          <dt>ยอดรวม</dt>
-          <dd>
-            <strong th:text="${booking.totalPrice != null
-              ? booking.totalPrice + ' บาท' : 'ไม่มีข้อมูล'}"></strong>
-          </dd>
-        </dl>
+              <dt>ยอดรวม</dt>
+              <dd>
+                <strong th:text="${booking.totalPrice != null
+                  ? booking.totalPrice + ' บาท' : 'ไม่มีข้อมูล'}"></strong>
+              </dd>
+            </dl>
+          </section>
+        </div>
 
         <section th:if="${not #lists.isEmpty(booking.extraServices)}">
           <h2>บริการเสริมที่จอง</h2>
