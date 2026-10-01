@@ -10,10 +10,13 @@ import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.RoomService;
+
 
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +35,7 @@ public class RoomServiceImpl implements RoomService {
     @Transactional
     public RoomResponse createRoom(CreateRoomRequest request){
         if(roomRepository.existsByRoomNumber(request.roomNumber())){
-            throw new IllegalArgumentException("Room number already exists: " + request.roomNumber());
+            throw new DuplicateResourceException("Room number already exists: " + request.roomNumber());
         }
 
         Room room = new Room();
@@ -52,7 +55,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional(readOnly = true)
     public  RoomResponse getRoomById(Long id){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
         return roomMapper.toResponse(room);
     }
 
@@ -83,7 +86,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional
     public RoomResponse deactivateRoom(Long id){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
         room.setStatus(RoomStatus.INACTIVE);
         roomRepository.save(room);
 
@@ -93,7 +96,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional
     public RoomResponse setRoomStatus(Long id,UpdateStatusRequest request){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
         room.setStatus(request.status());
         roomRepository.save(room);
 
@@ -104,11 +107,11 @@ public class RoomServiceImpl implements RoomService {
     @Override
     @Transactional
     public RoomResponse updateRoom(Long id,UpdateRoomRequest request){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
 
         //ถ้าroomใหม่ไม่เท่ากับ roomเก่า และ roomไม่ซ้ำใคร
         if (!room.getRoomNumber().equals(request.roomNumber()) && roomRepository.existsByRoomNumber(request.roomNumber())) {
-            throw new IllegalArgumentException("Room number already exists: " + request.roomNumber());
+            throw new DuplicateResourceException("Room number already exists: " + request.roomNumber());
         }
 
         room.setRoomNumber(request.roomNumber());

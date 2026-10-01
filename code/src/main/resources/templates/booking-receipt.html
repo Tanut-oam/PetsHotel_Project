@@ -13,12 +13,20 @@
   <script defer th:src="@{/js/booking-receipt.js}"></script>
 </head>
 
-<body class="receipt-page">
-  <header th:replace="~{fragments/layout :: topbar}"></header>
+<body class="receipt-page"
+      th:classappend="${staffView} ? 'admin' : ''">
+
+  <header th:replace="${staffView}
+    ? ~{fragments/layout :: admin-topbar}
+    : ~{fragments/layout :: topbar}">
+  </header>
 
   <div class="layout">
-    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
-
+    <aside th:replace="${staffView}
+      ? ~{fragments/layout :: admin-sidebar}
+      : ~{fragments/layout :: sidebar}">
+    </aside>
+    
     <main class="content">
       <div class="receipt-actions">
         <a class="btn" th:href="@{${backUrl}}">

@@ -1,11 +1,11 @@
 package com.example.petshotel.dto.request;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 public record CreateBookingApiRequest(
 
@@ -21,7 +21,7 @@ public record CreateBookingApiRequest(
         @NotNull(message = "Check-out date is required")
         LocalDate checkOutDate,
 
-        Map<Long, Integer> extraServiceQuantities,
+        Map<Long, List<Long>> servicePetIds,
 
         Long promotionId
 ) {

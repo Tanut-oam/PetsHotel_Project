@@ -138,7 +138,7 @@ public class PricingServiceTest {
     @Test 
     void rejectsCheckoutOnTheSameDay(){
         PricingContext context = context(
-           "500.00", 1,
+            "500.00", 1,
             LocalDate.of(2026, 2, 1),
             LocalDate.of(2026, 2, 1));
         assertThrows(IllegalArgumentException.class, () -> pricingService.calculate(context));
@@ -191,6 +191,74 @@ public class PricingServiceTest {
         assertEquals(new BigDecimal("400.00"), price.extraServicesPrice());
         assertEquals(new BigDecimal("700.00"), price.discountAmount());
         assertEquals(new BigDecimal("200.00"), price.totalPrice());
+    }
+
+    @Test
+    void chargesExtraServiceOnceForOnePetAcrossMultipleNights() {
+        PricingContext context = context(
+                "500.00", 1,
+                LocalDate.of(2026, 2, 1),
+                LocalDate.of(2026, 2, 4));
+
+        BookingExtraService service = new BookingExtraService();
+        service.setUnitPrice(new BigDecimal("250.00"));
+        service.setQuantity(1);
+        service.setTotalPrice(new BigDecimal("250.00"));
+
+        context.setExtraServices(List.of(service));
+
+        BookingPriceResponse price = pricingService.calculate(context);
+
+        assertEquals(new BigDecimal("1500.00"), price.basePrice());
+        assertEquals(new BigDecimal("250.00"), price.extraServicesPrice());
+        assertEquals(new BigDecimal("1750.00"), price.totalPrice());
+    }
+
+    @Test
+    void chargesExtraServiceForTwoSelectedPets() {
+        PricingContext context = context(
+                "500.00", 2,
+                LocalDate.of(2026, 2, 1),
+                LocalDate.of(2026, 2, 4));
+
+        BookingExtraService firstPetService = new BookingExtraService();
+        firstPetService.setUnitPrice(new BigDecimal("250.00"));
+        firstPetService.setQuantity(1);
+        firstPetService.setTotalPrice(new BigDecimal("250.00"));
+
+        BookingExtraService secondPetService = new BookingExtraService();
+        secondPetService.setUnitPrice(new BigDecimal("250.00"));
+        secondPetService.setQuantity(1);
+        secondPetService.setTotalPrice(new BigDecimal("250.00"));
+
+        context.setExtraServices(List.of(firstPetService, secondPetService));
+
+        BookingPriceResponse price = pricingService.calculate(context);
+
+        assertEquals(new BigDecimal("3000.00"), price.basePrice());
+        assertEquals(new BigDecimal("500.00"), price.extraServicesPrice());
+        assertEquals(new BigDecimal("3500.00"), price.totalPrice());
+    }
+
+    @Test
+    void chargesOnlyOneExtraServiceWhenBookingHasTwoPets() {
+        PricingContext context = context(
+                "500.00", 2,
+                LocalDate.of(2026, 2, 1),
+                LocalDate.of(2026, 2, 4));
+
+        BookingExtraService selectedPetService = new BookingExtraService();
+        selectedPetService.setUnitPrice(new BigDecimal("250.00"));
+        selectedPetService.setQuantity(1);
+        selectedPetService.setTotalPrice(new BigDecimal("250.00"));
+
+        context.setExtraServices(List.of(selectedPetService));
+
+        BookingPriceResponse price = pricingService.calculate(context);
+
+        assertEquals(new BigDecimal("3000.00"), price.basePrice());
+        assertEquals(new BigDecimal("250.00"), price.extraServicesPrice());
+        assertEquals(new BigDecimal("3250.00"), price.totalPrice());
     }
 
 

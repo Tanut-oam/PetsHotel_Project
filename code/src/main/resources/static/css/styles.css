@@ -291,6 +291,62 @@ small {
   font-size: .85rem;
 }
 
+/* dropdown ที่หน้าตาเหมือนปุ่ม .btn .btn-small (ใช้ในตาราง admin) */
+.btn-select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 32px;
+  padding: 5px 30px 5px 10px;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23246046' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  border: 1px solid #cdded1;
+  border-radius: 9px;
+  color: var(--green);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-select:hover {
+  background-color: var(--green-light);
+}
+
+.btn-select:focus {
+  outline: 2px solid #71ae87;
+}
+
+/* เรียงปุ่มในช่อง "จัดการ" ให้อยู่บรรทัดเดียวกัน มีระยะห่างเท่ากัน */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-actions form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+.search-input {
+  min-height: 32px;
+  min-width: 220px;
+  padding: 5px 10px;
+  border: 1px solid #cdded1;
+  border-radius: 9px;
+  background: white;
+  color: var(--text);
+  font-size: .85rem;
+}
+
+.search-input:focus {
+  outline: 2px solid #71ae87;
+}
+
 .badge {
   display: inline-block;
   padding: 5px 11px;

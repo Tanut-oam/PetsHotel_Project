@@ -124,7 +124,7 @@
               <thead>
                 <tr>
                   <th>บริการ</th>
-                  <th>จำนวน</th>
+                  <th>สัตว์ที่รับบริการ</th>
                   <th>ราคาต่อหน่วย (บาท)</th>
                   <th>รวม (บาท)</th>
                 </tr>
@@ -133,7 +133,8 @@
               <tbody>
                 <tr th:each="service : ${booking.extraServices}">
                   <td th:text="${service.name}"></td>
-                  <td th:text="${service.quantity}"></td>
+                  <td th:text="${service.petName != null
+                    ? service.petName : 'รายการเดิมไม่ระบุสัตว์'}"></td>
                   <td th:text="${service.unitPrice}"></td>
                   <td th:text="${service.totalPrice}"></td>
                 </tr>

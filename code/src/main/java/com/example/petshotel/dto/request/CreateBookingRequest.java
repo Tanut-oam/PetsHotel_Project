@@ -1,12 +1,17 @@
 package com.example.petshotel.dto.request;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
-import lombok.*;
-import java.util.Map;
-import java.time.LocalDate;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -30,7 +35,8 @@ public class CreateBookingRequest {
     @NotNull(message = "Check-out date is required")
     private LocalDate checkOutDate;
 
-    private Map<Long, Integer> extraServiceQuantities;
+    // รหัสบริการ -> รหัสสัตว์ที่รับบริการนี้
+    private Map<Long, List<Long>> servicePetIds;
 
     private Long promotionId;
 }

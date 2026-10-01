@@ -75,6 +75,7 @@ public class BookingReceiptController {
 
         model.addAttribute("booking", booking);
         model.addAttribute("receipt", receipt);
+        model.addAttribute("staffView", staff);
         model.addAttribute(
                 "backUrl",
                 staff ? "/admin/bookings" : "/bookings/" + id

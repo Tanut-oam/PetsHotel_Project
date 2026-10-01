@@ -1,70 +1,100 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PetsHotel Admin</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>สมาชิก | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
+
 <body class="admin">
-  <header class="topbar">
-    <a class="brand" href="index.html">🐾 PetsHotel Admin</a>
-    <div class="top-actions">
-      <a class="btn btn-small" href="../index.html">ดูหน้าลูกค้า</a>
-      <span>ผู้ดูแลระบบ</span>
-    </div>
-  </header>
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
 
   <div class="layout">
-    <aside class="sidebar">
-      <a href="index.html">▦ ภาพรวม</a>
-      <a href="bookings.html">▤ จัดการการจอง</a>
-      <a href="rooms.html">▣ จัดการห้องพัก</a>
-      <a href="pets.html">♧ สัตว์เลี้ยง</a>
-      <a href="services.html">✿ บริการเสริม</a>
-      <a href="promotions.html">◇ โปรโมชัน</a>
-      <a href="reports.html">▤ รายงานการดูแล</a>
-      <a href="users.html">♙ สมาชิก</a>
-      <a href="settings.html">⚙ ตั้งค่า</a>
-    </aside>
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content">
+      <div class="section-title">
         <h1>สมาชิก</h1>
-        <div class="toolbar">
-        <label class="field">
-            ค้นหาสมาชิก
-            <input type="search" placeholder="ชื่อหรืออีเมล">
-        </label>
-        </div>
 
-        <div class="panel table-scroll">
+        <form class="table-actions" th:action="@{/admin/users}" method="get">
+          <input type="search"
+                name="keyword"
+                class="search-input"
+                placeholder="ค้นหาชื่อ อีเมล หรือเบอร์โทร"
+                aria-label="ค้นหาสมาชิก"
+                th:value="${keyword}">
+
+          <select name="sort"
+                  class="btn-select"
+                  aria-label="เรียงลำดับ"
+                  onchange="this.form.submit()">
+            <option value="id"     th:selected="${sort == 'id'}">เรียงตามลำดับสมัคร</option>
+            <option value="newest" th:selected="${sort == 'newest'}">สมัครล่าสุด</option>
+            <option value="oldest" th:selected="${sort == 'oldest'}">สมัครเก่าสุด</option>
+            <option value="name"   th:selected="${sort == 'name'}">ชื่อ ก-ฮ / A-Z</option>
+            <option value="email"  th:selected="${sort == 'email'}">อีเมล</option>
+            <option value="role"   th:selected="${sort == 'role'}">บทบาท</option>
+          </select>
+
+          <button class="btn btn-small" type="submit">ค้นหา</button>
+        </form>
+      </div>
+
+      <div th:if="${message}" class="flash-notice flash-success" role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+      </div>
+
+      <div th:if="${error}" class="flash-notice flash-error" role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
+
+      <div class="panel table-scroll">
         <table class="table">
-            <thead>
+          <thead>
             <tr>
-                <th>ชื่อ</th>
-                <th>อีเมล</th>
-                <th>เบอร์โทร</th>
-                <th>บทบาท</th>
+              <th>ชื่อ</th>
+              <th>อีเมล</th>
+              <th>เบอร์โทร</th>
+              <th>บทบาท</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
             </tr>
-            </thead>
+          </thead>
 
-            <tbody>
-            <tr>
-                <td>ตัวอย่างผู้ใช้</td>
-                <td>demo@petshotel.test</td>
-                <td>081-234-5678</td>
-                <td><span class="badge">ลูกค้า</span></td>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(users)}">
+              <td colspan="6"
+                  th:text="${keyword != null and !#strings.isEmpty(keyword)} ? 'ไม่พบสมาชิกที่ค้นหา' : 'ยังไม่มีสมาชิก'">
+                ยังไม่มีสมาชิก
+              </td>
             </tr>
 
-            <tr>
-                <td>ผู้ดูแลระบบ</td>
-                <td>admin@petshotel.test</td>
-                <td>043-123-456</td>
-                <td><span class="badge">แอดมิน</span></td>
+            <tr th:each="user : ${users}">
+              <td th:text="${user.fullName()}">ตัวอย่างผู้ใช้</td>
+              <td th:text="${user.email}">demo@petshotel.test</td>
+              <td th:text="${user.phoneNumber}">0812345678</td>
+              <td>
+                <span class="badge" th:if="${user.role.name() == 'CUSTOMER'}">ลูกค้า</span>
+                <span class="badge badge-warning" th:if="${user.role.name() == 'STAFF'}">พนักงาน</span>
+                <span class="badge badge-danger" th:if="${user.role.name() == 'ADMIN'}">แอดมิน</span>
+              </td>
+              <td>
+                <span class="badge" th:if="${user.active}">ใช้งาน</span>
+                <span class="badge badge-danger" th:unless="${user.active}">ระงับ</span>
+              </td>
+              <td>
+                <a class="btn btn-small"
+                  th:href="@{/admin/users/{id}/edit(id=${user.id})}">
+                  แก้ไข
+                </a>
+              </td>
             </tr>
-            </tbody>
+          </tbody>
         </table>
-        </div>
+      </div>
     </main>
   </div>
 </body>

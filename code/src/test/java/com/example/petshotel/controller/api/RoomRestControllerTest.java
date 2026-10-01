@@ -2,9 +2,7 @@ package com.example.petshotel.controller.api;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,7 +23,11 @@ import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.service.RoomService;
+
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 class RoomRestControllerTest {
 
@@ -39,6 +41,9 @@ class RoomRestControllerTest {
         RoomRestController controller = new RoomRestController(roomService);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+        .setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 
     @Test
@@ -150,5 +155,54 @@ class RoomRestControllerTest {
                 new BigDecimal("500"),
                 RoomStatus.ACTIVE
         );
+    }
+
+        @Test
+    void createRoomShouldReturnBadRequestWhenCapacityIsZero() throws Exception {
+        mockMvc.perform(post("/api/room")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "roomNumber": "101", "name": "Deluxe",
+                    "capacity": 0, "pricePerPetPerNight": 500 }
+                    """))
+                .andExpect(status().isBadRequest());
+
+        verify(roomService, never()).createRoom(any());
+    }
+
+    @Test
+    void createRoomShouldReturnBadRequestWhenPriceIsNegative() throws Exception {
+        mockMvc.perform(post("/api/room")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "roomNumber": "101", "name": "Deluxe",
+                    "capacity": 3, "pricePerPetPerNight": -1 }
+                    """))
+                .andExpect(status().isBadRequest());
+
+        verify(roomService, never()).createRoom(any());
+    }
+
+        @Test
+    void getRoomByIdShouldReturnNotFoundWhenRoomMissing() throws Exception {
+        when(roomService.getRoomById(99L))
+                .thenThrow(new ResourceNotFoundException("Room", 99L));
+
+        mockMvc.perform(get("/api/room/99"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createRoomShouldReturnConflictWhenRoomNumberDuplicate() throws Exception {
+        when(roomService.createRoom(any()))
+                .thenThrow(new DuplicateResourceException("Room number already exists: 101"));
+
+        mockMvc.perform(post("/api/room")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    { "roomNumber": "101", "name": "Deluxe",
+                    "capacity": 3, "pricePerPetPerNight": 500 }
+                    """))
+                .andExpect(status().isConflict());
     }
 }

@@ -10,6 +10,7 @@ import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.BookingPriceResponse;
 import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.BookingService;
@@ -670,5 +671,65 @@ class BookingRestControllerTest {
                         new BigDecimal("1000.00")
                 )
                 .build();
+    }
+
+    @Test
+    void previewShouldUseLoggedInUserAndNotCreateBooking() throws Exception {
+        account(UserRole.CUSTOMER);
+        when(bookingService.previewPrice(any(CreateBookingRequest.class)))
+                .thenReturn(new BookingPriceResponse(
+                        new BigDecimal("1000.00"), new BigDecimal("300.00"),
+                        BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("1300.00")));
+
+        mockMvc.perform(post("/api/bookings/preview-price")
+                        .with(user(EMAIL).roles("CUSTOMER")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "userId": 999,
+                                  "roomId": 20,
+                                  "petIds": [30],
+                                  "checkInDate": "2030-10-10",
+                                  "checkOutDate": "2030-10-12",
+                                  "servicePetIds": {"40": [30]}
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.extraServicesPrice").value(300))
+                .andExpect(jsonPath("$.totalPrice").value(1300));
+
+        ArgumentCaptor<CreateBookingRequest> captor =
+                ArgumentCaptor.forClass(CreateBookingRequest.class);
+        verify(bookingService).previewPrice(captor.capture());
+        assertEquals(Long.valueOf(10L), captor.getValue().getUserId());
+        assertEquals(List.of(30L), captor.getValue().getServicePetIds().get(40L));
+        verify(bookingService, never()).createBooking(any(CreateBookingRequest.class));
+    }
+
+    @Test
+    void previewWithoutCsrfShouldBeRejected() throws Exception {
+        mockMvc.perform(post("/api/bookings/preview-price")
+                        .with(user(EMAIL).roles("CUSTOMER"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(bookingService);
+    }
+
+    @Test
+    void anonymousCannotPreviewPrices() throws Exception {
+        mockMvc.perform(post("/api/bookings/preview-price").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(VALID_JSON))
+                .andExpect(status().isUnauthorized());
+        verifyNoInteractions(bookingService);
+    }
+
+    @Test
+    void inactiveAccountCannotPreviewPrices() throws Exception {
+        account(UserRole.CUSTOMER).setActive(false);
+        mockMvc.perform(post("/api/bookings/preview-price")
+                        .with(user(EMAIL).roles("CUSTOMER")).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(VALID_JSON))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(bookingService);
     }
 }

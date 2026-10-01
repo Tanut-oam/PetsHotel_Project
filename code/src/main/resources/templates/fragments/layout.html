@@ -9,15 +9,12 @@
   <div class="top-actions">
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/login}">เข้าสู่ระบบ</a>
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/register}">สมัครสมาชิก</a>
-    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" style="display:inline">
-      <button class="btn btn-small" type="submit">ออกจากระบบ</button>
-    </form>
   </div>
 </header>
 
 <aside class="sidebar" th:fragment="sidebar">
   <a th:href="@{/}">⌂ หน้าแรก</a>
-  <a th:href="@{/rooms/available}">▣ ห้องพัก</a>
+  <a th:href="@{/rooms}">▣ ห้องพัก</a>
   <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
   <a th:href="@{/bookings}">▤ การจองของฉัน</a>
   <a sec:authorize="hasAnyRole('STAFF', 'ADMIN')" th:href="@{/admin/bookings}">▤ จัดการการจอง</a>
@@ -29,9 +26,7 @@
 <header class="topbar" th:fragment="admin-topbar">
   <a class="brand" th:href="@{/admin}">🐾 PetsHotel Admin</a>
   <div class="top-actions">
-    <form th:action="@{/logout}" method="post" style="display:inline">
-      <button class="btn btn-small" type="submit">ออกจากระบบ</button>
-    </form>
+    <span>ผู้ดูแลระบบ</span>
   </div>
 </header>
 
