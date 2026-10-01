@@ -9,8 +9,7 @@
   <div class="top-actions">
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/login}">เข้าสู่ระบบ</a>
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/register}">สมัครสมาชิก</a>
-    <span sec:authorize="isAuthenticated()" sec:authentication="name"></span>
-    <form th:action="@{/logout}" method="post" style="display:inline">
+    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" style="display:inline">
       <button class="btn btn-small" type="submit">ออกจากระบบ</button>
     </form>
   </div>
@@ -45,6 +44,7 @@
   <a th:href="@{/admin/promotions}">◇ โปรโมชัน</a>
   <a th:href="@{/admin/reports}">▤ รายงานการดูแล</a>
   <a th:href="@{/admin/users}">♙ สมาชิก</a>
+  <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
 </aside>
 
 </body>
