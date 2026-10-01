@@ -25,11 +25,11 @@
     .booking-actions form { margin: 0; }
   </style>
 </head>
-<body>
-  <header th:replace="~{fragments/layout :: topbar}"></header>
+<body class="admin">
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
 
   <div class="layout">
-    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
 
     <main class="content" data-booking-page="staff">
       <h1>จัดการการจอง</h1>
