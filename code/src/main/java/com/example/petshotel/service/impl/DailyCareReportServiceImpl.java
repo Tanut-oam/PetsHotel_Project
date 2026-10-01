@@ -125,18 +125,27 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
                 List.of(BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT))
                 .stream()
                 .map(bookingPet -> {
-                    Booking booking = bookingPet.getBooking();
-                    User owner = booking.getUser();
+                Booking booking = bookingPet.getBooking();
+                User owner = booking.getUser();
+                var pet = bookingPet.getPet();
 
-                    return new ReportableBookingPetResponse(
-                            bookingPet.getId(),
-                            booking.getId(),
-                            bookingPet.getPet().getName(),
-                            owner.getFirstName() + " " + owner.getLastName(),
-                            booking.getCheckInDate(),
-                            booking.getCheckOutDate()
-                    );
-                })
+                return new ReportableBookingPetResponse(
+                        bookingPet.getId(),
+                        booking.getId(),
+                        pet.getName(),
+                        owner.getFirstName() + " " + owner.getLastName(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate(),
+                        pet.getType(),
+                        pet.getBreed(),
+                        pet.getAge(),
+                        pet.getWeight(),
+                        pet.getGender(),
+                        pet.getMedicalNote(),
+                        pet.getFeedingInstruction(),
+                        pet.getSpecialNote()
+                );
+})
                 .toList();
     }
 

@@ -31,6 +31,7 @@ import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
+import com.example.petshotel.domain.enums.PetType;
 
 class AdminCareReportPageControllerTest {
 
@@ -64,7 +65,9 @@ class AdminCareReportPageControllerTest {
                 new ReportableBookingPetResponse(
                         2L, 3L, "Mochi", "Test Owner",
                         LocalDate.of(2026, 9, 23),
-                        LocalDate.of(2026, 9, 25)
+                        LocalDate.of(2026, 9, 25),
+                        PetType.DOG, "Pomeranian", 3, 15.0,
+                        "MALE", "ไม่มี", "อาหารปกติ", "ไม่มี"
                 );
         List<ReportableBookingPetResponse> options = List.of(option);
 
