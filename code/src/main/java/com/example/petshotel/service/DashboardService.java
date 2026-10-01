@@ -4,10 +4,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.example.petshotel.dto.response.DashboardResponse;
+import com.example.petshotel.dto.response.MonthlyRevenueResponse;
 import com.example.petshotel.dto.response.RecentBookingResponse;
 
 public interface DashboardService {
-    BigDecimal getTotalRevenue();
+    BigDecimal getRevenueThisMonth();
     long getBookingsThisMonth();
     long getCheckedInPets();
     String getTopRoom();
@@ -15,5 +16,7 @@ public interface DashboardService {
     long getAvailableRoomCountToday();
     long getTotalPets();
     List<RecentBookingResponse> getRecentBookings();
-    DashboardResponse getDashboard();     
+    List<MonthlyRevenueResponse> getMonthlyRevenue(int year);
+    DashboardResponse getDashboard();
+    DashboardResponse getDashboard(int year);   
 }
