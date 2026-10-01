@@ -7,7 +7,7 @@
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-  <header class="topbar">
+  <header th:replace="~{fragments/layout :: topbar}"></header>
     <a class="brand" th:href="@{/}">🐾 PetsHotel</a>
 
     <nav class="topnav">
@@ -17,14 +17,14 @@
       <a th:href="@{/my-bookings}">การจอง</a>
     </nav>
 
-    <div class="top-actions">
+    <div class="layout">
       <a class="btn btn-small" th:href="@{/admin/rooms}">ฝั่งแอดมิน</a>
       <a class="btn btn-small" th:href="@{/profile}">👤 บัญชีของฉัน</a>
     </div>
   </header>
 
   <div class="layout">
-    <aside class="sidebar">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
       <a th:href="@{/}">⌂ หน้าแรก</a>
       <a th:href="@{/rooms}">▣ ห้องพัก</a>
       <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
@@ -67,7 +67,7 @@
 
         <aside class="panel">
           <h2>
-            ฿<span th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 0, 'POINT')}">500</span>
+            ฿<span th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500</span>
             <small>/ ตัว / คืน</small>
           </h2>
 

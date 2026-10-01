@@ -50,7 +50,7 @@
             </p>
             <div class="row">
               <span class="price">
-                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 0, 'POINT')}">500</span> / คืน
+                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500</span> / คืน
               </span>
               <a class="btn btn-small" th:href="@{/rooms/{id}(id=${r.id})}">ดูห้อง</a>
             </div>

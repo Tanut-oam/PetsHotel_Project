@@ -20,6 +20,12 @@
           กลับหน้าจัดการห้องพัก
         </a>
       </div>
+      <div th:if="${error}"
+          class="flash-notice flash-error"
+          role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
 
       <form class="panel grid cols-2"
             th:action="@{/admin/rooms}"
@@ -28,15 +34,15 @@
         <label class="field">
           เลขห้อง
           <input type="text"
-                 name="roomNumber"
-                 required>
+                name="roomNumber"
+                required>
         </label>
 
         <label class="field">
           ชื่อห้อง
           <input type="text"
-                 name="name"
-                 required>
+                name="name"
+                required>
         </label>
 
         <label class="field" style="grid-column:1 / -1">
@@ -47,19 +53,19 @@
         <label class="field">
           รับได้ (ตัว)
           <input type="number"
-                 name="capacity"
-                 min="1"
-                 step="1"
-                 required>
+                name="capacity"
+                min="1"
+                step="1"
+                required>
         </label>
 
         <label class="field">
           ราคา/ตัว/คืน (บาท)
           <input type="number"
-                 name="pricePerPetPerNight"
-                 min="0"
-                 step="0.01"
-                 required>
+                name="pricePerPetPerNight"
+                min="0"
+                step="0.01"
+                required>
         </label>
 
         <div style="grid-column:1 / -1">
