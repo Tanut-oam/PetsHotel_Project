@@ -8,30 +8,9 @@
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
-    <a class="brand" th:href="@{/}">🐾 PetsHotel</a>
-
-    <nav class="topnav">
-      <a th:href="@{/}">หน้าแรก</a>
-      <a th:href="@{/rooms}">ห้องพัก</a>
-      <a th:href="@{/pets}">สัตว์เลี้ยง</a>
-      <a th:href="@{/my-bookings}">การจอง</a>
-    </nav>
-
-    <div class="layout">
-      <a class="btn btn-small" th:href="@{/admin/rooms}">ฝั่งแอดมิน</a>
-      <a class="btn btn-small" th:href="@{/profile}">👤 บัญชีของฉัน</a>
-    </div>
-  </header>
 
   <div class="layout">
     <aside th:replace="~{fragments/layout :: sidebar}"></aside>
-      <a th:href="@{/}">⌂ หน้าแรก</a>
-      <a th:href="@{/rooms}">▣ ห้องพัก</a>
-      <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
-      <a th:href="@{/my-bookings}">▤ การจองของฉัน</a>
-      <a th:href="@{/reports}">♡ รายงานการดูแล</a>
-      <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
-    </aside>
 
     <main class="content">
       <a th:href="@{/rooms}">← กลับไปหน้าห้องพัก</a>
