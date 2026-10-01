@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -30,9 +32,11 @@ public class CreateBookingRequest {
     private List<@NotNull(message = "Pet ID must not be null") Long> petIds;
 
     @NotNull(message = "Check-in date is required")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate checkInDate;
 
     @NotNull(message = "Check-out date is required")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate checkOutDate;
 
     // รหัสบริการ -> รหัสสัตว์ที่รับบริการนี้
