@@ -16,17 +16,21 @@ import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.PetService;
 import com.example.petshotel.exception.ResourceNotFoundException;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.petshotel.service.FileStorageService;
 
 @Service 
 public class PetServiceImpl implements PetService {
     private  final PetRepository petRepository;
     private  final UserRepository userRepository;
     private  final PetMapper petMapper;
-    
-    public PetServiceImpl(PetRepository petRepository, UserRepository userRepository, PetMapper petMapper) {
+    private final FileStorageService fileStorageService;
+
+    public PetServiceImpl(PetRepository petRepository, UserRepository userRepository, PetMapper petMapper,FileStorageService fileStorageService) {
         this.petRepository = petRepository;
         this.userRepository = userRepository;
         this.petMapper = petMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override 
@@ -123,5 +127,23 @@ public class PetServiceImpl implements PetService {
         }
         pet.setActive(false);
         petRepository.save(pet);    
+    }
+
+    @Override
+    @Transactional
+    public PetResponse updatePetImage(Long petId, Long ownerId, MultipartFile image) {
+        Pet pet = petRepository.findById(petId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pet", petId));
+
+        if (!pet.getOwner().getId().equals(ownerId)) {
+            throw new ResourceNotFoundException("Pet", petId);
+        }
+
+        String oldImageUrl = pet.getImageUrl();
+        pet.setImageUrl(fileStorageService.storePetImage(image));
+        Pet savedPet = petRepository.save(pet);
+        fileStorageService.deletePetImage(oldImageUrl);
+
+        return petMapper.toResponse(savedPet);
     }
 }

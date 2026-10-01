@@ -244,7 +244,8 @@ class PetRestControllerTest {
                 "Afraid of loud noises",
                 1L,
                 "Karn Jaidee",
-                true
+                true,
+                null
         );
     }
 }

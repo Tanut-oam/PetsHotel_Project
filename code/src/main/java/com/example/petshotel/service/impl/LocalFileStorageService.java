@@ -22,6 +22,7 @@ import com.example.petshotel.service.FileStorageService;
 public class LocalFileStorageService implements FileStorageService {
 
     public static final String ROOM_IMAGE_URL_PREFIX = "/uploads/rooms/";
+    public static final String PET_IMAGE_URL_PREFIX = "/uploads/pets/";
 
     private static final Logger log = LoggerFactory.getLogger(LocalFileStorageService.class);
     private static final long MAX_SIZE = 5L * 1024 * 1024;
@@ -30,9 +31,12 @@ public class LocalFileStorageService implements FileStorageService {
             "image/png", "png");
 
     private final Path roomImageDir;
+    private final Path petImageDir;
 
     public LocalFileStorageService(@Value("${app.upload-dir:uploads}") String uploadDir) {
-        this.roomImageDir = Paths.get(uploadDir).toAbsolutePath().normalize().resolve("rooms");
+        Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.roomImageDir = baseDir.resolve("rooms");
+        this.petImageDir = baseDir.resolve("pets");
     }
 
     @Override
@@ -91,6 +95,55 @@ public class LocalFileStorageService implements FileStorageService {
             Files.deleteIfExists(target);
         } catch (IOException e) {
             log.warn("Could not delete room image {}", target, e);
+        }
+    }
+    @Override
+public String storePetImage(MultipartFile file) {
+    if (file == null || file.isEmpty()) {
+        throw new IllegalArgumentException("กรุณาเลือกไฟล์รูป");
+    }
+    if (file.getSize() > MAX_SIZE) {
+        throw new IllegalArgumentException("ไฟล์รูปต้องมีขนาดไม่เกิน 5 MB");
+    }
+
+    String extension = ALLOWED_TYPES.get(file.getContentType());
+    if (extension == null) {
+        throw new IllegalArgumentException("รองรับเฉพาะไฟล์ JPG และ PNG");
+    }
+
+    byte[] bytes;
+    try {
+        bytes = file.getBytes();
+        if (ImageIO.read(new ByteArrayInputStream(bytes)) == null) {
+            throw new IllegalArgumentException("ไฟล์นี้ไม่ใช่รูปภาพที่ถูกต้อง");
+        }
+        Files.createDirectories(petImageDir);
+        String filename = UUID.randomUUID() + "." + extension;
+        Files.write(petImageDir.resolve(filename), bytes);
+        return PET_IMAGE_URL_PREFIX + filename;
+    } catch (IOException e) {
+        throw new IllegalStateException("บันทึกไฟล์รูปไม่สำเร็จ", e);
+    }
+}
+
+    @Override
+    public void deletePetImage(String imageUrl) {
+        if (imageUrl == null || !imageUrl.startsWith(PET_IMAGE_URL_PREFIX)) {
+            return;
+        }
+
+        Path target = petImageDir
+                .resolve(imageUrl.substring(PET_IMAGE_URL_PREFIX.length()))
+                .normalize();
+
+        if (!target.getParent().equals(petImageDir)) {
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(target);
+        } catch (IOException e) {
+            log.warn("Could not delete pet image {}", target, e);
         }
     }
 }

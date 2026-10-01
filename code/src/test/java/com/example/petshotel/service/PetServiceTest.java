@@ -35,7 +35,8 @@ class PetServiceTest {
         petService = new PetServiceImpl(
             petRepository,
             userRepository,
-            new PetMapper()
+            new PetMapper(),
+            mock(FileStorageService.class)
         );
     }
 

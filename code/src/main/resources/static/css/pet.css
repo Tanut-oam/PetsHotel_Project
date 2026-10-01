@@ -52,4 +52,12 @@
   .pet-dialog {
     padding: 16px;
   }
+
+.pet-photo {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 12px;
+}
 }

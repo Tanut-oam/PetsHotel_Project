@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import com.example.petshotel.dto.response.PetResponse;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.request.CreatePetRequest;
 import com.example.petshotel.dto.request.UpdatePetRequest;
@@ -43,7 +45,8 @@ public class PetPageController {
 
     @PostMapping("/pets")
     public String createPet(Principal principal,@Valid @ModelAttribute CreatePetRequest request,
-            BindingResult bindingResult,RedirectAttributes redirectAttributes) {
+            BindingResult bindingResult,@RequestParam(value = "photo", required = false) MultipartFile photo,
+            RedirectAttributes redirectAttributes) {
 
         User owner = requireActiveOwner(principal);
 
@@ -52,14 +55,26 @@ public class PetPageController {
             return "redirect:/pets";
         }
 
-        petService.createPet(owner.getId(), request);
+        PetResponse created = petService.createPet(owner.getId(), request);
+
+        if (photo != null && !photo.isEmpty()) {
+            try {
+                petService.updatePetImage(created.id(), owner.getId(), photo);
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                redirectAttributes.addFlashAttribute("error", "เพิ่มสัตว์เลี้ยงแล้ว แต่อัปโหลดรูปไม่สำเร็จ: " + e.getMessage());
+                return "redirect:/pets";
+            }
+        }
+
         redirectAttributes.addFlashAttribute("message", "เพิ่มสัตว์เลี้ยงสำเร็จ");
         return "redirect:/pets";
     }
 
     @PostMapping("/pets/{petId}/edit")
-    public String updatePet(@PathVariable Long petId,Principal principal,@Valid @ModelAttribute UpdatePetRequest request,
-            BindingResult bindingResult,RedirectAttributes redirectAttributes) {
+    public String updatePet(@PathVariable Long petId,Principal principal,
+            @Valid @ModelAttribute UpdatePetRequest request,BindingResult bindingResult,
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            RedirectAttributes redirectAttributes) {
 
         User owner = requireActiveOwner(principal);
 
@@ -71,9 +86,16 @@ public class PetPageController {
 
         try {
             petService.updatePet(petId, owner.getId(), request);
-        } catch (ResourceNotFoundException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Pet not found", exception);
+
+            if (photo != null && !photo.isEmpty()) {
+                petService.updatePetImage(petId, owner.getId(), photo);
+            }
+        } catch (ResourceNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pet not found", e);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("editError", "แก้ไขข้อมูลแล้ว แต่อัปโหลดรูปไม่สำเร็จ: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("editPetId", petId);
+            return "redirect:/pets";
         }
 
         redirectAttributes.addFlashAttribute("editMessage", "แก้ไขสัตว์เลี้ยงสำเร็จ");

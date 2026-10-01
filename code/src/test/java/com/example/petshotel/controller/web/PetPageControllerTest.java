@@ -51,7 +51,7 @@ class PetPageControllerTest {
 
         PetResponse pet = new PetResponse(
                 10L, "Mochi", PetType.DOG, "Shiba", 2, 12.5,
-                "MALE", null, null, null, 7L, "Test Owner", true
+                "MALE", null, null, null, 7L, "Test Owner", true,null
         );
         List<PetResponse> pets = List.of(pet);
 

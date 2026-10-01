@@ -19,7 +19,8 @@ public class PetMapper {
             pet.getSpecialNote(),
             pet.getOwner().getId(),
             pet.getOwner().getFirstName() + " " + pet.getOwner().getLastName(),
-            pet.getActive()
+            pet.getActive(),
+            pet.getImageUrl()
         );
     }
     
