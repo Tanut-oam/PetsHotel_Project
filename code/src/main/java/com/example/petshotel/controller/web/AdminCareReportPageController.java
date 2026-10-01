@@ -1,6 +1,8 @@
 package com.example.petshotel.controller.web;
 
 import java.security.Principal;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -8,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,24 +18,24 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
+import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
-import com.example.petshotel.dto.response.DailyCareReportResponse;
-import java.util.LinkedHashMap;
-import java.util.stream.Collectors;
-import com.example.petshotel.dto.response.ReportableBookingPetResponse;
-import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.PathVariable;
-import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 
-@Controller 
+import jakarta.validation.Valid;
+
+@Controller
 public class AdminCareReportPageController {
-    
+
     private final DailyCareReportService reportService;
-    private  final CurrentUserService currentUserService;
-    
-    public AdminCareReportPageController(DailyCareReportService reportService, CurrentUserService currentUserService) {
+    private final CurrentUserService currentUserService;
+
+    public AdminCareReportPageController(
+            DailyCareReportService reportService,
+            CurrentUserService currentUserService) {
         this.reportService = reportService;
         this.currentUserService = currentUserService;
     }
@@ -63,6 +66,28 @@ public class AdminCareReportPageController {
         return "admin/reports";
     }
 
+    @GetMapping("/admin/reports/pets/{bookingPetId}")
+    public String showPetReports(
+            @PathVariable Long bookingPetId,
+            Principal principal,
+            Model model) {
+        User user = requireActiveUser(principal);
+
+        ReportableBookingPetResponse pet = reportService
+                .getReportableBookingPetsForStaffAndAdmin(user.getId())
+                .stream()
+                .filter(option -> option.bookingPetId().equals(bookingPetId))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        model.addAttribute("pet", pet);
+        model.addAttribute(
+                "reports",
+                reportService.getReportsByBookingPet(bookingPetId, user.getId()));
+
+        return "admin/report-detail";
+    }
+
     @PostMapping("/admin/reports")
     public String createReport(
             Principal principal,
@@ -72,28 +97,33 @@ public class AdminCareReportPageController {
             RedirectAttributes redirectAttributes) {
 
         User user = requireActiveUser(principal);
-        if (bookingPetId != null) {
-            redirectAttributes.addFlashAttribute(
-                    "openBookingPetId", bookingPetId);
-        }
+        String target = petDetailUrl(bookingPetId);
 
         if (bookingPetId == null || bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute(
                     "error", "กรุณาตรวจสอบสัตว์ในการจองและข้อมูลรายงาน");
-            return "redirect:/admin/reports";
+            redirectAttributes.addFlashAttribute("openWrite", true);
+            return "redirect:" + target;
         }
 
         try {
             reportService.createReport(bookingPetId, user.getId(), request);
         } catch (ResourceNotFoundException exception) {
-            redirectAttributes.addFlashAttribute("error", "ไม่พบสัตว์ในการจองที่เลือก");
-            return "redirect:/admin/reports";
+            redirectAttributes.addFlashAttribute(
+                    "error", "ไม่พบสัตว์ในการจองที่เลือก");
+            redirectAttributes.addFlashAttribute("openWrite", true);
+            return "redirect:" + target;
         } catch (IllegalArgumentException | IllegalStateException exception) {
-            redirectAttributes.addFlashAttribute("error","ไม่สามารถบันทึกรายงานได้ กรุณาตรวจสอบวันที่ การจอง และรายงานที่มีอยู่แล้ว");
-            return "redirect:/admin/reports";
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    "ไม่สามารถบันทึกรายงานได้ กรุณาตรวจสอบวันที่ การจอง และรายงานที่มีอยู่แล้ว");
+            redirectAttributes.addFlashAttribute("openWrite", true);
+            return "redirect:" + target;
         }
-        redirectAttributes.addFlashAttribute("message", "บันทึกรายงานการดูแลสำเร็จ");
-        return "redirect:/admin/reports";
+
+        redirectAttributes.addFlashAttribute(
+                "message", "บันทึกรายงานการดูแลสำเร็จ");
+        return "redirect:" + target;
     }
 
     @PostMapping("/admin/reports/{reportId}/edit")
@@ -105,17 +135,13 @@ public class AdminCareReportPageController {
             RedirectAttributes redirectAttributes) {
 
         User user = requireActiveUser(principal);
-
-        if (request.bookingPetId() != null) {
-            redirectAttributes.addFlashAttribute(
-                    "openBookingPetId", request.bookingPetId());
-        }
+        String target = petDetailUrl(request.bookingPetId());
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute(
                     "error", "กรุณาตรวจสอบข้อมูลรายงาน");
             redirectAttributes.addFlashAttribute("openReportId", reportId);
-            return "redirect:/admin/reports";
+            return "redirect:" + target;
         }
 
         try {
@@ -124,19 +150,25 @@ public class AdminCareReportPageController {
             redirectAttributes.addFlashAttribute(
                     "error", "ไม่พบรายงานที่ต้องการแก้ไข");
             redirectAttributes.addFlashAttribute("openReportId", reportId);
-            return "redirect:/admin/reports";
+            return "redirect:" + target;
         } catch (IllegalArgumentException | IllegalStateException exception) {
             redirectAttributes.addFlashAttribute(
                     "error", "แก้ไขรายงานไม่สำเร็จ กรุณาตรวจสอบข้อมูล");
             redirectAttributes.addFlashAttribute("openReportId", reportId);
-            return "redirect:/admin/reports";
+            return "redirect:" + target;
         }
 
         redirectAttributes.addFlashAttribute(
                 "message", "แก้ไขรายงานสำเร็จ");
-        return "redirect:/admin/reports";
+        return "redirect:" + target;
     }
-    
+
+    private String petDetailUrl(Long bookingPetId) {
+        return bookingPetId == null
+                ? "/admin/reports"
+                : "/admin/reports/pets/" + bookingPetId;
+    }
+
     private User requireActiveUser(Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
