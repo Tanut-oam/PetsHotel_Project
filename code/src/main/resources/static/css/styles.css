@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap");
-
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=account_circle,bed,calendar_month,description,home,pets,settings&display=block");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined&icon_names=account_circle,bed,calendar_month,dashboard,description,group,home,local_offer,pets,room_service,settings&display=block");
 :root {
   --green: #246046;
   --green-dark: #194b36;
@@ -533,7 +534,18 @@ small {
   color: var(--muted);
   text-align: center;
 }
+.customer-sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
+.customer-sidebar .material-symbols-outlined {
+  flex: 0 0 24px;
+  width: 24px;
+  font-size: 21px;
+  line-height: 1;
+}
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;
@@ -605,6 +617,36 @@ small {
 
   .room-image.large {
     height: 240px;
+  }
+}
+.admin-sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  border-left: 3px solid transparent;
+}
+
+.admin-sidebar .material-symbols-outlined {
+  flex: 0 0 24px;
+  width: 24px;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.admin-sidebar a.active {
+  border-left-color: #82d2a7;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar a {
+    white-space: nowrap;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  .admin-sidebar a.active {
+    border-bottom-color: #82d2a7;
   }
 }
 
@@ -774,4 +816,65 @@ small {
 .revenue-scroll:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: -2px;
+}
+.customer-sidebar {
+  padding: 24px 14px;
+  background: #fbfdfb;
+}
+
+.customer-sidebar .sidebar-heading {
+  margin: 18px 14px 8px;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.customer-sidebar .sidebar-heading:first-child {
+  margin-top: 0;
+}
+
+.customer-sidebar a {
+  min-height: 44px;
+  margin-bottom: 3px;
+  padding: 10px 14px;
+  border-left: 3px solid transparent;
+  border-radius: 9px;
+  line-height: 1.5;
+}
+
+.customer-sidebar a:hover,
+.customer-sidebar a.active {
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.customer-sidebar a.active {
+  border-left-color: var(--green);
+  font-weight: 700;
+}
+
+.customer-sidebar a:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .customer-sidebar {
+    padding: 8px;
+  }
+
+  .customer-sidebar .sidebar-heading {
+    display: none;
+  }
+
+  .customer-sidebar a {
+    white-space: nowrap;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+  }
+
+  .customer-sidebar a.active {
+    border-bottom-color: var(--green);
+  }
+
 }
