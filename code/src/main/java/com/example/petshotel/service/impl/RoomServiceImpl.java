@@ -15,20 +15,24 @@ import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.repository.RoomRepository;
+import com.example.petshotel.service.FileStorageService;
 import com.example.petshotel.service.RoomService;
 
 
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class RoomServiceImpl implements RoomService {
     
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
+    private final FileStorageService fileStorageService;
 
-    public RoomServiceImpl(RoomRepository roomRepository,RoomMapper roomMapper){
+    public RoomServiceImpl(RoomRepository roomRepository, RoomMapper roomMapper,FileStorageService fileStorageService) {
         this.roomRepository = roomRepository;
         this.roomMapper = roomMapper;
+        this.fileStorageService = fileStorageService;
     }
 
     @Override
@@ -119,10 +123,35 @@ public class RoomServiceImpl implements RoomService {
         room.setDescription(request.description());
         room.setCapacity(request.capacity());
         room.setPricePerPetPerNight(request.pricePerPetPerNight());
-
         roomRepository.save(room);
+        return roomMapper.toResponse(room);
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse updateRoomImage(Long id, MultipartFile image) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Room", id));
+
+        String oldImageUrl = room.getImageUrl();
+        room.setImageUrl(fileStorageService.storeRoomImage(image));
+        roomRepository.save(room);
+        fileStorageService.deleteRoomImage(oldImageUrl);
 
         return roomMapper.toResponse(room);
+    }
 
+    @Override
+    @Transactional
+    public RoomResponse removeRoomImage(Long id) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Room", id));
+
+        String oldImageUrl = room.getImageUrl();
+        room.setImageUrl(null);
+        roomRepository.save(room);
+        fileStorageService.deleteRoomImage(oldImageUrl);
+
+        return roomMapper.toResponse(room);
     }
 }

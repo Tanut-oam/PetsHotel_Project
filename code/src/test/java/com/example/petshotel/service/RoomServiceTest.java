@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.RoomStatus;
@@ -39,6 +40,9 @@ public class RoomServiceTest {
     @InjectMocks
     private RoomServiceImpl roomService;
 
+    @Mock
+    private FileStorageService fileStorageService;
+
     private Room room;
     private RoomResponse roomResponse;
     
@@ -53,7 +57,7 @@ public class RoomServiceTest {
         room.setPricePerPetPerNight(new BigDecimal("500"));
         room.setStatus(RoomStatus.ACTIVE);
 
-        roomResponse = new RoomResponse(room.getId(),room.getRoomNumber(),room.getName(),room.getDescription(),room.getCapacity(),room.getPricePerPetPerNight(),room.getStatus());
+        roomResponse = new RoomResponse(room.getId(),room.getRoomNumber(),room.getName(),room.getDescription(),room.getCapacity(),room.getPricePerPetPerNight(),room.getStatus(), null);
     }
 
     //ควรโยน_exception_เมื่อเลขห้องซ้ำ
@@ -184,6 +188,33 @@ public class RoomServiceTest {
 
         assertThrows(DuplicateResourceException.class, () -> roomService.updateRoom(1L, request));
         verify(roomRepository, never()).save(any(Room.class));
+    }
+
+    @Test
+    void updateRoomImage_storesNewAndDeletesOld() {
+        room.setImageUrl("/uploads/rooms/old.png");
+        MultipartFile image = mock(MultipartFile.class);
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
+        when(fileStorageService.storeRoomImage(image)).thenReturn("/uploads/rooms/new.png");
+        when(roomMapper.toResponse(room)).thenReturn(roomResponse);
+
+        roomService.updateRoomImage(1L, image);
+
+        assertEquals("/uploads/rooms/new.png", room.getImageUrl());
+        verify(fileStorageService).deleteRoomImage("/uploads/rooms/old.png");
+        verify(roomRepository).save(room);
+    }
+
+    @Test
+    void removeRoomImage_clearsUrlAndDeletesFile() {
+        room.setImageUrl("/uploads/rooms/old.png");
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
+        when(roomMapper.toResponse(room)).thenReturn(roomResponse);
+
+        roomService.removeRoomImage(1L);
+
+        assertNull(room.getImageUrl());
+        verify(fileStorageService).deleteRoomImage("/uploads/rooms/old.png");
     }
 
 

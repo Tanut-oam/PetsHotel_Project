@@ -27,6 +27,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // เปิดสาธารณะ
                 .requestMatchers("/", "/login", "/register",
+                        "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
+                .requestMatchers("/", "/login", "/register",
                         "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/room/**").permitAll()
                 .requestMatchers("/rooms/available").permitAll()

@@ -40,7 +40,7 @@ class HomeControllerTest {
 
     private RoomResponse room(Long id) {
         return new RoomResponse(id, "10" + id, "Room " + id, null, 2,
-                new BigDecimal("500.00"), RoomStatus.ACTIVE);
+                new BigDecimal("500.00"), RoomStatus.ACTIVE, null);
     }
 
     private ExtraService service(Long id, String name) {

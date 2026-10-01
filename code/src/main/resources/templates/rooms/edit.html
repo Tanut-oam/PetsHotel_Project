@@ -24,16 +24,25 @@
           กลับหน้าจัดการห้องพัก
         </a>
       </div>
+
       <div th:if="${error}"
-          class="flash-notice flash-error"
-          role="alert">
+           class="flash-notice flash-error"
+           role="alert">
         <span class="flash-icon" aria-hidden="true">!</span>
         <span th:text="${error}"></span>
       </div>
 
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+      </div>
+
       <form class="panel grid cols-2"
             th:action="@{/admin/rooms/{id}(id=${room.id})}"
-            method="post">
+            method="post"
+            enctype="multipart/form-data">
 
         <label class="field">
           เลขห้อง
@@ -77,27 +86,52 @@
                  required>
         </label>
 
+        <div class="field" style="grid-column:1 / -1">
+          รูปห้องปัจจุบัน
+          <img th:if="${room.imageUrl}"
+               class="room-image"
+               style="max-width:320px; border-radius:12px"
+               th:src="@{${room.imageUrl}}"
+               th:alt="${room.name}">
+          <span th:unless="${room.imageUrl}" class="muted">ยังไม่มีรูป</span>
+        </div>
+
+        <label class="field" style="grid-column:1 / -1">
+          เปลี่ยนรูปห้อง (JPG/PNG ไม่เกิน 5 MB)
+          <input type="file"
+                 name="image"
+                 accept="image/jpeg,image/png">
+        </label>
+
         <div style="grid-column:1 / -1">
           <button class="btn btn-primary" type="submit">
             บันทึกการแก้ไข
           </button>
 
-          <form th:action="@{/admin/rooms/{id}/deactivate(id=${room.id})}"
-            method="post"
-            style="margin-top:20px"
-            onsubmit="return confirm('ยืนยันปิดใช้งานห้องนี้?');">
+          <a class="btn" th:href="@{/admin/rooms}">
+            ยกเลิก
+          </a>
         </div>
       </form>
 
-      <form th:action="@{/admin/rooms/{id}/deactivate(id=${room.id})}"
-            method="post"
-            style="margin-top:20px">
-        <button class="btn btn-danger"
-                type="submit"
-                th:disabled="${room.status.name() == 'INACTIVE'}">
-          ปิดใช้งานห้องนี้
-        </button>
-      </form>
+      <div class="table-actions" style="margin-top:20px">
+        <form th:if="${room.imageUrl}"
+              th:action="@{/admin/rooms/{id}/image/delete(id=${room.id})}"
+              method="post"
+              onsubmit="return confirm('ยืนยันลบรูปห้องนี้?');">
+          <button class="btn" type="submit">ลบรูปห้อง</button>
+        </form>
+
+        <form th:action="@{/admin/rooms/{id}/deactivate(id=${room.id})}"
+              method="post"
+              onsubmit="return confirm('ยืนยันปิดใช้งานห้องนี้?');">
+          <button class="btn btn-danger"
+                  type="submit"
+                  th:disabled="${room.status.name() == 'INACTIVE'}">
+            ปิดใช้งานห้องนี้
+          </button>
+        </form>
+      </div>
     </main>
   </div>
 </body>

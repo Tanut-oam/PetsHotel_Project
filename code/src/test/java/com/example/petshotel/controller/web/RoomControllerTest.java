@@ -36,9 +36,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 
 import com.example.petshotel.config.SecurityConfig;
 import com.example.petshotel.controller.api.RoomRestController;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
 @WebMvcTest({RoomController.class, RoomRestController.class})
 @Import(SecurityConfig.class)
@@ -52,7 +55,7 @@ class RoomControllerTest {
 
         private RoomResponse sampleRoom(Long id, RoomStatus status) {
                 return new RoomResponse(id, "101", "Deluxe", "ห้องกว้าง", 3,
-                        new BigDecimal("500.00"), status);
+                        new BigDecimal("500.00"), status, null);
         }
 
     // ===== ลูกค้า =====
@@ -251,5 +254,41 @@ class RoomControllerTest {
                         .andExpect(flash().attribute("error", "The room must accommodate at least one animal."));
 
                 verify(roomService, never()).createRoom(any());
+        }
+
+                @Test
+        void updateRoom_withImage_uploadsImage() throws Exception {
+                MockMultipartFile image = new MockMultipartFile(
+                        "image", "room.png", "image/png", new byte[] {1, 2, 3});
+
+                mockMvc.perform(multipart("/admin/rooms/1")
+                                .file(image)
+                                .with(csrf())
+                                .param("roomNumber", "101")
+                                .param("name", "Deluxe")
+                                .param("capacity", "3")
+                                .param("pricePerPetPerNight", "500"))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/admin/rooms"));
+
+                verify(roomService).updateRoomImage(eq(1L), any());
+        }
+
+        @Test
+        void updateRoom_invalidImage_redirectsBackWithError() throws Exception {
+                MockMultipartFile image = new MockMultipartFile(
+                        "image", "room.gif", "image/gif", new byte[] {1, 2, 3});
+                when(roomService.updateRoomImage(eq(1L), any()))
+                        .thenThrow(new IllegalArgumentException("รองรับเฉพาะไฟล์ JPG และ PNG"));
+
+                mockMvc.perform(multipart("/admin/rooms/1")
+                                .file(image)
+                                .with(csrf())
+                                .param("roomNumber", "101")
+                                .param("name", "Deluxe")
+                                .param("capacity", "3")
+                                .param("pricePerPetPerNight", "500"))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/admin/rooms/1/edit"));
         }
 }
