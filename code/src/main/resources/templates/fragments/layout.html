@@ -12,14 +12,35 @@
   </div>
 </header>
 
-<aside class="sidebar" th:fragment="sidebar">
-  <a th:href="@{/}">⌂ หน้าแรก</a>
-  <a th:href="@{/rooms}">▣ ห้องพัก</a>
-  <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
-  <a th:href="@{/bookings}">▤ การจองของฉัน</a>
-  <a sec:authorize="hasAnyRole('STAFF', 'ADMIN')" th:href="@{/admin/bookings}">▤ จัดการการจอง</a>
-  <a th:href="@{/reports}">♡ รายงานการดูแล</a>
-  <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
+<aside class="sidebar customer-sidebar" th:fragment="sidebar" aria-label="เมนูลูกค้า">
+  <a th:href="@{/}"><span class="material-symbols-outlined" aria-hidden="true">home</span><span>หน้าแรก</span></a>
+  <a th:href="@{/rooms}"><span class="material-symbols-outlined" aria-hidden="true">bed</span><span>ห้องพัก</span></a>
+  <a th:href="@{/pets}"><span class="material-symbols-outlined" aria-hidden="true">pets</span><span>สัตว์เลี้ยงของฉัน</span></a>
+  <a th:href="@{/bookings}"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span>การจองของฉัน</span></a>
+  <a th:href="@{/reports}"><span class="material-symbols-outlined" aria-hidden="true">description</span><span>รายงานการดูแล</span></a>
+  <a th:href="@{/profile}"><span class="material-symbols-outlined" aria-hidden="true">account_circle</span><span>ข้อมูลบัญชี</span></a>
+
+  <p class="sidebar-heading"
+    sec:authorize="hasAnyRole('STAFF', 'ADMIN')">สำหรับผู้ดูแล</p>
+  <a sec:authorize="hasAnyRole('STAFF', 'ADMIN')" th:href="@{/admin/bookings}">
+    <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+    <span>จัดการการจอง</span>
+  </a>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const current = location.pathname.replace(/\/+$/, '') || '/';
+
+      document.querySelectorAll('.customer-sidebar a[href]').forEach(link => {
+        const target = new URL(link.href).pathname.replace(/\/+$/, '') || '/';
+        if (current === target ||
+            (target !== '/' && current.startsWith(target + '/'))) {
+          link.classList.add('active');
+          link.setAttribute('aria-current', 'page');
+        }
+      });
+    });
+  </script>
 </aside>
 
 <!-- ===== ฝั่งแอดมิน ===== -->
@@ -30,16 +51,36 @@
   </div>
 </header>
 
-<aside class="sidebar" th:fragment="admin-sidebar">
-  <a th:href="@{/admin}">▦ ภาพรวม</a>
-  <a th:href="@{/admin/bookings}">▤ จัดการการจอง</a>
-  <a th:href="@{/admin/rooms}">▣ จัดการห้องพัก</a>
-  <a th:href="@{/admin/pets}">♧ สัตว์เลี้ยง</a>
-  <a th:href="@{/admin/services}">✿ บริการเสริม</a>
-  <a th:href="@{/admin/promotions}">◇ โปรโมชัน</a>
-  <a th:href="@{/admin/reports}">▤ รายงานการดูแล</a>
-  <a th:href="@{/admin/users}">♙ สมาชิก</a>
-  <a th:href="@{/profile}">♙ บัญชีของฉัน</a>
+<aside class="sidebar admin-sidebar" th:fragment="admin-sidebar" aria-label="เมนูผู้ดูแล">
+  <a th:href="@{/admin}"><span class="material-symbols-outlined" aria-hidden="true">dashboard</span><span>ภาพรวม</span></a>
+  <a th:href="@{/admin/bookings}"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span>จัดการการจอง</span></a>
+  <a th:href="@{/admin/rooms}"><span class="material-symbols-outlined" aria-hidden="true">bed</span><span>จัดการห้องพัก</span></a>
+  <a th:href="@{/admin/pets}"><span class="material-symbols-outlined" aria-hidden="true">pets</span><span>สัตว์เลี้ยง</span></a>
+  <a th:href="@{/admin/services}"><span class="material-symbols-outlined" aria-hidden="true">room_service</span><span>บริการเสริม</span></a>
+  <a th:href="@{/admin/promotions}"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span><span>โปรโมชัน</span></a>
+  <a th:href="@{/admin/reports}"><span class="material-symbols-outlined" aria-hidden="true">description</span><span>รายงานการดูแล</span></a>
+  <a th:href="@{/admin/users}"><span class="material-symbols-outlined" aria-hidden="true">group</span><span>สมาชิก</span></a>
+  <a th:href="@{/profile}"><span class="material-symbols-outlined" aria-hidden="true">account_circle</span><span>บัญชีของฉัน</span></a>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const current = location.pathname.replace(/\/+$/, '') || '/';
+      const match = [...document.querySelectorAll('.admin-sidebar a[href]')]
+        .map(link => ({
+          link,
+          path: new URL(link.href).pathname.replace(/\/+$/, '') || '/'
+        }))
+        .filter(item =>
+          current === item.path || current.startsWith(item.path + '/')
+        )
+        .sort((a, b) => b.path.length - a.path.length)[0];
+
+      if (match) {
+        match.link.classList.add('active');
+        match.link.setAttribute('aria-current', 'page');
+      }
+    });
+  </script>
 </aside>
 
 </body>
