@@ -2,10 +2,13 @@ package com.example.petshotel.service;
 
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.BookingPriceResponse;
 
 import java.util.List;
 
 public interface BookingService {
+
+    BookingPriceResponse previewPrice(CreateBookingRequest request);
 
     BookingResponse createBooking(CreateBookingRequest request);
 
