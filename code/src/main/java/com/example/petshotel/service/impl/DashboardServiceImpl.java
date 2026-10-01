@@ -23,6 +23,8 @@ import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.AvailabilityService;
 import com.example.petshotel.service.DashboardService;
+import com.example.petshotel.domain.enums.PaymentStatus;
+import com.example.petshotel.dto.response.MonthlyRevenueResponse;
 
 @Service 
 public class DashboardServiceImpl implements DashboardService{
@@ -44,29 +46,49 @@ public class DashboardServiceImpl implements DashboardService{
     }
 
 
-    @Override 
+    @Override
     @Transactional(readOnly = true)
-    public BigDecimal getTotalRevenue() {
+    public BigDecimal getRevenueThisMonth() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
+
         BigDecimal total = BigDecimal.ZERO;
+
         for (Receipt receipt : receiptRepository.findAll()) {
-            total = total.add(receipt.getTotalAmount());
+            Booking booking = receipt.getBooking();
+
+            if (booking == null
+                    || booking.getPaymentStatus() != PaymentStatus.PAID
+                    || booking.getPaidAt() == null) {
+                continue;
+            }
+
+            LocalDate paidDate = booking.getPaidAt().toLocalDate();
+
+            if (!paidDate.isBefore(monthStart)
+                    && paidDate.isBefore(nextMonthStart)) {
+                total = total.add(receipt.getTotalAmount());
+            }
         }
+
         return total;
     }
 
-    @Override 
+    @Override
     @Transactional(readOnly = true)
-    public long getBookingsThisMonth(){
+    public long getBookingsThisMonth() {
         LocalDate today = LocalDate.now();
         long count = 0;
 
-        for(Booking booking : bookingRepository.findAll()){
-            if (booking.getCreatedAt() != null
-                && booking.getCreatedAt().getYear() == today.getYear()
-                && booking.getCreatedAt().getMonth() == today.getMonth()) {
+        for (Booking booking : bookingRepository.findAll()) {
+            if (booking.getStatus() != BookingStatus.CANCELLED
+                    && booking.getCreatedAt() != null
+                    && booking.getCreatedAt().getYear() == today.getYear()
+                    && booking.getCreatedAt().getMonth() == today.getMonth()) {
                 count++;
             }
         }
+
         return count;
     }
 
@@ -149,19 +171,92 @@ public class DashboardServiceImpl implements DashboardService{
         return responses;
     }
 
-    @Override 
+    @Override
     @Transactional(readOnly = true)
-    public DashboardResponse getDashboard(){
+    public DashboardResponse getDashboard() {
+        return getDashboard(LocalDate.now().getYear());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DashboardResponse getDashboard(int year) {
+        List<MonthlyRevenueResponse> monthlyRevenue =
+                getMonthlyRevenue(year);
+
+        BigDecimal yearlyRevenue = BigDecimal.ZERO;
+
+        for (MonthlyRevenueResponse month : monthlyRevenue) {
+            yearlyRevenue = yearlyRevenue.add(month.totalAmount());
+        }
+
         return new DashboardResponse(
-            getTotalRevenue(),
-            getBookingsThisMonth(),
-            getCheckedInPets(),
-            getTopRoom(),
-            getTotalBookings(),
-            getAvailableRoomCountToday(),
-            getTotalPets(),
-            getRecentBookings()
+                getRevenueThisMonth(),
+                getBookingsThisMonth(),
+                getCheckedInPets(),
+                getTopRoom(),
+                getTotalBookings(),
+                getAvailableRoomCountToday(),
+                getTotalPets(),
+                getRecentBookings(),
+                year,
+                monthlyRevenue,
+                yearlyRevenue
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MonthlyRevenueResponse> getMonthlyRevenue(int year) {
+        if (year < 1 || year > 9999) {
+            throw new IllegalArgumentException(
+                    "Year must be between 1 and 9999");
+        }
+
+        String[] monthNames = {
+                "มกราคม", "กุมภาพันธ์", "มีนาคม",
+                "เมษายน", "พฤษภาคม", "มิถุนายน",
+                "กรกฎาคม", "สิงหาคม", "กันยายน",
+                "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+        };
+
+        BigDecimal[] monthlyTotals = new BigDecimal[12];
+
+        for (int index = 0; index < 12; index++) {
+            monthlyTotals[index] = BigDecimal.ZERO;
+        }
+
+        for (Receipt receipt : receiptRepository.findAll()) {
+            Booking booking = receipt.getBooking();
+
+            if (booking == null
+                    || booking.getPaymentStatus() != PaymentStatus.PAID
+                    || booking.getPaidAt() == null) {
+                continue;
+            }
+
+            LocalDate paidDate = booking.getPaidAt().toLocalDate();
+
+            if (paidDate.getYear() != year) {
+                continue;
+            }
+
+            int monthIndex = paidDate.getMonthValue() - 1;
+
+            monthlyTotals[monthIndex] = monthlyTotals[monthIndex]
+                    .add(receipt.getTotalAmount());
+        }
+
+        List<MonthlyRevenueResponse> months = new ArrayList<>();
+
+        for (int index = 0; index < 12; index++) {
+            months.add(new MonthlyRevenueResponse(
+                    index + 1,
+                    monthNames[index],
+                    monthlyTotals[index]
+            ));
+        }
+
+        return months;
     }
 
 
