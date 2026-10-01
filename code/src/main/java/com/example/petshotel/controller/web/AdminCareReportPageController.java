@@ -18,9 +18,13 @@ import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
-
+import com.example.petshotel.dto.response.DailyCareReportResponse;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import jakarta.validation.Valid;
-
+import org.springframework.web.bind.annotation.PathVariable;
+import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 
 @Controller 
 public class AdminCareReportPageController {
@@ -37,13 +41,24 @@ public class AdminCareReportPageController {
     public String showReports(Principal principal, Model model) {
         User user = requireActiveUser(principal);
 
+        var reports = reportService.getAllReportsForStaffAndAdmin(user.getId());
+        model.addAttribute("reports", reports);
         model.addAttribute(
-                "reports",
-                reportService.getAllReportsForStaffAndAdmin(user.getId()));
+                "reportsByBookingPet",
+                reports.stream().collect(
+                        Collectors.groupingBy(
+                                DailyCareReportResponse::bookingPetId)));
 
+        var bookingPetOptions =
+                reportService.getReportableBookingPetsForStaffAndAdmin(user.getId());
+        model.addAttribute("bookingPetOptions", bookingPetOptions);
         model.addAttribute(
-                "bookingPetOptions",
-                reportService.getReportableBookingPetsForStaffAndAdmin(user.getId()));
+                "reportableBookings",
+                bookingPetOptions.stream().collect(
+                        Collectors.groupingBy(
+                                ReportableBookingPetResponse::bookingId,
+                                LinkedHashMap::new,
+                                Collectors.toList())));
 
         return "admin/reports";
     }
@@ -57,6 +72,10 @@ public class AdminCareReportPageController {
             RedirectAttributes redirectAttributes) {
 
         User user = requireActiveUser(principal);
+        if (bookingPetId != null) {
+            redirectAttributes.addFlashAttribute(
+                    "openBookingPetId", bookingPetId);
+        }
 
         if (bookingPetId == null || bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute(
@@ -77,6 +96,47 @@ public class AdminCareReportPageController {
         return "redirect:/admin/reports";
     }
 
+    @PostMapping("/admin/reports/{reportId}/edit")
+    public String updateReport(
+            @PathVariable Long reportId,
+            Principal principal,
+            @Valid @ModelAttribute UpdateDailyCareReportRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
+
+        User user = requireActiveUser(principal);
+
+        if (request.bookingPetId() != null) {
+            redirectAttributes.addFlashAttribute(
+                    "openBookingPetId", request.bookingPetId());
+        }
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute(
+                    "error", "กรุณาตรวจสอบข้อมูลรายงาน");
+            redirectAttributes.addFlashAttribute("openReportId", reportId);
+            return "redirect:/admin/reports";
+        }
+
+        try {
+            reportService.updateReport(reportId, user.getId(), request);
+        } catch (ResourceNotFoundException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "error", "ไม่พบรายงานที่ต้องการแก้ไข");
+            redirectAttributes.addFlashAttribute("openReportId", reportId);
+            return "redirect:/admin/reports";
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            redirectAttributes.addFlashAttribute(
+                    "error", "แก้ไขรายงานไม่สำเร็จ กรุณาตรวจสอบข้อมูล");
+            redirectAttributes.addFlashAttribute("openReportId", reportId);
+            return "redirect:/admin/reports";
+        }
+
+        redirectAttributes.addFlashAttribute(
+                "message", "แก้ไขรายงานสำเร็จ");
+        return "redirect:/admin/reports";
+    }
+    
     private User requireActiveUser(Principal principal) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
