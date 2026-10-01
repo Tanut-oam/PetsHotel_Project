@@ -116,7 +116,7 @@
             th:if="${s.description != null and !#strings.isEmpty(s.description)}"
             th:text="${s.description}">รายละเอียดบริการ</p>
           <p>
-            ฿<span th:text="${#numbers.formatDecimal(s.price, 1, 'COMMA', 0, 'POINT')}">300</span> / ครั้ง
+            ฿<span th:text="${#numbers.formatDecimal(s.price, 1, 'COMMA', 0, 'POINT')}">300</span>  บาท/ตัว/การจอง
           </p>
         </div>
       </div>
