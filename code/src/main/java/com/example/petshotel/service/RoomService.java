@@ -2,6 +2,8 @@ package com.example.petshotel.service;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.response.RoomResponse;
@@ -16,4 +18,6 @@ public interface RoomService {
     RoomResponse deactivateRoom(Long id);
     RoomResponse setRoomStatus(Long id,UpdateStatusRequest request);
     List<RoomResponse> getActiveRooms();
+    RoomResponse updateRoomImage(Long id, MultipartFile image);
+    RoomResponse removeRoomImage(Long id);
 }

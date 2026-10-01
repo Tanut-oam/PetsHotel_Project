@@ -231,6 +231,15 @@ small {
 .room-image.large {
   height: 370px;
   border-radius: 15px;
+  margin: 0 0 20px;
+}
+
+.room-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--green-light);
+  font-size: 2.5rem;
 }
 
 .pet-photo {

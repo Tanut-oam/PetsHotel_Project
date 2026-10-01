@@ -68,6 +68,12 @@
 
       <div class="grid cols-3">
         <article class="card" th:each="r : ${rooms}">
+            <img th:if="${r.imageUrl}"
+            class="room-image"
+            th:src="@{${r.imageUrl}}"
+            th:alt="${r.name}"
+            loading="lazy">
+          <div th:unless="${r.imageUrl}" class="room-image room-image-placeholder">🐾</div>
           <div class="card-body">
             <div class="row">
               <h3 th:text="${r.name}">Deluxe Room</h3>

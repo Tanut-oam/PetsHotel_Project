@@ -118,7 +118,7 @@ class RoomRestControllerTest {
     @Test
     void setRoomStatusShouldReturnUpdatedStatus() throws Exception {
         RoomResponse maintenanceRoom = new RoomResponse(1L, "101", "Deluxe", "ห้องมาตรฐาน",
-                3, new BigDecimal("500"), RoomStatus.MAINTENANCE);
+                3, new BigDecimal("500"), RoomStatus.MAINTENANCE, null);
         when(roomService.setRoomStatus(eq(1L), any())).thenReturn(maintenanceRoom);
 
         mockMvc.perform(patch("/api/room/1/status")
@@ -135,7 +135,7 @@ class RoomRestControllerTest {
     @Test
     void deactivateRoomShouldReturnInactiveRoom() throws Exception {
         RoomResponse inactiveRoom = new RoomResponse(1L, "101", "Deluxe", "ห้องมาตรฐาน",
-                3, new BigDecimal("500"), RoomStatus.INACTIVE);
+                3, new BigDecimal("500"), RoomStatus.INACTIVE, null);
         when(roomService.deactivateRoom(1L)).thenReturn(inactiveRoom);
 
         mockMvc.perform(patch("/api/room/1/deactivate"))
@@ -154,6 +154,7 @@ class RoomRestControllerTest {
                 3,
                 new BigDecimal("500"),
                 RoomStatus.ACTIVE
+                , null
         );
     }
 

@@ -14,7 +14,8 @@ public class RoomMapper {
             room.getDescription(),
             room.getCapacity(),
             room.getPricePerPetPerNight(),
-            room.getStatus()
+            room.getStatus(),
+            room.getImageUrl()
         );
     }
 }

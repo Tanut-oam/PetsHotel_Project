@@ -15,7 +15,6 @@
     <main class="content">
       <h1>ห้องพักทั้งหมด</h1>
 
-      <!-- ฟอร์มค้นหาห้องว่าง: ต้องรอ endpoint ของ Availability (ธเนศ) -->
       <section class="panel">
         <form class="form-grid" th:action="@{/rooms/available}" method="get">
           <label class="field">
@@ -39,6 +38,13 @@
 
       <div class="grid cols-3">
         <article class="card" th:each="r : ${rooms}">
+          <img th:if="${r.imageUrl}"
+               class="room-image"
+               th:src="@{${r.imageUrl}}"
+               th:alt="${r.name}"
+               loading="lazy">
+          <div th:unless="${r.imageUrl}" class="room-image room-image-placeholder">🐾</div>
+
           <div class="card-body">
             <div class="row">
               <h3 th:text="${r.name}">Deluxe Room</h3>
@@ -50,7 +56,7 @@
             </p>
             <div class="row">
               <span class="price">
-                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500</span> / คืน
+                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500</span> / ตัว / คืน
               </span>
               <a class="btn btn-small" th:href="@{/rooms/{id}(id=${r.id})}">ดูห้อง</a>
             </div>
