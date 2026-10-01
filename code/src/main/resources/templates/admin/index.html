@@ -15,29 +15,29 @@
     <main class="content">
         <h1>ภาพรวม</h1>
             <div class="stats">
-            <div class="stat">
-              <span>ยอดรวมจากใบเสร็จ</span>
-              <strong
-                th:text="|฿${#numbers.formatDecimal(dashboard.totalRevenue, 1, 'COMMA', 2, 'POINT')}|">
-                ฿0.00
-              </strong>
-            </div>
+              <div class="stat">
+                <span>ยอดรับเงินเดือนนี้</span>
+                <strong
+                  th:text="|฿${#numbers.formatDecimal(dashboard.revenueThisMonth, 1, 'COMMA', 2, 'POINT')}|">
+                  ฿0.00
+                </strong>
+              </div>
 
-            <div class="stat">
-              <span>การจองทั้งหมด</span>
-              <strong th:text="${dashboard.totalBookings}">0</strong>
-            </div>
+              <div class="stat">
+                <span>การจองเดือนนี้ (ไม่รวมยกเลิก)</span>
+                <strong th:text="${dashboard.bookingsThisMonth}">0</strong>
+              </div>
 
-            <div class="stat">
-              <span>ห้องว่างคืนนี้</span>
-              <strong th:text="${dashboard.availableRoomCountToday}">0</strong>
-            </div>
+              <div class="stat">
+                <span>ห้องว่างคืนนี้</span>
+                <strong th:text="${dashboard.availableRoomCountToday}">0</strong>
+              </div>
 
-            <div class="stat">
-              <span>สัตว์เลี้ยงในระบบ</span>
-              <strong th:text="${dashboard.totalPets}">0</strong>
+              <div class="stat">
+                <span>สัตว์ที่กำลังเข้าพัก</span>
+                <strong th:text="${dashboard.checkedInPets}">0</strong>
+              </div>
             </div>
-          </div>
 
             <div class="section-title">
             <h2>การจองล่าสุด</h2>
