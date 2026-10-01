@@ -15,5 +15,6 @@ public record PetResponse(
     String specialNote,
     Long ownerId,
     String ownerName,
-    Boolean active
+    Boolean active,
+    String imageUrl
 ) {}

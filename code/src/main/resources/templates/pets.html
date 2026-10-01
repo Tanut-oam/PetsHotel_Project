@@ -26,19 +26,19 @@
       </div>
 
       <div class="pet-notice pet-notice-success"
-            th:if="${message}"
-            th:text="${message}"
-            role="status"></div>
+           th:if="${message}"
+           th:text="${message}"
+           role="status"></div>
 
       <div class="pet-notice pet-notice-success"
-          th:if="${editMessage}"
-          th:text="${editMessage}"
-          role="status"></div>
+           th:if="${editMessage}"
+           th:text="${editMessage}"
+           role="status"></div>
 
       <div class="pet-notice pet-notice-success"
-          th:if="${deleteMessage}"
-          th:text="${deleteMessage}"
-          role="status"></div>
+           th:if="${deleteMessage}"
+           th:text="${deleteMessage}"
+           role="status"></div>
 
       <div class="panel" th:if="${#lists.isEmpty(pets)}">
         ยังไม่มีสัตว์เลี้ยงในบัญชีของคุณ
@@ -47,7 +47,13 @@
       <div class="grid cols-2" th:unless="${#lists.isEmpty(pets)}">
         <article class="panel" th:each="pet : ${pets}">
           <div class="pet-row">
-            <span aria-hidden="true" style="font-size: 2rem;">🐾</span>
+            <img th:if="${!#strings.isEmpty(pet.imageUrl)}"
+                 class="pet-photo"
+                 th:src="@{${pet.imageUrl}}"
+                 th:alt="|รูปของ ${pet.name}|">
+            <span th:unless="${!#strings.isEmpty(pet.imageUrl)}"
+                  aria-hidden="true"
+                  style="font-size: 2rem;">🐾</span>
             <div>
               <h3 th:text="${pet.name}">ชื่อสัตว์เลี้ยง</h3>
 
@@ -98,15 +104,16 @@
             </div>
 
             <div class="pet-notice pet-notice-error"
-                  th:if="${editPetId == pet.id and editError != null}"
-                  th:text="${editError}"
-                  data-edit-feedback
-                  tabindex="-1"
-                  role="alert"></div>
+                 th:if="${editPetId == pet.id and editError != null}"
+                 th:text="${editError}"
+                 data-edit-feedback
+                 tabindex="-1"
+                 role="alert"></div>
 
             <form class="panel grid cols-2"
                   th:action="@{/pets/{petId}/edit(petId=${pet.id})}"
-                  method="post">
+                  method="post"
+                  enctype="multipart/form-data">
               <label class="field">
                 ชื่อ
                 <input name="name" th:value="${pet.name}" required>
@@ -139,6 +146,12 @@
                 น้ำหนัก (กก.)
                 <input type="number" name="weight" min="0.01" step="any"
                        th:value="${pet.weight}">
+              </label>
+
+              <label class="field">
+                เปลี่ยนรูปภาพ
+                <input type="file" name="photo" accept="image/jpeg,image/png">
+                <small>ถ้าไม่เลือกไฟล์ จะใช้รูปเดิม</small>
               </label>
 
               <label class="field">
@@ -215,15 +228,16 @@
         </div>
 
         <div class="pet-notice pet-notice-error"
-            th:if="${error}"
-            th:text="${error}"
-            data-pet-feedback
-            role="alert"></div>
+             th:if="${error}"
+             th:text="${error}"
+             data-pet-feedback
+             role="alert"></div>
 
         <form class="panel grid cols-2"
               id="pet-form"
               th:action="@{/pets}"
-              method="post">
+              method="post"
+              enctype="multipart/form-data">
           <label class="field">
             ชื่อ
             <input name="name" required>
@@ -255,8 +269,8 @@
 
           <label class="field">
             รูปภาพ
-            <input type="file" name="photo" accept="image/*" disabled>
-            <small>ยังไม่รองรับการอัปโหลดรูปภาพ</small>
+            <input type="file" name="photo" accept="image/jpeg,image/png">
+            <small>รองรับ JPG และ PNG ขนาดไม่เกิน 5 MB</small>
           </label>
 
           <label class="field">
