@@ -94,6 +94,63 @@
                 </tbody>
             </table>
             </div>
+            <div class="section-title">
+              <h2 th:text="|ยอดรับเงินรายเดือน ปี ${dashboard.selectedYear}|">
+                ยอดรับเงินรายเดือน
+              </h2>
+            </div>
+
+            <form class="toolbar" method="get" th:action="@{/admin}">
+              <label class="field">
+                ปี (ค.ศ.)
+                <input type="number"
+                      name="year"
+                      th:value="${dashboard.selectedYear}"
+                      min="1"
+                      max="9999"
+                      step="1"
+                      required>
+              </label>
+
+              <button class="btn btn-primary" type="submit">
+                ดูยอดเงิน
+              </button>
+            </form>
+
+            <div class="panel revenue-panel">
+              <div class="revenue-scroll"
+                  tabindex="0"
+                  role="region"
+                  aria-label="ตารางยอดรับเงินรายเดือน เลื่อนเพื่อดูเดือนเพิ่มเติม">
+
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th scope="col">เดือน</th>
+                      <th scope="col">ยอดรับเงิน</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr th:each="month : ${dashboard.monthlyRevenue}">
+                      <td th:text="${month.monthName}">มกราคม</td>
+                      <td
+                        th:text="|฿${#numbers.formatDecimal(month.totalAmount, 1, 'COMMA', 2, 'POINT')}|">
+                        ฿0.00
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="revenue-total">
+                <strong>รวมทั้งปี</strong>
+                <strong
+                  th:text="|฿${#numbers.formatDecimal(dashboard.yearlyRevenue, 1, 'COMMA', 2, 'POINT')}|">
+                  ฿0.00
+                </strong>
+              </div>
+            </div>
     </main>
   </div>
 </body>
