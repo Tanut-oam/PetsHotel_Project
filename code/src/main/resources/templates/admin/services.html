@@ -37,6 +37,32 @@
         <span th:text="${error}"></span>
         </div>
 
+        <div id="list-filters" hidden>
+          <div class="toolbar">
+            <label class="field">
+              ค้นหาชื่อ
+              <input id="list-search"
+                    type="search"
+                    placeholder="พิมพ์ชื่อที่ต้องการค้นหา">
+            </label>
+
+            <label class="field">
+              สถานะเปิดใช้งาน
+              <select id="list-status">
+                <option value="ALL">ทั้งหมด</option>
+                <option value="ACTIVE">เปิดใช้</option>
+                <option value="INACTIVE">ปิดใช้</option>
+              </select>
+            </label>
+
+            <button id="clear-filters"
+                    class="btn"
+                    type="button">
+              ล้างตัวกรอง
+            </button>
+          </div>
+        </div>
+
       <div class="panel table-scroll">
         <table class="table">
           <thead>
@@ -53,7 +79,10 @@
               <td colspan="4">ยังไม่มีบริการเสริม</td>
             </tr>
 
-            <tr th:each="service : ${extraServices}">
+            <tr th:each="service : ${extraServices}"
+              data-filter-row
+              th:attr="data-name=${service.name},
+                      data-status=${service.active == true ? 'ACTIVE' : 'INACTIVE'}">
               <td th:text="${service.name}">ชื่อบริการ</td>
               <td th:text="|฿${service.price}|">฿0.00</td>
 
@@ -76,6 +105,13 @@
           </tbody>
         </table>
       </div>
+
+      <p id="filter-empty"
+        class="muted"
+        role="status"
+        hidden>
+        ไม่พบรายการที่ตรงกับชื่อและสถานะที่เลือก
+      </p>
 
       <dialog class="admin-form-dialog"
         aria-labelledby="service-dialog-title">
@@ -150,5 +186,6 @@
     </main>
   </div>
     <script th:src="@{/js/admin-form-dialog.js}" defer></script>
+    <script th:src="@{/js/admin-list-filter.js}" defer></script>
 </body>
 </html>
