@@ -17,7 +17,7 @@
 
 <aside class="sidebar" th:fragment="sidebar">
   <a th:href="@{/}">⌂ หน้าแรก</a>
-  <a th:href="@{/rooms/available}">▣ ห้องพัก</a>
+  <a th:href="@{/rooms}">▣ ห้องพัก</a>
   <a th:href="@{/pets}">♧ สัตว์เลี้ยงของฉัน</a>
   <a th:href="@{/bookings}">▤ การจองของฉัน</a>
   <a sec:authorize="hasAnyRole('STAFF', 'ADMIN')" th:href="@{/admin/bookings}">▤ จัดการการจอง</a>
