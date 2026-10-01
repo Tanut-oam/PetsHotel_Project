@@ -43,7 +43,11 @@ public class BookingMapper {
                                         item.getExtraService().getName(),
                                         item.getQuantity(),
                                         item.getUnitPrice(),
-                                        item.getTotalPrice()
+                                        item.getTotalPrice(),
+                                        item.getBookingPet() != null
+                                                ? item.getBookingPet().getPet().getId() : null,
+                                        item.getBookingPet() != null
+                                                ? item.getBookingPet().getPet().getName() : null
                                 ))
                                 .toList()
                 )

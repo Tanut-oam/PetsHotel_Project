@@ -5,6 +5,7 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateBookingApiRequest;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.BookingPriceResponse;
 import com.example.petshotel.service.BookingService;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
@@ -43,7 +44,7 @@ public class BookingRestController {
                 .petIds(request.petIds())
                 .checkInDate(request.checkInDate())
                 .checkOutDate(request.checkOutDate())
-                .extraServiceQuantities(request.extraServiceQuantities())
+                .servicePetIds(request.servicePetIds())
                 .promotionId(request.promotionId())
                 .build();
 
@@ -51,6 +52,24 @@ public class BookingRestController {
                 bookingService.createBooking(serviceRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/preview-price")
+    public BookingPriceResponse previewPrice(
+            @Valid @RequestBody CreateBookingApiRequest request,
+            Principal principal) {
+
+        User user = currentUser(principal);
+
+        return bookingService.previewPrice(CreateBookingRequest.builder()
+                .userId(user.getId())
+                .roomId(request.roomId())
+                .petIds(request.petIds())
+                .checkInDate(request.checkInDate())
+                .checkOutDate(request.checkOutDate())
+                .servicePetIds(request.servicePetIds())
+                .promotionId(request.promotionId())
+                .build());
     }
 
     @GetMapping

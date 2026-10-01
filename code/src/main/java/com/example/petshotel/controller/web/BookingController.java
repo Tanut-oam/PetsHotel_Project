@@ -2,6 +2,7 @@ package com.example.petshotel.controller.web;
 
 import java.security.Principal;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.time.LocalDate;
 
@@ -58,7 +59,7 @@ public class BookingController {
                 "checkInDate",
                 "checkOutDate",
                 "promotionId",
-                "extraServiceQuantities[*]"
+                "servicePetIds[*]"
         );
     }
 
@@ -100,7 +101,6 @@ public class BookingController {
         // ป้องกันการจองในชื่อผู้ใช้อื่น
         form.setUserId(user.getId());
 
-        removeUnselectedServices(form);
 
         validateForm(form, bindingResult);
 
@@ -253,21 +253,6 @@ public class BookingController {
         }
     }
 
-    private void removeUnselectedServices(
-            CreateBookingRequest form) {
-
-        if (form.getExtraServiceQuantities() == null) {
-            return;
-        }
-
-        form.getExtraServiceQuantities()
-                .entrySet()
-                .removeIf(entry ->
-                        Integer.valueOf(0)
-                                .equals(entry.getValue())
-                );
-    }
-
     private void validateForm(
             CreateBookingRequest form,
             BindingResult bindingResult) {
@@ -297,17 +282,17 @@ public class BookingController {
                 extraServiceService
                         .getActiveExtraServices();
 
-        if (form.getExtraServiceQuantities() == null) {
-            form.setExtraServiceQuantities(
+        if (form.getServicePetIds() == null) {
+            form.setServicePetIds(
                     new HashMap<>()
             );
         }
 
         for (var service : services) {
-            form.getExtraServiceQuantities()
+            form.getServicePetIds()
                     .putIfAbsent(
                             service.getId(),
-                            0
+                            new ArrayList<>()
                     );
         }
 

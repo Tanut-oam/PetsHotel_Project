@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>สร้างการจอง · PetsHotel</title>
+  <meta name="_csrf" th:content="${_csrf.token}">
+  <meta name="_csrf_header" th:content="${_csrf.headerName}">
   <link rel="stylesheet" th:href="@{/css/styles.css}">
   <script defer th:src="@{/js/booking-form.js}"></script>
   <style>
@@ -40,7 +42,8 @@
               class="panel"
               method="post"
               th:action="@{/bookings}"
-              th:object="${bookingForm}">
+              th:object="${bookingForm}"
+              th:attr="data-preview-url=@{/api/bookings/preview-price}">
 
           <div id="server-errors"
                th:if="${#fields.hasAnyErrors()}"
@@ -138,23 +141,43 @@
           <section data-booking-step="2" aria-labelledby="heading-services">
             <h2 id="heading-services" tabindex="-1">บริการเสริมและโปรโมชั่น</h2>
 
-            <p class="muted">ใส่จำนวนที่ต้องการ หรือ 0 หากไม่เลือกบริการ</p>
+            <p class="muted">
+              คิดราคาต่อสัตว์ที่เลือกตลอดการจอง ไม่คูณจำนวนคืน
+            </p>
 
             <p th:if="${#lists.isEmpty(extraServices)}" class="muted">
               ยังไม่มีบริการเสริมที่เปิดใช้งาน
             </p>
 
-            <label th:each="service : ${extraServices}" class="field">
-              <span th:text="${service.name}"></span>
-              <small th:text="${service.price + ' บาท/หน่วย'}"></small>
+            <div th:each="service : ${extraServices}"
+                 class="panel service-option"
+                 data-service-group
+                 th:attr="data-service-id=${service.id},data-service-name=${service.name}">
+              <label class="choice">
+                <input type="checkbox" data-service-toggle hidden>
+                <span>
+                  <strong th:text="${service.name}"></strong>
+                  <span th:text="${' — ' + service.price + ' บาท/ตัว/การจอง'}"></span>
+                </span>
+              </label>
 
-              <input type="number"
-                     min="0"
-                     step="1"
-                     required
-                     th:field="*{extraServiceQuantities[__${service.id}__]}"
-                     th:attr="data-service-id=${service.id},data-name=${service.name}">
-            </label>
+              <p class="muted" th:text="${service.description}"></p>
+
+              <div data-service-recipients>
+                <p>สัตว์ที่รับบริการ</p>
+                <label class="choice" th:each="pet : ${pets}"
+                       data-recipient-row>
+                  <input type="checkbox" data-service-pet
+                         th:field="*{servicePetIds[__${service.id}__]}"
+                         th:value="${pet.id}"
+                         th:attr="data-pet-name=${pet.name}">
+                  <span th:text="${pet.name}"></span>
+                </label>
+                <p data-no-recipients hidden>
+                  เลือกสัตว์ที่จะเข้าพักในขั้นที่ 2 ก่อน
+                </p>
+              </div>
+            </div>
 
             <label class="field">
               โปรโมชั่น
@@ -189,14 +212,16 @@
               <dd id="review-pets">—</dd>
 
               <dt>บริการเสริม</dt>
-              <dd id="review-services">—</dd>
+              <dd id="review-services" style="white-space: pre-line">—</dd>
 
               <dt>โปรโมชั่น</dt>
               <dd id="review-promotion">—</dd>
+              <dt>ยอดรวมประมาณการ</dt>
+              <dd id="review-total">—</dd>
             </dl>
 
             <p class="muted">
-              เมื่อสร้างการจองสำเร็จ จะแสดงรายละเอียดและยอดรวมในหน้าถัดไป
+              ตรวจสอบยอดรวมประมาณการในสรุปก่อนยืนยัน
               ขั้นตอนนี้ยังไม่ได้ชำระเงิน
             </p>
           </section>
@@ -248,7 +273,22 @@
             <span id="summary-pets">0 ตัว</span>
           </div>
 
-          <p class="muted">ยอดจริงแสดงหลังระบบตรวจสอบและสร้างการจองสำเร็จ</p>
+          <p id="summary-services" class="muted" style="white-space: pre-line"></p>
+          <hr>
+          <div class="summary-line"><span>ค่าห้องพัก</span><span id="price-room">—</span></div>
+          <div class="summary-line"><span>บริการเสริม</span><span id="price-services">—</span></div>
+          <div class="summary-line"><span>ค่าธรรมเนียมเพิ่มเติม</span><span id="price-surcharge">—</span></div>
+          <div class="summary-line"><span>ส่วนลด</span><span id="price-discount">—</span></div>
+          <hr>
+          <div class="summary-line"><strong>ยอดรวมประมาณการ</strong><strong id="price-total">—</strong></div>
+          <p id="price-status" role="status" aria-live="polite">
+            เลือกห้อง วันที่ และสัตว์เลี้ยงเพื่อคำนวณราคา
+          </p>
+          <button id="price-retry" class="btn" type="button" hidden>คำนวณอีกครั้ง</button>
+          <p class="muted">
+            ราคานี้ยังไม่ใช่การจองห้อง ระบบตรวจราคาและห้องว่างอีกครั้งเมื่อสร้างการจอง
+          </p>
+          <noscript><p>เปิด JavaScript เพื่อดูราคาประมาณการก่อนจอง</p></noscript>
         </aside>
       </div>
 
