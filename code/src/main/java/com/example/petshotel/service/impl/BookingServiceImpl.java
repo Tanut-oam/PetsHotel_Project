@@ -25,6 +25,7 @@ import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.PromotionRepository;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.repository.BookingPetRepository;
 
 import com.example.petshotel.service.BookingService;
 import com.example.petshotel.service.PricingService;
@@ -43,6 +44,7 @@ import com.example.petshotel.mapper.BookingMapper;
 
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
+import com.example.petshotel.exception.PetNotAvailableException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,7 +67,15 @@ import java.time.ZoneId;
 @Transactional
 public class BookingServiceImpl implements BookingService {
 
+    private static final List<BookingStatus>
+            PET_RESERVING_STATUSES = List.of(
+                    BookingStatus.PENDING,
+                    BookingStatus.CONFIRMED,
+                    BookingStatus.CHECKED_IN
+            );
+
     private final BookingRepository bookingRepository;
+    private final BookingPetRepository bookingPetRepository;
     private final UserRepository userRepository;
     private final RoomRepository roomRepository;
     private final PetRepository petRepository;
@@ -79,6 +89,7 @@ public class BookingServiceImpl implements BookingService {
     // =========================================================
     // CREATE BOOKING
     // =========================================================
+
 
     @Override
     @Transactional(readOnly = true)
@@ -115,7 +126,14 @@ public class BookingServiceImpl implements BookingService {
                     request.getCheckOutDate());
         }
 
-        List<Pet> pets = petRepository.findAllById(request.getPetIds());
+        List<Pet> pets = creating
+        ? petRepository.findAllByIdForUpdate(
+                request.getPetIds()
+        )
+        : petRepository.findAllById(
+                request.getPetIds()
+        );
+
         Set<Long> foundPetIds = pets.stream()
                 .map(pet -> pet.getId()).collect(Collectors.toSet());
 
@@ -134,9 +152,41 @@ public class BookingServiceImpl implements BookingService {
 
         // Preview is only a quote, not a reservation.
         if (creating) {
-            availabilityService.checkRoomAvailable(
-                    room.getId(), request.getCheckInDate(),
-                    request.getCheckOutDate(), pets.size());
+        List<Long> overlappingPetIds =
+                bookingPetRepository.findOverlappingPetIds(
+                        request.getPetIds(),
+                        request.getCheckInDate(),
+                        request.getCheckOutDate(),
+                        PET_RESERVING_STATUSES
+                );
+
+        if (!overlappingPetIds.isEmpty()) {
+                Set<Long> overlappingPetIdSet =
+                        new HashSet<>(overlappingPetIds);
+
+                List<String> overlappingPetNames =
+                        pets.stream()
+                                .filter(pet ->
+                                        overlappingPetIdSet.contains(
+                                                pet.getId()
+                                        )
+                                )
+                                .map((Pet pet) -> pet.getName())
+                                .toList();
+
+                throw new PetNotAvailableException(
+                        overlappingPetNames,
+                        request.getCheckInDate(),
+                        request.getCheckOutDate()
+                );
+        }
+
+        availabilityService.checkRoomAvailable(
+                room.getId(),
+                request.getCheckInDate(),
+                request.getCheckOutDate(),
+                pets.size()
+        );
         }
 
         // Transient graph only: preview does not save any of these objects.
