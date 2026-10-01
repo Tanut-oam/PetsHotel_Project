@@ -26,6 +26,27 @@ public class BookingMapper {
                 .status(booking.getStatus())
                 .totalPrice(booking.getTotalPrice())
                 .paymentStatus(booking.getPaymentStatus())
+                .roomName(booking.getRoom().getName())
+                .petNames(
+                        booking.getBookingPets().stream()
+                                .map(item -> item.getPet().getName())
+                                .toList()
+                )
+                .promotionName(booking.getPromotionName())
+                .roomAmount(booking.getRoomAmount())
+                .serviceAmount(booking.getServiceAmount())
+                .surchargeAmount(booking.getSurchargeAmount())
+                .discountAmount(booking.getDiscountAmount())
+                .extraServices(
+                        booking.getExtraServices().stream()
+                                .map(item -> new BookingResponse.ExtraServiceLine(
+                                        item.getExtraService().getName(),
+                                        item.getQuantity(),
+                                        item.getUnitPrice(),
+                                        item.getTotalPrice()
+                                ))
+                                .toList()
+                )
                 .build();
     }
 }

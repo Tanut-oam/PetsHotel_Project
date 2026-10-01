@@ -4,22 +4,202 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>จัดการการจอง · PetsHotel</title>
+
   <link rel="stylesheet" th:href="@{/css/styles.css}">
   <script defer th:src="@{/js/booking-ui.js}"></script>
+
+  <style>
+    [hidden] { display: none !important; }
+    dialog {
+      border: 0;
+      border-radius: 12px;
+      padding: 24px;
+      width: min(520px, 90vw);
+    }
+    dialog::backdrop { background: rgb(0 0 0 / 40%); }
+    .booking-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .booking-actions form { margin: 0; }
+  </style>
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
+
   <div class="layout">
     <aside th:replace="~{fragments/layout :: sidebar}"></aside>
 
-    <main class="content">
+    <main class="content" data-booking-page="staff">
       <h1>จัดการการจอง</h1>
 
       <p th:if="${message}" th:text="${message}" role="status"></p>
       <p th:if="${error}" th:text="${error}" role="alert"></p>
 
-      <section th:replace="~{fragments/booking-table :: table(${bookings}, true)}">
-      </section>
+      <div class="toolbar">
+        <label class="field">
+          ค้นหาการจอง
+          <input id="booking-search" type="search"
+                 placeholder="เลขที่ ผู้จอง ห้อง หรือสัตว์เลี้ยง">
+        </label>
+
+        <label class="field">
+          สถานะ
+          <select id="booking-filter">
+            <option value="">ทั้งหมด</option>
+            <option value="PENDING">รอยืนยัน</option>
+            <option value="CONFIRMED">ยืนยันแล้ว</option>
+            <option value="CHECKED_IN">เข้าพักแล้ว</option>
+            <option value="CHECKED_OUT">เช็กเอาต์แล้ว</option>
+            <option value="CANCELLED">ยกเลิกแล้ว</option>
+          </select>
+        </label>
+      </div>
+
+      <p id="booking-count" role="status"
+         th:text="${'ทั้งหมด ' + #lists.size(bookings) + ' รายการ'}"></p>
+
+      <div class="panel table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>เลขที่</th>
+              <th>รหัสผู้จอง</th>
+              <th>ห้องพัก</th>
+              <th>สัตว์เลี้ยง</th>
+              <th>วันเข้า–วันออก</th>
+              <th>สถานะ</th>
+              <th>การชำระเงิน</th>
+              <th>ยอดรวม</th>
+              <th>ดำเนินการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr th:each="booking : ${bookings}"
+                data-booking-row
+                th:attr="data-status=${booking.status.name()}">
+
+              <td data-detail-label="เลขที่"
+                  th:text="${booking.id}"></td>
+
+              <td data-detail-label="รหัสผู้จอง"
+                  th:text="${booking.userId}"></td>
+
+              <td data-detail-label="ห้องพัก"
+                  th:text="${booking.roomName}"></td>
+
+              <td data-detail-label="สัตว์เลี้ยง"
+                  th:text="${booking.petNames}"></td>
+
+              <td data-detail-label="วันเข้า–วันออก"
+                  th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></td>
+
+              <td data-detail-label="สถานะ">
+                <span data-status-label
+                      th:attr="data-status-label=${booking.status.name()}"
+                      th:text="${booking.status}"></span>
+              </td>
+
+              <td data-detail-label="การชำระเงิน">
+                <span data-payment-label
+                      th:attr="data-payment-label=${booking.paymentStatus}"
+                      th:text="${booking.paymentStatus}"></span>
+              </td>
+
+              <td data-detail-label="ยอดรวม"
+                  th:text="${booking.totalPrice + ' บาท'}"></td>
+
+              <td>
+                <div class="booking-actions">
+                  <button type="button" class="btn btn-small"
+                          data-show-details hidden>
+                    ดูข้อมูล
+                  </button>
+
+                  <a class="btn btn-small"
+                    th:if="${booking.paymentStatus != null
+                      and booking.paymentStatus.name() == 'PAID'}"
+                    th:href="@{/bookings/{id}/receipt(id=${booking.id})}">
+                    ดูใบเสร็จ
+                  </a>
+
+                  <form method="post"
+                        th:if="${booking.status.name() == 'PENDING'}"
+                        th:action="@{/admin/bookings/{id}/confirm(id=${booking.id})}"
+                        data-confirm="ยืนยันการจองนี้หรือไม่?">
+                    <button type="submit" class="btn btn-small">
+                      ยืนยันการจอง
+                    </button>
+                  </form>
+
+                  <form method="post"
+                        th:if="${booking.status.name() == 'CONFIRMED'}"
+                        th:action="@{/admin/bookings/{id}/check-in(id=${booking.id})}"
+                        data-confirm="ยืนยันเช็กอินการจองนี้หรือไม่?">
+                    <button type="submit" class="btn btn-small">
+                      เช็กอิน
+                    </button>
+                  </form>
+
+                  <form method="post"
+                        th:if="${booking.status.name() == 'CHECKED_IN'}"
+                        th:action="@{/admin/bookings/{id}/check-out(id=${booking.id})}"
+                        data-confirm="ยืนยันเช็กเอาต์การจองนี้หรือไม่?">
+                    <button type="submit" class="btn btn-small">
+                      เช็กเอาต์
+                    </button>
+                  </form>
+
+                  <form method="post"
+                        th:if="${booking.paymentStatus != null
+                          and booking.paymentStatus.name() == 'UNPAID'
+                          and (booking.status.name() == 'PENDING'
+                            or booking.status.name() == 'CONFIRMED')}"
+                        th:action="@{/admin/bookings/{id}/cancel(id=${booking.id})}"
+                        data-confirm="ยืนยันยกเลิกการจองนี้หรือไม่?">
+                    <button type="submit" class="btn btn-small">
+                      ยกเลิก
+                    </button>
+                  </form>
+                  <form method="post"
+                      th:if="${booking.paymentStatus != null
+                        and booking.paymentStatus.name() == 'UNPAID'
+                        and (booking.status.name() == 'CONFIRMED'
+                          or booking.status.name() == 'CHECKED_IN'
+                          or booking.status.name() == 'CHECKED_OUT')}"
+                      th:action="@{/admin/bookings/{id}/payment/confirm(id=${booking.id})}"
+                      th:attr="data-confirm=${'ได้รับเงินจำนวน '
+                        + booking.totalPrice + ' บาทครบแล้ว และต้องการออกใบเสร็จใช่หรือไม่?'}">
+                  <button type="submit" class="btn btn-small">
+                    บันทึกรับเงิน
+                  </button>
+                </form>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p id="booking-empty"
+         th:hidden="${not #lists.isEmpty(bookings)}">
+        ไม่พบรายการการจอง
+      </p>
+
+      <dialog id="booking-dialog" aria-labelledby="dialog-title">
+        <h2 id="dialog-title">ข้อมูลการจอง</h2>
+        <p id="dialog-text" style="white-space: pre-line"></p>
+
+        <div class="row">
+          <button id="dialog-close" type="button" class="btn">ปิด</button>
+          <button id="dialog-confirm" type="button"
+                  class="btn btn-primary" hidden>
+            ยืนยัน
+          </button>
+        </div>
+      </dialog>
     </main>
   </div>
 </body>

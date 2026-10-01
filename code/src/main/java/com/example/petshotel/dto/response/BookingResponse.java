@@ -32,4 +32,28 @@ public class BookingResponse {
     private BigDecimal totalPrice;
 
     private PaymentStatus paymentStatus;
+
+    private String roomName;
+
+    private List<String> petNames;
+
+    private String promotionName;
+
+    private BigDecimal roomAmount;
+
+    private BigDecimal serviceAmount;
+
+    private BigDecimal surchargeAmount;
+
+    private BigDecimal discountAmount;
+
+    private List<ExtraServiceLine> extraServices;
+
+    public record ExtraServiceLine(
+            String name,
+            Integer quantity,
+            BigDecimal unitPrice,
+            BigDecimal totalPrice
+    ) {}
+    
 }
