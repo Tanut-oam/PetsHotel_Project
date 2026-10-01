@@ -25,13 +25,10 @@ public class BookingExtraService {
     @JoinColumn(name = "extra_service_id", nullable = false)
     private ExtraService extraService;
 
-    // Nullable for historical rows that never recorded a recipient.
-    // Every new selection is linked to a BookingPet by BookingServiceImpl.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_pet_id")
     private BookingPet bookingPet;
 
-    // New rows always have quantity 1. Retained for historical rows.
     @Column(nullable = false)
     private Integer quantity;
 
