@@ -143,7 +143,7 @@ class AdminCareReportPageControllerTest {
                 .param("feedingMorning", "กินหมด")
                 .param("walkingMinutes", "15"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/reports"))
+                .andExpect(redirectedUrl("/admin/reports/pets/2"))
                 .andExpect(flash().attribute(
                         "message", "บันทึกรายงานการดูแลสำเร็จ"));
 
@@ -201,7 +201,7 @@ class AdminCareReportPageControllerTest {
                 .param("reportDate", "2026-09-25")
                 .param("walkingMinutes", "-1"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/reports"))
+                .andExpect(redirectedUrl("/admin/reports/pets/2"))
                 .andExpect(flash().attribute(
                         "error",
                         "กรุณาตรวจสอบสัตว์ในการจองและข้อมูลรายงาน"));
@@ -230,7 +230,7 @@ class AdminCareReportPageControllerTest {
                 .param("bookingPetId", "2")
                 .param("reportDate", "2026-09-25"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/reports"))
+                .andExpect(redirectedUrl("/admin/reports/pets/2"))
                 .andExpect(flash().attribute(
                         "error",
                         "ไม่สามารถบันทึกรายงานได้ กรุณาตรวจสอบวันที่ การจอง และรายงานที่มีอยู่แล้ว"));

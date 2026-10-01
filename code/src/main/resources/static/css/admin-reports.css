@@ -27,13 +27,13 @@
 }
 
 .report-pet-button {
+  display: block;
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--background);
   color: var(--text);
   text-align: left;
-  cursor: pointer;
 }
 
 .report-pet-button:hover,
@@ -52,35 +52,38 @@
   color: var(--muted);
 }
 
-.care-pet-dialog {
-  width: min(900px, calc(100% - 32px));
+.report-detail [hidden] {
+  display: none !important;
 }
 
-.care-pet-profile {
-  margin: 18px 0;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--background);
-}
-
-.care-pet-profile summary {
-  padding: 12px 16px;
-  cursor: pointer;
-}
-
-.care-pet-profile summary strong {
-  margin-right: 8px;
-}
-
-.care-pet-warning {
-  margin-left: 12px;
-  color: var(--red);
+.report-back {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--green);
   font-weight: 700;
 }
 
-.care-pet-profile .care-pet-facts {
-  margin: 0;
-  padding: 0 12px 12px;
+.report-detail > .muted {
+  margin-bottom: 20px;
+}
+
+.care-pet-profile {
+  margin: 20px 0 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+.care-pet-profile summary {
+  padding: 16px 18px;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.care-pet-warning {
+  margin-left: 14px;
+  color: var(--red);
+  font-weight: 700;
 }
 
 .care-pet-facts,
@@ -90,8 +93,14 @@
   gap: 12px;
 }
 
+.care-pet-facts {
+  margin: 0;
+  padding: 0 18px 18px;
+}
+
 .care-pet-facts div,
 .care-report-details div {
+  min-width: 0;
   padding: 12px;
   border-radius: 10px;
   background: var(--background);
@@ -108,67 +117,61 @@
   overflow-wrap: anywhere;
 }
 
-.care-report-entry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
+.care-reports > .section-title {
+  margin-top: 12px;
 }
 
-.care-report-entry h4 {
-  grid-column: 1;
-  margin: 0;
+.care-report-tabs {
+  display: flex;
+  gap: 24px;
+  margin: 8px 0 22px;
+  border-bottom: 1px solid var(--line);
 }
 
-.care-report-edit {
-  grid-column: 2;
-  justify-self: end;
-  margin: 0;
-  padding: 0;
+.care-report-tab {
+  padding: 10px 0;
   border: 0;
-}
-
-.care-report-edit summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: white;
-  color: var(--green);
-  font-size: 0.9rem;
-  line-height: 1.2;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
   font-weight: 700;
-  cursor: pointer;
-  list-style: none;
 }
 
-.care-report-edit summary::-webkit-details-marker {
-  display: none;
+.care-report-tab[aria-selected="true"] {
+  border-bottom-color: var(--green);
+  color: var(--green);
 }
 
-.care-report-edit summary:hover,
-.care-report-edit summary:focus-visible {
-  border-color: var(--green);
-  background: var(--green-light);
+.care-report-entry {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
 }
 
-.care-report-edit summary svg {
+.care-report-entry-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.care-report-entry-heading h3 {
+  margin: 0;
+}
+
+.care-report-edit-button {
+  gap: 6px;
+}
+
+.care-report-edit-button svg {
   width: 16px;
   height: 16px;
-  flex-shrink: 0;
 }
 
-.care-report-inline-form {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-
-.care-report-inline-form .care-report-details {
+.care-report-details {
   margin: 0;
 }
 
@@ -177,26 +180,25 @@
   display: none;
 }
 
-.care-report-edit[open] + .care-report-inline-form .care-report-value {
+.care-report-entry.is-editing .care-report-value {
   display: none;
 }
 
-.care-report-edit[open] + .care-report-inline-form .care-report-input {
+.care-report-entry.is-editing .care-report-input {
   display: block;
 }
 
-.care-report-edit[open] + .care-report-inline-form .care-report-save {
+.care-report-entry.is-editing .care-report-save {
   display: flex;
 }
 
 .care-report-input {
   width: 100%;
   min-height: 42px;
-  box-sizing: border-box;
   padding: 9px 11px;
   border: 1px solid #d6e0d7;
   border-radius: 9px;
-  background: white;
+  background: var(--white);
   color: var(--text);
   font: inherit;
 }
@@ -208,22 +210,106 @@ textarea.care-report-input {
 
 .care-report-save {
   justify-content: flex-end;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
-@media (max-width: 600px) {
+#care-write-panel {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+#care-write-panel h3 {
+  margin-bottom: 18px;
+}
+
+#care-write-panel .care-report-save {
+  display: flex;
+}
+
+@media (max-width: 650px) {
   .care-pet-facts,
   .care-report-details {
     grid-template-columns: 1fr;
   }
 
-  .care-report-entry {
-    grid-template-columns: 1fr;
+  .care-reports > .section-title {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .care-report-entry h4,
-  .care-report-edit,
-  .care-report-inline-form {
-    grid-column: 1;
+  #care-write-panel {
+    padding: 16px;
+  }
+}
+
+.care-pet-card {
+  padding: 24px 28px 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--white);
+}
+
+.care-pet-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.care-pet-card-heading h2 {
+  margin: 0;
+}
+
+.care-pet-card .care-pet-warning {
+  margin-left: 0;
+  color: #a96812;
+}
+
+.care-pet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.care-pet-meta > span + span::before {
+  content: "·";
+  margin: 0 8px 0 4px;
+}
+
+.care-pet-stay {
+  margin: 0;
+  color: var(--muted);
+}
+
+.care-pet-card .care-pet-profile {
+  margin: 20px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.care-pet-card .care-pet-profile summary {
+  padding: 16px 0;
+  font-weight: 700;
+}
+
+.care-pet-card .care-pet-facts {
+  padding: 0 0 20px;
+}
+
+@media (max-width: 650px) {
+  .care-pet-card {
+    padding: 18px 18px 0;
   }
 }
