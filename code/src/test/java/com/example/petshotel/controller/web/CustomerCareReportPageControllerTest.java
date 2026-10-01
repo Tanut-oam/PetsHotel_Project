@@ -22,6 +22,7 @@ import com.example.petshotel.dto.response.DailyCareReportResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
+import com.example.petshotel.service.BookingService;
 
 class CustomerCareReportPageControllerTest {
 
@@ -29,10 +30,11 @@ class CustomerCareReportPageControllerTest {
             mock(DailyCareReportService.class);
     private final CurrentUserService currentUserService =
             mock(CurrentUserService.class);
+    private final BookingService bookingService = mock(BookingService.class);
 
     private final MockMvc mockMvc = MockMvcBuilders
         .standaloneSetup(new CustomerCareReportPageController(
-                reportService, currentUserService))
+                reportService, currentUserService,bookingService))
         .setViewResolvers(new InternalResourceViewResolver(
                 "/test-views/", ".html"))
         .build();
@@ -58,7 +60,9 @@ class CustomerCareReportPageControllerTest {
                 .thenReturn(owner);
         when(reportService.getReportsForOwner(7L))
                 .thenReturn(reports);
-
+        when(bookingService.getBookingsByUserId(7L))
+        .thenReturn(List.of());
+        
         mockMvc.perform(get("/reports")
                 .principal(() -> "owner@example.com"))
                 .andExpect(status().isOk())
@@ -103,5 +107,59 @@ class CustomerCareReportPageControllerTest {
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(reportService);
+    }
+
+    @Test
+    void showPetReportsShouldShowSelectedReport() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        DailyCareReportResponse latest = new DailyCareReportResponse(
+                11L, 2L, 3L, 4L, "Mochi", 5L,
+                LocalDate.of(2026, 10, 3),
+                "กินหมด", null, 10,
+                null, null, null, null,
+                LocalDateTime.of(2026, 10, 3, 10, 0));
+
+        DailyCareReportResponse selected = new DailyCareReportResponse(
+                10L, 2L, 3L, 4L, "Mochi", 5L,
+                LocalDate.of(2026, 10, 2),
+                "กินหมด", "กินหมด", 15,
+                null, null, null, null,
+                LocalDateTime.of(2026, 10, 2, 10, 0));
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
+        when(reportService.getReportsByBookingPet(2L, 7L))
+                .thenReturn(List.of(latest, selected));
+
+        mockMvc.perform(get("/reports/pets/2")
+                .principal(() -> "owner@example.com")
+                .param("reportId", "10"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("report-detail"))
+                .andExpect(model().attribute("selectedReport", selected))
+                .andExpect(model().attribute("reportCount", 2))
+                .andExpect(model().attribute("totalPages", 1));
+
+        verify(reportService).getReportsByBookingPet(2L, 7L);
+    }
+
+    @Test
+    void showPetReportsShouldHideAnotherOwnersReports() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
+        when(reportService.getReportsByBookingPet(99L, 7L))
+                .thenThrow(new IllegalArgumentException(
+                        "You cannot view this care report"));
+
+        mockMvc.perform(get("/reports/pets/99")
+                .principal(() -> "owner@example.com"))
+                .andExpect(status().isNotFound());
     }
 }

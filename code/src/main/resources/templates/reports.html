@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>รายงานการดูแล | PetsHotel</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/customer-report.css}">
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
@@ -23,70 +24,52 @@
         ยังไม่มีรายงานการดูแลสำหรับการจองของคุณ
       </div>
 
-      <div class="grid"
+      <div class="customer-booking-list"
            th:unless="${#lists.isEmpty(reports)}">
-        <article class="panel"
-                 th:each="report : ${reports}">
-          <div class="row">
-            <h2 th:text="${report.petName}">ชื่อสัตว์เลี้ยง</h2>
+        <article class="panel customer-booking"
+                 th:each="booking : ${bookingGroups}"
+                 th:with="bookingInfo=${bookingsById[booking.key]}">
+
+          <div class="customer-booking-header">
+            <div>
+              <h2 th:text="|การจอง #${booking.key}|">การจอง #1</h2>
+              <p class="muted"
+                 th:if="${bookingInfo != null}"
+                 th:text="|เข้าพัก ${bookingInfo.checkInDate} ถึง ${bookingInfo.checkOutDate}|">
+                วันที่เข้าพัก
+              </p>
+            </div>
+
             <span class="badge"
-                  th:text="|การจอง #${report.bookingId}|">
-              เลขการจอง
+                  th:text="|${reportCountsByBooking[booking.key]} รายงาน|">
+              จำนวนรายงาน
             </span>
           </div>
 
-          <p class="muted">
-            วันที่รายงาน:
-            <time th:datetime="${report.reportDate}"
-                  th:text="${report.reportDate}">
-              วันที่
-            </time>
+          <p class="customer-booking-caption"
+             th:text="|สัตว์เลี้ยงที่มีรายงาน ${#maps.size(booking.value)} ตัว|">
+            สัตว์เลี้ยงที่มีรายงาน
           </p>
 
-          <div class="grid cols-3">
-            <section>
-              <h3>อาหาร</h3>
-              <p>
-                เช้า:
-                <span th:text="${#strings.isEmpty(report.feedingMorning) ? '—' : report.feedingMorning}">—</span>
-              </p>
-              <p>
-                เย็น:
-                <span th:text="${#strings.isEmpty(report.feedingEvening) ? '—' : report.feedingEvening}">—</span>
-              </p>
-            </section>
+          <div class="customer-pet-list">
+            <div class="customer-pet-row"
+                 th:each="petGroup : ${booking.value}"
+                 th:with="latest=${petGroup.value[0]}">
+              <div class="customer-pet-summary">
+                <strong th:text="${latest.petName}">ชื่อสัตว์เลี้ยง</strong>
+                <span class="muted"
+                      th:text="|${#lists.size(petGroup.value)} รายงาน · ล่าสุด ${latest.reportDate}|">
+                  จำนวนและวันที่รายงาน
+                </span>
+              </div>
 
-            <section>
-              <h3>กิจกรรมและความสะอาด</h3>
-              <p>
-                เดินเล่น:
-                <span th:text="${report.walkingMinutes == null ? '—' : report.walkingMinutes + ' นาที'}">—</span>
-              </p>
-              <p>
-                ดูแลความสะอาด:
-                <span th:text="${#strings.isEmpty(report.grooming) ? '—' : report.grooming}">—</span>
-              </p>
-            </section>
-
-            <section>
-              <h3>อารมณ์และสุขภาพ</h3>
-              <p>
-                อารมณ์:
-                <span th:text="${#strings.isEmpty(report.mood) ? '—' : report.mood}">—</span>
-              </p>
-              <p>
-                สุขภาพ:
-                <span th:text="${#strings.isEmpty(report.healthNote) ? '—' : report.healthNote}">—</span>
-              </p>
-            </section>
+              <a class="btn btn-primary"
+                 th:href="@{/reports/pets/{bookingPetId}(bookingPetId=${petGroup.key})}"
+                 th:aria-label="|ดูรายงานของ ${latest.petName} ในการจอง #${booking.key}|">
+                ดูรายงาน
+              </a>
+            </div>
           </div>
-
-          <p>
-            <strong>หมายเหตุเพิ่มเติม:</strong>
-            <span th:text="${#strings.isEmpty(report.generalNote) ? 'ไม่มี' : report.generalNote}">
-              ไม่มี
-            </span>
-          </p>
         </article>
       </div>
     </main>
