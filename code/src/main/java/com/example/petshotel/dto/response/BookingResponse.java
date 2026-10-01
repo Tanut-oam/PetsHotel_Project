@@ -53,7 +53,9 @@ public class BookingResponse {
             String name,
             Integer quantity,
             BigDecimal unitPrice,
-            BigDecimal totalPrice
+            BigDecimal totalPrice,
+            Long petId,
+            String petName
     ) {}
     
 }

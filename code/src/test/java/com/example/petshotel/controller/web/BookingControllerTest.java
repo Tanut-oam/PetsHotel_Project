@@ -302,27 +302,18 @@ class BookingControllerTest {
     }
 
     @Test
-    void createShouldIgnoreForgedUserIdAndRemoveZeroServices()
-            throws Exception {
-
+    void createShouldUseLoggedInUserAndBindServiceRecipients() throws Exception {
         when(bookingService.createBooking(any(CreateBookingRequest.class)))
                 .thenReturn(response(7L));
-
-        mvc.perform(validCreate()
-                        .param("userId", "999")
-                        .param("extraServiceQuantities[40]", "0"))
+        mvc.perform(validCreate().param("userId", "999")
+                        .param("servicePetIds[40]", "30"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/bookings/1"));
-
         ArgumentCaptor<CreateBookingRequest> captor =
                 ArgumentCaptor.forClass(CreateBookingRequest.class);
-
         verify(bookingService).createBooking(captor.capture());
-
-        CreateBookingRequest request = captor.getValue();
-
-        assertEquals(Long.valueOf(7L), request.getUserId());
-        assertFalse(request.getExtraServiceQuantities().containsKey(40L));
+        assertEquals(Long.valueOf(7L), captor.getValue().getUserId());
+        assertEquals(List.of(30L), captor.getValue().getServicePetIds().get(40L));
     }
 
     @Test

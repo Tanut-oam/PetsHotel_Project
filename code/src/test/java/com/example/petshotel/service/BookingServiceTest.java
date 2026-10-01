@@ -313,52 +313,45 @@ class BookingServiceTest {
     void extraServiceShouldKeepPriceSnapshotAndBookingReference() {
         prepareCreate();
         CreateBookingRequest request = validRequest();
-        request.setExtraServiceQuantities(Map.of(40L, 2));
+        request.setServicePetIds(Map.of(40L, List.of(30L)));
 
         ExtraService extra = new ExtraService();
         extra.setId(40L);
         extra.setActive(true);
         extra.setPrice(new BigDecimal("300.00"));
 
-        when(extraServiceRepository.findById(40L))
-                .thenReturn(Optional.of(extra));
+        when(extraServiceRepository.findById(40L)).thenReturn(Optional.of(extra));
         when(pricingService.calculate(any(PricingContext.class)))
                 .thenReturn(new BookingPriceResponse(
-                        new BigDecimal("1000.00"),
-                        new BigDecimal("600.00"),
-                        BigDecimal.ZERO,
-                        BigDecimal.ZERO,
-                        new BigDecimal("1600.00")
-                ));
+                        new BigDecimal("1000.00"), new BigDecimal("300.00"),
+                        BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("1300.00")));
 
         bookingService.createBooking(request);
         Booking saved = capturedBooking();
-
-        assertEquals(1, saved.getExtraServices().size());
         BookingExtraService selected = saved.getExtraServices().get(0);
 
+        assertEquals(1, saved.getExtraServices().size());
         assertSame(saved, selected.getBooking());
+        assertSame(saved.getBookingPets().get(0), selected.getBookingPet());
+        assertSame(saved, selected.getBookingPet().getBooking());
+        assertSame(pet, selected.getBookingPet().getPet());
         assertSame(extra, selected.getExtraService());
-        assertEquals(2, selected.getQuantity());
+        assertEquals(Integer.valueOf(1), selected.getQuantity());
         assertEquals(new BigDecimal("300.00"), selected.getUnitPrice());
-        assertEquals(new BigDecimal("600.00"), selected.getTotalPrice());
-        assertEquals(new BigDecimal("600.00"), saved.getServiceAmount());
+        assertEquals(new BigDecimal("300.00"), selected.getTotalPrice());
 
         extra.setPrice(new BigDecimal("350.00"));
         assertEquals(new BigDecimal("300.00"), selected.getUnitPrice());
-        assertEquals(new BigDecimal("600.00"), selected.getTotalPrice());
+        assertEquals(new BigDecimal("300.00"), selected.getTotalPrice());
     }
 
     @Test
-    void zeroExtraServiceQuantityShouldReject() {
+    void serviceRecipientOutsideBookingShouldReject() {
         prepareCreate();
         CreateBookingRequest request = validRequest();
-        request.setExtraServiceQuantities(Map.of(40L, 0));
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> bookingService.createBooking(request)
-        );
+        request.setServicePetIds(Map.of(40L, List.of(999L)));
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createBooking(request));
         verifyNoInteractions(extraServiceRepository);
         verifyNoSave();
     }
@@ -367,7 +360,7 @@ class BookingServiceTest {
     void missingExtraServiceShouldReject() {
         prepareCreate();
         CreateBookingRequest request = validRequest();
-        request.setExtraServiceQuantities(Map.of(40L, 1));
+        request.setServicePetIds(Map.of(40L, List.of(30L)));
         when(extraServiceRepository.findById(40L))
                 .thenReturn(Optional.empty());
 
@@ -685,5 +678,110 @@ class BookingServiceTest {
                 verifyNoSave();
             }
         }
+    }
+
+    @Test
+    void duplicateServiceRecipientShouldReject() {
+        prepareCreate();
+        CreateBookingRequest request = validRequest();
+        request.setServicePetIds(Map.of(40L, List.of(30L, 30L)));
+        assertThrows(IllegalArgumentException.class,
+                () -> bookingService.createBooking(request));
+        verifyNoInteractions(extraServiceRepository);
+        verifyNoSave();
+    }
+
+    @Test
+    void previewShouldNotSaveLockRoomOrPublishEvent() {
+        prepareCreate();
+        when(roomRepository.findById(20L)).thenReturn(Optional.of(room));
+        assertNotNull(bookingService.previewPrice(validRequest()));
+        verify(roomRepository).findById(20L);
+        verify(roomRepository, never()).findByIdForUpdate(anyLong());
+        verifyNoInteractions(bookingRepository, eventPublisher, availabilityService);
+    }
+
+    @Test
+    void previewAndCreateShouldUseSamePricingInputsAndRecipient() {
+        prepareCreate();
+        when(roomRepository.findById(20L)).thenReturn(Optional.of(room));
+        ExtraService extra = new ExtraService();
+        extra.setId(40L);
+        extra.setActive(true);
+        extra.setPrice(new BigDecimal("300.00"));
+        when(extraServiceRepository.findById(40L)).thenReturn(Optional.of(extra));
+
+        CreateBookingRequest request = validRequest();
+        request.setServicePetIds(Map.of(40L, List.of(30L)));
+        bookingService.previewPrice(request);
+        bookingService.createBooking(request);
+
+        ArgumentCaptor<PricingContext> captor = ArgumentCaptor.forClass(PricingContext.class);
+        verify(pricingService, times(2)).calculate(captor.capture());
+        PricingContext preview = captor.getAllValues().get(0);
+        PricingContext created = captor.getAllValues().get(1);
+
+        assertSame(preview.getRoom(), created.getRoom());
+        assertEquals(preview.getPetCount(), created.getPetCount());
+        assertEquals(preview.getNights(), created.getNights());
+        assertEquals(preview.getCheckIn(), created.getCheckIn());
+        assertEquals(preview.getCheckOut(), created.getCheckOut());
+        assertEquals(preview.getExtraServices().get(0).getTotalPrice(),
+                created.getExtraServices().get(0).getTotalPrice());
+        assertSame(pet, preview.getExtraServices().get(0).getBookingPet().getPet());
+        assertNull(preview.getExtraServices().get(0).getBookingPet().getId());
+        verify(bookingRepository, times(1)).save(any(Booking.class));
+    }
+
+    @Test
+    void twoRecipientsShouldCostTwoUnitsWithoutMultiplyingByNights() {
+        prepareCreate();
+        Pet secondPet = new Pet();
+        secondPet.setId(31L);
+        secondPet.setOwner(user);
+        secondPet.setActive(true);
+        CreateBookingRequest request = validRequest();
+        request.setPetIds(List.of(30L, 31L));
+        request.setServicePetIds(Map.of(40L, List.of(30L, 31L)));
+        when(petRepository.findAllById(request.getPetIds()))
+                .thenReturn(List.of(pet, secondPet));
+        ExtraService extra = new ExtraService();
+        extra.setId(40L);
+        extra.setActive(true);
+        extra.setPrice(new BigDecimal("300.00"));
+        when(extraServiceRepository.findById(40L)).thenReturn(Optional.of(extra));
+
+        bookingService.createBooking(request);
+        Booking saved = capturedBooking();
+        assertEquals(2, saved.getExtraServices().size());
+        for (BookingExtraService item : saved.getExtraServices()) {
+            assertSame(saved, item.getBookingPet().getBooking());
+            assertTrue(saved.getBookingPets().contains(item.getBookingPet()));
+            assertEquals(Integer.valueOf(1), item.getQuantity());
+        }
+
+        ArgumentCaptor<PricingContext> captor = ArgumentCaptor.forClass(PricingContext.class);
+        verify(pricingService).calculate(captor.capture());
+        BigDecimal extraTotal = new com.example.petshotel.pricing.ExtraServicePricingStrategy()
+                .calculate(captor.getValue(), BigDecimal.ZERO);
+        assertEquals(0, extraTotal.compareTo(new BigDecimal("600.00")));
+    }
+
+    @Test
+    void mapperShouldKeepHistoricalServiceWithoutRecipientReadable() {
+        Booking booking = existingBooking(BookingStatus.CONFIRMED);
+        ExtraService extra = new ExtraService();
+        extra.setName("Historical bath");
+        BookingExtraService historical = new BookingExtraService();
+        historical.setExtraService(extra);
+        historical.setQuantity(2);
+        historical.setUnitPrice(new BigDecimal("300.00"));
+        historical.setTotalPrice(new BigDecimal("600.00"));
+        booking.addExtraService(historical);
+        BookingResponse response = new BookingMapper().toResponse(booking);
+        assertNull(response.getExtraServices().get(0).petId());
+        assertNull(response.getExtraServices().get(0).petName());
+        assertEquals(new BigDecimal("600.00"),
+                response.getExtraServices().get(0).totalPrice());
     }
 }
