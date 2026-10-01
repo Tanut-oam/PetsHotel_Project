@@ -9,9 +9,6 @@
   <div class="top-actions">
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/login}">เข้าสู่ระบบ</a>
     <a sec:authorize="isAnonymous()" class="btn btn-small" th:href="@{/register}">สมัครสมาชิก</a>
-    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" style="display:inline">
-      <button class="btn btn-small" type="submit">ออกจากระบบ</button>
-    </form>
   </div>
 </header>
 
@@ -29,9 +26,7 @@
 <header class="topbar" th:fragment="admin-topbar">
   <a class="brand" th:href="@{/admin}">🐾 PetsHotel Admin</a>
   <div class="top-actions">
-    <form th:action="@{/logout}" method="post" style="display:inline">
-      <button class="btn btn-small" type="submit">ออกจากระบบ</button>
-    </form>
+    <span>ผู้ดูแลระบบ</span>
   </div>
 </header>
 

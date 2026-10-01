@@ -28,8 +28,29 @@
           </label>
         </div>
       </section>
+            <section class="panel" style="max-width: 650px; margin-top: 18px;">
+        <h2>ออกจากระบบ</h2>
+        <p class="muted">ออกจากบัญชีนี้บนอุปกรณ์นี้</p>
+        <button class="btn btn-danger" type="button" data-open-logout>ออกจากระบบ</button>
+      </section>
+
+      <dialog id="logout-dialog"
+              class="admin-form-dialog"
+              style="width: min(440px, calc(100% - 32px));"
+              aria-labelledby="logout-title">
+        <form class="admin-dialog-form" th:action="@{/logout}" method="post">
+          <h2 id="logout-title">ยืนยันการออกจากระบบ</h2>
+          <p class="muted">ต้องการออกจากระบบใช่ไหม?</p>
+
+          <div class="admin-dialog-actions">
+            <button class="btn" type="button" data-close-logout>ยกเลิก</button>
+            <button class="btn btn-danger" type="submit">ออกจากระบบ</button>
+          </div>
+        </form>
+      </dialog>
     </main>
   </div>
   <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
-</body>
+  <script th:src="@{/js/logout-confirm.js}" defer></script>
+  </body>
 </html>
