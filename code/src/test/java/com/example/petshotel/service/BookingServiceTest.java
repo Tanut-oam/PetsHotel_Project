@@ -9,6 +9,7 @@ import com.example.petshotel.dto.response.BookingPriceResponse;
 import com.example.petshotel.dto.response.BookingResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
+import com.example.petshotel.exception.PetNotAvailableException;
 import com.example.petshotel.mapper.BookingMapper;
 import com.example.petshotel.notification.BookingConfirmedEvent;
 import com.example.petshotel.pricing.PricingContext;
@@ -30,11 +31,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class BookingServiceTest {
 
     private BookingRepository bookingRepository;
+    private BookingPetRepository bookingPetRepository;
     private UserRepository userRepository;
     private RoomRepository roomRepository;
     private PetRepository petRepository;
@@ -52,6 +57,7 @@ class BookingServiceTest {
     @BeforeEach
     void setUp() {
         bookingRepository = mock(BookingRepository.class);
+        bookingPetRepository = mock(BookingPetRepository.class);
         userRepository = mock(UserRepository.class);
         roomRepository = mock(RoomRepository.class);
         petRepository = mock(PetRepository.class);
@@ -63,6 +69,7 @@ class BookingServiceTest {
 
         bookingService = new BookingServiceImpl(
                 bookingRepository,
+                bookingPetRepository,
                 userRepository,
                 roomRepository,
                 petRepository,
@@ -85,6 +92,7 @@ class BookingServiceTest {
 
         pet = new Pet();
         pet.setId(30L);
+        pet.setName("มอคอ");
         pet.setOwner(user);
         pet.setActive(true);
     }
@@ -230,7 +238,8 @@ class BookingServiceTest {
     @Test
     void missingPetShouldReject() {
         prepareCreate();
-        when(petRepository.findAllById(List.of(30L))).thenReturn(List.of());
+        when(petRepository.findAllByIdForUpdate(List.of(30L)))
+                .thenReturn(List.of());
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -266,6 +275,48 @@ class BookingServiceTest {
     }
 
     @Test
+    void petWithOverlappingBookingShouldRejectBeforeRoomCheck() {
+        prepareCreate();
+
+        CreateBookingRequest request = validRequest();
+
+        when(bookingPetRepository.findOverlappingPetIds(
+                request.getPetIds(),
+                request.getCheckInDate(),
+                request.getCheckOutDate(),
+                List.of(
+                        BookingStatus.PENDING,
+                        BookingStatus.CONFIRMED,
+                        BookingStatus.CHECKED_IN
+                )
+        )).thenReturn(List.of(30L));
+
+        PetNotAvailableException exception = assertThrows(
+                PetNotAvailableException.class,
+                () -> bookingService.createBooking(request)
+        );
+
+        assertTrue(
+        exception.getMessage().contains("มอคอ")
+        );
+
+        assertTrue(
+        exception.getMessage().contains(
+                "10 ตุลาคม 2026"
+        )
+        );
+
+        assertTrue(
+                exception.getMessage().contains(
+                        "12 ตุลาคม 2026"
+                )
+        );
+        verifyNoInteractions(availabilityService);
+        verify(pricingService, never()).calculate(any(PricingContext.class));
+        verifyNoSave();
+    }
+
+    @Test
     void petCountExceedingCapacityShouldReject() {
         prepareCreate();
         room.setCapacity(1);
@@ -278,7 +329,7 @@ class BookingServiceTest {
         CreateBookingRequest request = validRequest();
         request.setPetIds(List.of(30L, 31L));
 
-        when(petRepository.findAllById(List.of(30L, 31L)))
+        when(petRepository.findAllByIdForUpdate(List.of(30L, 31L)))
                 .thenReturn(List.of(pet, secondPet));
 
         assertThrows(
@@ -604,6 +655,8 @@ class BookingServiceTest {
         when(userRepository.findById(10L)).thenReturn(Optional.of(user));
         when(roomRepository.findByIdForUpdate(20L))
                 .thenReturn(Optional.of(room));
+        when(petRepository.findAllByIdForUpdate(List.of(30L)))
+                .thenReturn(List.of(pet));
         when(petRepository.findAllById(List.of(30L)))
                 .thenReturn(List.of(pet));
 
@@ -698,7 +751,13 @@ class BookingServiceTest {
         assertNotNull(bookingService.previewPrice(validRequest()));
         verify(roomRepository).findById(20L);
         verify(roomRepository, never()).findByIdForUpdate(anyLong());
-        verifyNoInteractions(bookingRepository, eventPublisher, availabilityService);
+        verify(petRepository, never()).findAllByIdForUpdate(anyCollection());
+        verifyNoInteractions(
+                bookingRepository,
+                bookingPetRepository,
+                eventPublisher,
+                availabilityService
+        );
     }
 
     @Test
@@ -743,7 +802,7 @@ class BookingServiceTest {
         CreateBookingRequest request = validRequest();
         request.setPetIds(List.of(30L, 31L));
         request.setServicePetIds(Map.of(40L, List.of(30L, 31L)));
-        when(petRepository.findAllById(request.getPetIds()))
+        when(petRepository.findAllByIdForUpdate(request.getPetIds()))
                 .thenReturn(List.of(pet, secondPet));
         ExtraService extra = new ExtraService();
         extra.setId(40L);
