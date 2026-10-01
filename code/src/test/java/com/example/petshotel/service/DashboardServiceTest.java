@@ -35,6 +35,7 @@ import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.DashboardServiceImpl;
+import com.example.petshotel.domain.enums.PaymentStatus;
 
 public class DashboardServiceTest {
     private ReceiptRepository receiptRepository;
@@ -55,9 +56,20 @@ public class DashboardServiceTest {
         dashboardService = new DashboardServiceImpl(receiptRepository, bookingRepository, petRepository, availabilityService, recentBookingMapper);
     }
 
-    private Receipt receipt(String amount){
+    private Receipt receipt(String amount, LocalDate paidDate, PaymentStatus paymentStatus) {
+
+        Booking booking = new Booking();
+        booking.setPaymentStatus(paymentStatus);
+
+        if (paidDate != null) {
+            booking.setPaidAt(paidDate.atStartOfDay());
+        }
+
         Receipt receipt = new Receipt();
+        receipt.setBooking(booking);
         receipt.setTotalAmount(new BigDecimal(amount));
+        receipt.setIssuedAt(LocalDate.now().atStartOfDay());
+
         return receipt;
     }
 
@@ -105,32 +117,33 @@ public class DashboardServiceTest {
 
 
 
-    @Test 
-    void sumsRevenueFromReceipts(){
+    @Test
+    void sumsOnlyPaidReceiptsFromCurrentMonthAndYear() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+
         when(receiptRepository.findAll()).thenReturn(List.of(
-            receipt("1000.50"),receipt("250.25")
+                receipt("1000.50", monthStart, PaymentStatus.PAID),
+                receipt("250.25", monthStart, PaymentStatus.PAID),
+
+                receipt("900.00", monthStart.minusDays(1),
+                        PaymentStatus.PAID),
+
+                receipt("800.00", monthStart.minusYears(1),
+                        PaymentStatus.PAID),
+
+                receipt("700.00", monthStart.plusMonths(1),
+                        PaymentStatus.PAID),
+
+                receipt("600.00", monthStart,
+                        PaymentStatus.UNPAID),
+
+                receipt("500.00", null,
+                        PaymentStatus.PAID)
         ));
 
-        BigDecimal result = dashboardService.getTotalRevenue();
+        BigDecimal result = dashboardService.getRevenueThisMonth();
 
         assertEquals(new BigDecimal("1250.75"), result);
-    }
-
-    @Test 
-    void countsOnlyBookingsCreatedInCurrentMonthAndYear(){
-        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
-
-        when(bookingRepository.findAll()).thenReturn(List.of(
-            booking(thisMonth, BookingStatus.CONFIRMED, "A101", 0),
-            booking(thisMonth, BookingStatus.CANCELLED, "A102", 0),
-            booking(thisMonth.minusMonths(1), BookingStatus.CONFIRMED, "A103", 0),
-            booking(thisMonth.minusYears(1), BookingStatus.CONFIRMED, "A104", 0),
-            booking(null, BookingStatus.CONFIRMED, "A105", 0)
-        ));
-
-        long result = dashboardService.getBookingsThisMonth();
-
-        assertEquals(2L, result);
     }
 
     @Test 
@@ -189,7 +202,7 @@ public class DashboardServiceTest {
 
         DashboardResponse result = dashboardService.getDashboard();
 
-        assertEquals(BigDecimal.ZERO, result.totalRevenue());
+        assertEquals(BigDecimal.ZERO, result.revenueThisMonth());
         assertEquals(0L, result.bookingsThisMonth());
         assertEquals(0L, result.checkedInPets());
         assertNull(result.topRoom());
@@ -206,7 +219,8 @@ public class DashboardServiceTest {
         Booking latestBooking = recentBooking(today);
 
         when(receiptRepository.findAll())
-                .thenReturn(List.of(receipt("1500.00")));
+        .thenReturn(List.of(
+                receipt("1500.00", today, PaymentStatus.PAID)));
         when(bookingRepository.findAll())
                 .thenReturn(List.of(latestBooking));
         when(bookingRepository.count()).thenReturn(1L);
@@ -221,7 +235,7 @@ public class DashboardServiceTest {
 
         DashboardResponse result = dashboardService.getDashboard();
 
-        assertEquals(new BigDecimal("1500.00"), result.totalRevenue());
+        assertEquals(new BigDecimal("1500.00"), result.revenueThisMonth());
         assertEquals(1L, result.bookingsThisMonth());
         assertEquals(2L, result.checkedInPets());
         assertEquals("A101", result.topRoom());
@@ -296,6 +310,25 @@ public class DashboardServiceTest {
 
         assertEquals("id", orders.get(1).getProperty());
         assertEquals(Sort.Direction.DESC, orders.get(1).getDirection());
+    }
+
+    @Test
+    void countsOnlyBookingsCreatedInCurrentMonthAndYear() {
+        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                booking(thisMonth, BookingStatus.CONFIRMED, "A101", 0),
+                booking(thisMonth, BookingStatus.CANCELLED, "A102", 0),
+                booking(thisMonth.minusMonths(1),
+                        BookingStatus.CONFIRMED, "A103", 0),
+                booking(thisMonth.minusYears(1),
+                        BookingStatus.CONFIRMED, "A104", 0),
+                booking(null, BookingStatus.CONFIRMED, "A105", 0)
+        ));
+
+        long result = dashboardService.getBookingsThisMonth();
+
+        assertEquals(1L, result);
     }
 
 
