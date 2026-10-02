@@ -80,8 +80,23 @@
               <td data-detail-label="เลขที่" th:text="${booking.id}"></td>
               <td data-detail-label="สัตว์เลี้ยง" th:text="${booking.petNames}"></td>
               <td data-detail-label="ห้องพัก" th:text="${booking.roomName}"></td>
-              <td data-detail-label="วันเข้า–วันออก"
-                  th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></td>
+              <td data-detail-label="วันเข้า–วันออก">
+                <span th:text="${#temporals.format(
+                  booking.checkInDate,
+                  'dd/MM/yyyy'
+                )}">
+                  02/10/2026
+                </span>
+
+                <span aria-hidden="true"> – </span>
+
+                <span th:text="${#temporals.format(
+                  booking.checkOutDate,
+                  'dd/MM/yyyy'
+                )}">
+                  04/10/2026
+                </span>
+              </td>
 
               <td data-detail-label="สถานะ">
                 <span class="booking-status-badge"

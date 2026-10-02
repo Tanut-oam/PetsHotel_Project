@@ -21,7 +21,16 @@
               th:action="@{/rooms/available}"
               method="get">
 
-          <div th:replace="~{fragments/date-range-picker :: picker(null, null)}"></div>
+          <div th:replace="~{
+            fragments/date-range-picker
+            :: picker(
+              null,
+              null,
+              'checkIn',
+              'checkOut'
+            )
+          }">
+          </div>
 
           <label class="field">
             จำนวนสัตว์เลี้ยง
