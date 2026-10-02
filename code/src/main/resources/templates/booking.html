@@ -253,8 +253,8 @@
 
                 <option th:each="room : ${rooms}"
                         th:value="${room.id}"
-                        th:text="${room.name + ' · รับได้ '
-                          + room.capacity + ' ตัว'}"
+                        th:text="${room.name + ' · รองรับสูงสุด '
+                          + room.capacity + ' ตัวต่อการจอง'}"
                         th:attr="data-name=${room.name},
                           data-capacity=${room.capacity}">
                 </option>
