@@ -64,10 +64,60 @@
   }
 
   function openDialog(title, text, form = null) {
+    const dialogText = byId("dialog-text");
+
     pendingForm = form;
+
     byId("dialog-title").textContent = title;
-    byId("dialog-text").textContent = text;
+
+    dialogText.classList.remove("is-structured");
+    dialogText.textContent = text;
+
     dialogConfirm.hidden = !form;
+    dialog.showModal();
+  }
+
+  function openDetailsDialog(row) {
+    const dialogText = byId("dialog-text");
+
+    pendingForm = null;
+
+    byId("dialog-title").textContent =
+      "รายละเอียดการจอง";
+
+    dialogText.replaceChildren();
+    dialogText.classList.add("is-structured");
+
+    bookingDetailCells(row).forEach(cell => {
+      const detailRow =
+        document.createElement("div");
+
+      const label =
+        document.createElement("span");
+
+      const value =
+        document.createElement("span");
+
+      detailRow.className =
+        "booking-dialog-detail-row";
+
+      label.className =
+        "booking-dialog-detail-label";
+
+      value.className =
+        "booking-dialog-detail-value";
+
+      label.textContent =
+        cell.dataset.detailLabel;
+
+      value.textContent =
+        normalizeText(cell);
+
+      detailRow.append(label, value);
+      dialogText.append(detailRow);
+    });
+
+    dialogConfirm.hidden = true;
     dialog.showModal();
   }
 
@@ -130,9 +180,8 @@
     button.hidden = false;
 
     button.addEventListener("click", () => {
-      openDialog(
-        "รายละเอียดการจอง",
-        describeRow(button.closest("[data-booking-row]"))
+      openDetailsDialog(
+        button.closest("[data-booking-row]")
       );
     });
   });

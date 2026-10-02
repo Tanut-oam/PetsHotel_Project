@@ -23,7 +23,39 @@
       gap: 8px;
     }
     .booking-actions form { margin: 0; }
+
+    #booking-dialog {
+      width: min(620px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    #dialog-title {
+      margin: 0;
+    }
+
+    #dialog-text {
+      margin: 20px 0;
+      padding: 16px 18px;
+      color: var(--text);
+      background: #f6faf7;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      line-height: 1.9;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    #booking-dialog > .row {
+      justify-content: flex-end;
+      margin: 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
   </style>
+
 </head>
 <body class="admin">
   <header th:replace="~{fragments/layout :: admin-topbar}"></header>
@@ -449,7 +481,7 @@
 
       <dialog id="booking-dialog" aria-labelledby="dialog-title">
         <h2 id="dialog-title">ข้อมูลการจอง</h2>
-        <p id="dialog-text" style="white-space: pre-line"></p>
+        <div id="dialog-text"></div>
 
         <div class="row">
           <button id="dialog-close" type="button" class="btn">ปิด</button>

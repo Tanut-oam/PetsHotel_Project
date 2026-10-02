@@ -113,6 +113,13 @@
         margin-bottom: 10px;
       }
     }
+
+    .booking-cancel-hint {
+      margin: 16px 0 0;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      line-height: 1.6;
+    }
   </style>
 </head>
 
@@ -315,7 +322,7 @@
           </form>
         </div>
 
-       <p class="muted"
+       <p class="muted booking-cancel-hint"
           th:if="${booking.status != null
             and booking.status.name() != 'CANCELLED'}">
           ยกเลิกได้เฉพาะรายการที่ยังไม่ชำระเงิน
