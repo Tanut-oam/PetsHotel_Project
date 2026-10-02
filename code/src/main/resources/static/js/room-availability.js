@@ -66,13 +66,6 @@
   const petCount =
     document.getElementById("room-pet-count");
 
-  const thaiDateFormatter =
-    new Intl.DateTimeFormat("th-TH", {
-      day: "numeric",
-      month: "short",
-      year: "2-digit"
-    });
-
   const thaiMonthFormatter =
     new Intl.DateTimeFormat("th-TH", {
       month: "long",
@@ -152,15 +145,25 @@
     return `${year}-${month}-${day}`;
   }
 
-  function formatDate(value) {
+    function formatDate(value) {
     if (!value) {
-      return "ยังไม่ได้เลือก";
+        return "ยังไม่ได้เลือก";
     }
 
-    return thaiDateFormatter.format(
-      parseIsoDate(value)
-    );
-  }
+    const date = parseIsoDate(value);
+
+    const day = String(
+        date.getDate()
+    ).padStart(2, "0");
+
+    const month = String(
+        date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+    }
 
   function sameMonth(first, second) {
     return (
@@ -312,7 +315,7 @@
 
     button.setAttribute(
       "aria-label",
-      thaiDateFormatter.format(date)
+      formatDate(dateValue)
     );
 
     if (past || beyondMaximum) {
