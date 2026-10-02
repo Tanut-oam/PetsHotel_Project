@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="th"
+      xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+  <div th:fragment="picker(checkInValue, checkOutValue)"
+       class="shared-date-range-picker"
+       data-date-range-picker>
+
+    <input type="hidden"
+           name="checkIn"
+           th:value="${checkInValue}"
+           data-range-check-in>
+
+    <input type="hidden"
+           name="checkOut"
+           th:value="${checkOutValue}"
+           data-range-check-out>
+
+    <button class="date-range-trigger"
+            type="button"
+            data-range-open
+            aria-haspopup="dialog">
+
+      <span class="date-range-trigger-icon"
+            aria-hidden="true">
+        📅
+      </span>
+
+      <span>
+        <small>ช่วงวันเข้าพัก</small>
+
+        <strong data-range-label>
+          เลือกเช็กอินและเช็กเอาต์
+        </strong>
+      </span>
+    </button>
+
+    <dialog class="availability-calendar-dialog"
+            data-range-dialog
+            aria-label="เลือกช่วงวันเข้าพัก">
+
+      <div class="availability-calendar-shell">
+
+        <header class="availability-calendar-header">
+          <div>
+            <h2>เลือกช่วงวันเข้าพัก</h2>
+
+            <p class="muted"
+               data-range-help>
+              เลือกวันเช็กอินก่อน
+            </p>
+          </div>
+
+          <button class="calendar-icon-button"
+                  type="button"
+                  data-range-close
+                  aria-label="ปิดปฏิทิน">
+            ✕
+          </button>
+        </header>
+
+        <div class="calendar-month-navigation">
+          <button class="calendar-icon-button"
+                  type="button"
+                  data-range-previous
+                  aria-label="เดือนก่อนหน้า">
+            ←
+          </button>
+
+          <strong data-range-month>
+            เดือนและปี
+          </strong>
+
+          <button class="calendar-icon-button"
+                  type="button"
+                  data-range-next
+                  aria-label="เดือนถัดไป">
+            →
+          </button>
+        </div>
+
+        <div class="calendar-weekdays"
+             aria-hidden="true">
+          <span>อา.</span>
+          <span>จ.</span>
+          <span>อ.</span>
+          <span>พ.</span>
+          <span>พฤ.</span>
+          <span>ศ.</span>
+          <span>ส.</span>
+        </div>
+
+        <div class="room-calendar-grid"
+             data-range-grid
+             role="grid"
+             aria-label="ปฏิทินเลือกวันเข้าพัก">
+        </div>
+
+        <div class="calendar-legend">
+            <span>
+                <i class="calendar-legend-mark is-available"></i>
+                เลือกได้
+            </span>
+
+            <span>
+                <i class="calendar-legend-mark is-selected"></i>
+                วันที่เลือก
+            </span>
+
+            <span>
+                <i class="calendar-legend-mark is-unavailable"></i>
+                เลือกไม่ได้
+            </span>
+            </div>
+
+        <div class="calendar-selection-summary">
+          <div>
+            <small>เช็กอิน</small>
+
+            <strong data-range-check-in-summary>
+              ยังไม่ได้เลือก
+            </strong>
+          </div>
+
+          <span aria-hidden="true">→</span>
+
+          <div>
+            <small>เช็กเอาต์</small>
+
+            <strong data-range-check-out-summary>
+              ยังไม่ได้เลือก
+            </strong>
+          </div>
+        </div>
+
+        <footer class="availability-calendar-actions">
+          <button class="btn"
+                  type="button"
+                  data-range-clear>
+            ล้างวันที่
+          </button>
+
+          <button class="btn btn-primary"
+                  type="button"
+                  data-range-apply
+                  disabled>
+            ยืนยันช่วงวันที่
+          </button>
+        </footer>
+
+      </div>
+    </dialog>
+
+  </div>
+
+</body>
+</html>

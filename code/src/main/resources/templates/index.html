@@ -6,6 +6,8 @@
   <title>PetsHotel</title>
 
   <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script th:src="@{/js/date-range-picker.js}"
+        defer></script>
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
@@ -27,24 +29,16 @@
         </div>
       </section>
 
-      <section class="panel" style="margin-top: 18px;">
-        <form class="form-grid"
-              th:action="@{/rooms/available}"
-              method="get">
+      <section class="panel home-availability-panel">
+        <form class="form-grid home-availability-form"
+          th:action="@{/rooms/available}"
+          method="get">
 
-          <label class="field">
-            เช็กอิน
-            <input type="date"
-                   name="checkIn"
-                   required>
-          </label>
-
-          <label class="field">
-            เช็กเอาต์
-            <input type="date"
-                   name="checkOut"
-                   required>
-          </label>
+          <div th:replace="~{
+          fragments/date-range-picker
+          :: picker(null, null)
+        }">
+        </div>
 
           <label class="field">
             จำนวนสัตว์เลี้ยง

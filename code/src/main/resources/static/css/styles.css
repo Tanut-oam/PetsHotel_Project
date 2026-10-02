@@ -1566,7 +1566,18 @@ small {
 }
 
 .availability-search-form {
+  grid-template-columns:
+    minmax(280px, 2fr)
+    minmax(180px, 1fr)
+    minmax(150px, auto);
   align-items: end;
+}
+
+.availability-search-form
+.btn[type="submit"] {
+  min-height: 68px;
+  padding-inline: 24px;
+  white-space: nowrap;
 }
 
 .availability-search-form .btn {
@@ -1835,5 +1846,96 @@ small {
 
   .availability-result-table td:last-child .btn {
     width: 100%;
+  }
+}
+
+/* =========================================================
+   Shared date range picker
+   ========================================================= */
+
+.shared-date-range-picker {
+  width: 100%;
+  min-width: 0;
+}
+
+.shared-date-range-picker .date-range-trigger {
+  height: 100%;
+}
+
+.home-availability-panel {
+  margin-top: 18px;
+}
+
+.home-availability-form {
+  grid-template-columns:
+    minmax(280px, 2fr)
+    minmax(180px, 1fr)
+    minmax(160px, auto);
+  align-items: end;
+}
+
+.home-availability-form .field {
+  min-width: 0;
+}
+
+.home-availability-form .btn[type="submit"] {
+  min-height: 68px;
+  padding-inline: 24px;
+  white-space: nowrap;
+}
+
+@media (max-width: 850px) {
+  .home-availability-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .home-availability-form
+  .shared-date-range-picker {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .home-availability-form {
+    grid-template-columns: 1fr;
+  }
+
+  .home-availability-form
+  .shared-date-range-picker {
+    grid-column: auto;
+  }
+
+  .home-availability-form
+  .btn[type="submit"] {
+    width: 100%;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 850px) {
+  .availability-search-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .availability-search-form
+  .shared-date-range-picker {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .availability-search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-search-form
+  .shared-date-range-picker {
+    grid-column: auto;
+  }
+
+  .availability-search-form
+  .btn[type="submit"] {
+    width: 100%;
+    min-height: 50px;
   }
 }
