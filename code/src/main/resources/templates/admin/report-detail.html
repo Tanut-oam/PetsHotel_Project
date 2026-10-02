@@ -124,7 +124,7 @@
                      th:each="report : ${reports}"
                      th:attr="data-open-edit=${openReportId == report.id}">
               <div class="care-report-entry-heading">
-                <h3 th:text="|วันที่ ${report.reportDate}|">วันที่รายงาน</h3>
+                <h3 th:text="|วันที่ ${#temporals.format(report.reportDate, 'dd/MM/yyyy')}|">วันที่รายงาน</h3>
                 <button class="btn btn-small care-report-edit-button"
                         type="button"
                         data-edit-report
@@ -140,8 +140,10 @@
                 </button>
               </div>
 
-              <form th:action="@{/admin/reports/{reportId}/edit(reportId=${report.id})}"
-                    method="post">
+            <details class="care-report-more">
+                <summary>ดูรายละเอียดรายงาน</summary>
+                <form th:action="@{/admin/reports/{reportId}/edit(reportId=${report.id})}"
+                        method="post">
                 <input type="hidden" name="bookingPetId"
                        th:value="${pet.bookingPetId}">
                 <input type="hidden" name="reportDate"

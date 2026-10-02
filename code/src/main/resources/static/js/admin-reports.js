@@ -30,10 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   page.querySelectorAll(".care-report-entry").forEach((entry) => {
     const editButton = entry.querySelector("[data-edit-report]");
+    const details = entry.querySelector(".care-report-more");
 
     const toggleEdit = (editing) => {
-      entry.classList.toggle("is-editing", editing);
-      editButton.setAttribute("aria-expanded", String(editing));
+    if (editing && details) details.open = true;
+    entry.classList.toggle("is-editing", editing);
+    editButton.setAttribute("aria-expanded", String(editing));
     };
 
     editButton.addEventListener("click", () => {
