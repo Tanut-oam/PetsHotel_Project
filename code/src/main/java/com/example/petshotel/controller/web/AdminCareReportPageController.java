@@ -180,6 +180,7 @@ public class AdminCareReportPageController {
     @GetMapping("/admin/reports/pets/{bookingPetId}")
     public String showPetReports(
             @PathVariable Long bookingPetId,
+            @RequestParam(name = "reportId", required = false) Long reportId,
             Principal principal,
             Model model) {
         User user = requireActiveUser(principal);
@@ -189,12 +190,31 @@ public class AdminCareReportPageController {
                 .stream()
                 .filter(option -> option.bookingPetId().equals(bookingPetId))
                 .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        List<DailyCareReportResponse> reports =
+                reportService.getReportsByBookingPet(
+                        bookingPetId, user.getId());
+
+        Long openReportId = (Long) model.asMap().get("openReportId");
+        Long selectedId =
+                reportId != null ? reportId : openReportId;
+
+        DailyCareReportResponse selectedReport = null;
+        if (selectedId != null) {
+            selectedReport = reports.stream()
+                    .filter(report -> selectedId.equals(report.id()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new ResponseStatusException(HttpStatus.NOT_FOUND));
+        } else if (!reports.isEmpty()) {
+            selectedReport = reports.get(0);
+        }
 
         model.addAttribute("pet", pet);
-        model.addAttribute(
-                "reports",
-                reportService.getReportsByBookingPet(bookingPetId, user.getId()));
+        model.addAttribute("reports", reports);
+        model.addAttribute("selectedReport", selectedReport);
 
         return "admin/report-detail";
     }
@@ -271,7 +291,7 @@ public class AdminCareReportPageController {
 
         redirectAttributes.addFlashAttribute(
                 "message", "แก้ไขรายงานสำเร็จ");
-        return "redirect:" + target;
+        return "redirect:" + target + "?reportId=" + reportId;
     }
 
     private String petDetailUrl(Long bookingPetId) {
