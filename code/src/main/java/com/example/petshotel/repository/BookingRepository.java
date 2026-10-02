@@ -35,6 +35,23 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                      @Param("checkIn") LocalDate checkIn,
                                      @Param("checkOut") LocalDate checkOut,
                                      @Param("statuses") Collection<BookingStatus> statuses);
+    
+    @Query("""
+        SELECT b
+        FROM Booking b
+        WHERE b.room.id = :roomId
+          AND b.status IN :statuses
+          AND b.checkInDate < :toDate
+          AND b.checkOutDate > :fromDate
+        ORDER BY b.checkInDate ASC
+        """)
+    List<Booking> findOverlappingBookingsByRoom(
+            @Param("roomId") Long roomId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            @Param("statuses")
+            Collection<BookingStatus> statuses
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM Booking b WHERE b.id = :id")

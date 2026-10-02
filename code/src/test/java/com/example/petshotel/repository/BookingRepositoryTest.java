@@ -172,6 +172,87 @@ class BookingRepositoryTest {
         assertThat(excludedStatus).isFalse();
     }
 
+        @Test
+        void findOverlappingBookingsByRoomShouldReturnOnlyBlockingBookings() {
+        Booking pendingBooking = createBooking(
+                user,
+                room,
+                LocalDate.of(2026, 10, 2),
+                LocalDate.of(2026, 10, 5),
+                BookingStatus.PENDING
+        );
+
+        Booking confirmedBooking = createBooking(
+                user,
+                room,
+                LocalDate.of(2026, 10, 10),
+                LocalDate.of(2026, 10, 12),
+                BookingStatus.CONFIRMED
+        );
+
+        Booking cancelledBooking = createBooking(
+                user,
+                room,
+                LocalDate.of(2026, 10, 15),
+                LocalDate.of(2026, 10, 18),
+                BookingStatus.CANCELLED
+        );
+
+        Booking outsideCalendar = createBooking(
+                user,
+                room,
+                LocalDate.of(2026, 11, 5),
+                LocalDate.of(2026, 11, 8),
+                BookingStatus.CONFIRMED
+        );
+
+        Room anotherRoom = createRoom(
+                "B202",
+                "Another Room"
+        );
+
+        Booking anotherRoomBooking = createBooking(
+                user,
+                anotherRoom,
+                LocalDate.of(2026, 10, 20),
+                LocalDate.of(2026, 10, 22),
+                BookingStatus.CONFIRMED
+        );
+
+        bookingRepository.saveAllAndFlush(
+                List.of(
+                        pendingBooking,
+                        confirmedBooking,
+                        cancelledBooking,
+                        outsideCalendar,
+                        anotherRoomBooking
+                )
+        );
+
+        List<Booking> result =
+                bookingRepository
+                        .findOverlappingBookingsByRoom(
+                                room.getId(),
+                                LocalDate.of(2026, 10, 1),
+                                LocalDate.of(2026, 11, 1),
+                                List.of(
+                                        BookingStatus.PENDING,
+                                        BookingStatus.CONFIRMED,
+                                        BookingStatus.CHECKED_IN
+                                )
+                        );
+
+        assertThat(result)
+                .extracting(
+                        (Booking booking) ->
+                                booking.getId()
+                )
+                .containsExactly(
+                        pendingBooking.getId(),
+                        confirmedBooking.getId()
+                );
+        }
+
     @Test
     void findByIdForUpdateShouldReturnExistingBooking() {
         Booking booking = createBooking(
