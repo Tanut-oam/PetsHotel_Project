@@ -25,13 +25,15 @@
             method="get">
 
         <div th:replace="~{
-          fragments/date-range-picker
-          :: picker(
-            ${search.checkIn},
-            ${search.checkOut}
-          )
-        }">
-        </div>
+            fragments/date-range-picker
+            :: picker(
+              ${search.checkIn},
+              ${search.checkOut},
+              'checkIn',
+              'checkOut'
+            )
+          }">
+          </div>
 
         <label class="field">
           จำนวนสัตว์เลี้ยง

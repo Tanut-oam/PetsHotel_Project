@@ -4,19 +4,24 @@
 
 <body>
 
-  <div th:fragment="picker(checkInValue, checkOutValue)"
+  <div th:fragment="picker(
+       checkInValue,
+       checkOutValue,
+       checkInName,
+       checkOutName
+     )"
        class="shared-date-range-picker"
        data-date-range-picker>
 
     <input type="hidden"
-           name="checkIn"
-           th:value="${checkInValue}"
-           data-range-check-in>
+        th:name="${checkInName}"
+        th:value="${checkInValue}"
+        data-range-check-in>
 
     <input type="hidden"
-           name="checkOut"
-           th:value="${checkOutValue}"
-           data-range-check-out>
+        th:name="${checkOutName}"
+        th:value="${checkOutValue}"
+        data-range-check-out>
 
     <button class="date-range-trigger"
             type="button"

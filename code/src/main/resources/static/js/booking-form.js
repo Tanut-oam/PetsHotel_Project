@@ -17,8 +17,10 @@
   ];
 
   const room = byId("room-id");
-  const checkIn = byId("check-in");
-  const checkOut = byId("check-out");
+  const checkIn =
+  form.querySelector("[data-range-check-in]");
+  const checkOut =
+  form.querySelector("[data-range-check-out]");
   const promotion = byId("promotion-id");
 
   const previous = byId("booking-prev");
@@ -71,6 +73,21 @@
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }) + " บาท";
+
+  const formatDisplayDate = value => {
+    if (!value) {
+      return "—";
+    }
+
+    const [year, month, day] =
+      value.split("-");
+
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year}`;
+  };
 
   const roomName = () =>
     room.selectedOptions[0]?.dataset.name || "ยังไม่ได้เลือก";
@@ -429,7 +446,9 @@
 
     byId("review-dates").textContent =
       checkIn.value && checkOut.value
-        ? checkIn.value + " – " + checkOut.value
+        ? formatDisplayDate(checkIn.value)
+          + " – "
+          + formatDisplayDate(checkOut.value)
         : "—";
 
     byId("review-nights").textContent =
@@ -779,7 +798,10 @@
 
       byId("create-dialog-text").textContent = [
         "ห้อง: " + roomName(),
-        "วันเข้า–วันออก: " + checkIn.value + " – " + checkOut.value,
+        "วันเข้า–วันออก: "
+          + formatDisplayDate(checkIn.value)
+          + " – "
+          + formatDisplayDate(checkOut.value),
         "สัตว์เลี้ยง: " + byId("review-pets").textContent,
         "บริการ:\n" + byId("review-services").textContent,
         "ยอดรวมประมาณการ: " + money(quoteTotal),

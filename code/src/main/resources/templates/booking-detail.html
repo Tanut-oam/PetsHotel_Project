@@ -192,10 +192,20 @@
               </dd>
 
               <dt>วันเช็กอิน</dt>
-              <dd th:text="${booking.checkInDate}"></dd>
+                <dd th:text="${#temporals.format(
+                  booking.checkInDate,
+                  'dd/MM/yyyy'
+                )}">
+                  02/10/2026
+                </dd>
 
-              <dt>วันเช็กเอาต์</dt>
-              <dd th:text="${booking.checkOutDate}"></dd>
+                <dt>วันเช็กเอาต์</dt>
+                <dd th:text="${#temporals.format(
+                  booking.checkOutDate,
+                  'dd/MM/yyyy'
+                )}">
+                  04/10/2026
+                </dd>
 
               <dt>สถานะ</dt>
               <dd>

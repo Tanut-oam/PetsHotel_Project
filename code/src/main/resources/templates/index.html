@@ -36,7 +36,12 @@
 
           <div th:replace="~{
           fragments/date-range-picker
-          :: picker(null, null)
+          :: picker(
+            null,
+            null,
+            'checkIn',
+            'checkOut'
+          )
         }">
         </div>
 

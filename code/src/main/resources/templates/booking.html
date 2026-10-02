@@ -8,8 +8,14 @@
   <meta name="_csrf" th:content="${_csrf.token}">
   <meta name="_csrf_header" th:content="${_csrf.headerName}">
 
-  <link rel="stylesheet" th:href="@{/css/styles.css}">
-  <script defer th:src="@{/js/booking-form.js}"></script>
+  <link rel="stylesheet"
+        th:href="@{/css/styles.css}">
+
+  <script th:src="@{/js/date-range-picker.js}"
+          defer></script>
+
+  <script th:src="@{/js/booking-form.js}"
+          defer></script>
 
   <style>
     [hidden] {
@@ -274,24 +280,15 @@
                th:errors="*{roomId}"
                data-field-error></p>
 
-            <div class="grid cols-2">
-              <label class="field">
-                วันเช็กอิน
-
-                <input id="check-in"
-                       type="date"
-                       th:field="*{checkInDate}"
-                       required>
-              </label>
-
-              <label class="field">
-                วันเช็กเอาต์
-
-                <input id="check-out"
-                       type="date"
-                       th:field="*{checkOutDate}"
-                       required>
-              </label>
+            <div th:replace="~{
+              fragments/date-range-picker
+              :: picker(
+                *{checkInDate},
+                *{checkOutDate},
+                'checkInDate',
+                'checkOutDate'
+              )
+            }">
             </div>
 
             <p th:if="${#fields.hasErrors('checkInDate')}"
