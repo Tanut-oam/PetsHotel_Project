@@ -632,7 +632,12 @@
     });
 
     previous.hidden = false;
-    previous.disabled = sending || index === 0;
+    previous.disabled = sending;
+
+    previous.textContent =
+      index === 0
+        ? "กลับหน้าห้องพัก"
+        : "ย้อนกลับ";
 
     next.hidden = index === steps.length - 1;
     next.disabled = sending;
@@ -712,9 +717,15 @@
   previous.addEventListener("click", () => {
     error.hidden = true;
 
-    if (currentStep > 0) {
-      showStep(currentStep - 1);
+    if (currentStep === 0) {
+      window.location.assign(
+        form.dataset.backUrl || "/rooms"
+      );
+
+      return;
     }
+
+    showStep(currentStep - 1);
   });
 
   next.addEventListener("click", () => {
