@@ -2,6 +2,7 @@ package com.example.petshotel.controller.web;
 
 import java.security.Principal;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,57 +13,93 @@ import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
-import com.example.petshotel.dto.response.BookingResponse;
-import com.example.petshotel.service.BookingService;
 
+
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.stream.Collectors;
+
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportBookingSummary;
+
 import java.util.List;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.util.Map;
+import org.springframework.data.domain.Page;
 
 @Controller 
 public class CustomerCareReportPageController {
     private final DailyCareReportService reportService;
     private final CurrentUserService currentUserService;
-    private final BookingService bookingService;
+
 
     public CustomerCareReportPageController(DailyCareReportService reportService,
-            CurrentUserService currentUserService,BookingService bookingService) {
+            CurrentUserService currentUserService) {
         this.reportService = reportService;
         this.currentUserService = currentUserService;
-        this.bookingService = bookingService;
     }
 
     @GetMapping("/reports")
-    public String showReports(Principal principal, Model model) {
+    public String showReports(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            Principal principal,
+            Model model
+    ) {
         User owner = requireActiveUser(principal);
 
-        var reports = reportService.getReportsForOwner(owner.getId());
+        if (page < 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        Page<ReportBookingSummary> bookingPage =
+                reportService.getReportBookingsForOwner(
+                        owner.getId(), PageRequest.of(page, 5)
+                );
+
+        if (page > 0 && page >= bookingPage.getTotalPages()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        List<Long> bookingIds = bookingPage.getContent().stream()
+                .map(ReportBookingSummary::id)
+                .toList();
+
+        List<DailyCareReportResponse> reports =
+                reportService.getReportsForOwnerBookings(owner.getId(), bookingIds);
+
+        Map<Long, Map<Long, List<DailyCareReportResponse>>> bookingGroups =
+                new LinkedHashMap<>();
+        Map<Long, Long> reportCountsByBooking = new LinkedHashMap<>();
+        Map<Long, ReportBookingSummary> bookingsById = new LinkedHashMap<>();
+
+        for (ReportBookingSummary booking : bookingPage.getContent()) {
+            bookingGroups.put(booking.id(), new LinkedHashMap<>());
+            reportCountsByBooking.put(booking.id(), 0L);
+            bookingsById.put(booking.id(), booking);
+        }
+
+        for (DailyCareReportResponse report : reports) {
+            Map<Long, List<DailyCareReportResponse>> pets =
+                    bookingGroups.get(report.bookingId());
+
+            if (pets != null) {
+                pets.computeIfAbsent(
+                        report.bookingPetId(),
+                        ignored -> new ArrayList<>()
+                ).add(report);
+
+                reportCountsByBooking.merge(
+                        report.bookingId(), 1L, Long::sum
+                );
+            }
+        }
+
         model.addAttribute("reports", reports);
-        model.addAttribute("bookingGroups",
-        reports.stream().collect(Collectors.groupingBy(
-                DailyCareReportResponse::bookingId,
-                LinkedHashMap::new,
-                Collectors.groupingBy(
-                        DailyCareReportResponse::bookingPetId,
-                        LinkedHashMap::new,
-                        Collectors.toList()
-                )
-        )));
-        model.addAttribute("reportCountsByBooking",
-        reports.stream().collect(Collectors.groupingBy(
-                DailyCareReportResponse::bookingId,
-                Collectors.counting()
-        )));
-        
-        model.addAttribute("bookingsById",
-        bookingService.getBookingsByUserId(owner.getId()).stream()
-                .collect(Collectors.toMap(
-                        BookingResponse::getId,
-                        booking -> booking
-                )));
+        model.addAttribute("bookingGroups", bookingGroups);
+        model.addAttribute("reportCountsByBooking", reportCountsByBooking);
+        model.addAttribute("bookingsById", bookingsById);
+        model.addAttribute("page", page);
+        model.addAttribute("totalPages", bookingPage.getTotalPages());
 
         return "reports";
     }
