@@ -1,0 +1,233 @@
+    .revenue-help {
+    color: var(--muted);
+    margin-bottom: 14px;
+    }
+
+    .revenue-error {
+    padding: 14px 18px;
+    border: 1px solid #e8b8b8;
+    border-radius: 12px;
+    background: #fff0f0;
+    color: #9b2525;
+    }
+
+    .revenue-month-button {
+    padding: 4px 0;
+    border: 0;
+    background: transparent;
+    color: var(--green);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+    }
+
+    .revenue-month-button:hover {
+    color: var(--green-dark);
+    }
+
+    .revenue-month-button:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 4px;
+    border-radius: 3px;
+    }
+
+    .revenue-dialog {
+    width: min(1000px, calc(100% - 32px));
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: white;
+    color: var(--text);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+    }
+
+    .revenue-dialog::backdrop {
+    background: rgb(20 45 35 / 60%);
+    }
+
+    .revenue-dialog-header,
+    .revenue-dialog-summary,
+    .revenue-booking-heading,
+    .revenue-receipt-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    }
+
+    .revenue-dialog-header h2,
+    .revenue-booking-heading h3 {
+    margin: 0;
+    }
+
+    .revenue-dialog-summary {
+    margin: 20px 0;
+    padding: 16px;
+    border-radius: 12px;
+    background: #edf7f0;
+    }
+
+    .revenue-dialog-summary strong {
+    color: var(--green);
+    }
+
+    .revenue-empty {
+    padding: 24px 0;
+    text-align: center;
+    color: var(--muted);
+    }
+
+    .revenue-booking-list {
+    display: grid;
+    gap: 18px;
+    }
+
+    .revenue-booking {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    }
+
+    .revenue-booking-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+    }
+
+    .revenue-booking-info dt {
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: .9rem;
+    }
+
+    .revenue-booking-info dd,
+    .revenue-price-list dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    }
+
+    .revenue-price-list {
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    }
+
+    .revenue-price-list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 0;
+    }
+
+    .revenue-booking-total {
+    margin-top: 8px;
+    border-top: 1px solid var(--line);
+    color: var(--green);
+    font-weight: 700;
+    }
+
+    .revenue-receipt-link {
+    margin-top: 18px;
+    }
+
+
+    .revenue-booking {
+        padding: 16px;
+    }
+
+    .revenue-dialog-frame {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+    padding: 24px;
+    box-sizing: border-box;
+    }
+
+    .revenue-dialog-frame .revenue-dialog-header,
+    .revenue-dialog-frame .revenue-dialog-summary {
+    flex-shrink: 0;
+    }
+
+    .revenue-dialog-table-scroll {
+    min-height: 0;
+    max-height: 60vh;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    }
+
+    .revenue-popup-table {
+    min-width: 680px;
+    border-collapse: separate;
+    border-spacing: 0;
+    }
+
+    .revenue-popup-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #fafcf9;
+    }
+
+    .revenue-popup-table th:nth-child(4),
+    .revenue-popup-table td:nth-child(4) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    }
+
+    .revenue-popup-table th:last-child,
+    .revenue-popup-table td:last-child {
+    text-align: right;
+    }
+
+    .revenue-popup-table .revenue-empty {
+    text-align: center;
+    white-space: normal;
+    }
+
+    .revenue-detail-row[hidden] {
+    display: none;
+    }
+
+    .revenue-popup-table .revenue-detail-row > td {
+    padding: 0;
+    text-align: left;
+    white-space: normal;
+    background: #f7faf8;
+    }
+
+    .revenue-detail-content {
+    padding: 20px;
+    }
+
+    .revenue-detail-content .revenue-receipt-link span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    }
+
+    .revenue-dialog-table-scroll:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: -2px;
+    }
+
+    @media (max-width: 600px) {
+    .revenue-dialog-frame {
+        padding: 16px;
+    }
+
+    .revenue-detail-content {
+        padding: 16px;
+    }
+
+    .revenue-booking-info {
+        grid-template-columns: 1fr;
+    }
+    }

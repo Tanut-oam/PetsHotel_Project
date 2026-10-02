@@ -1,0 +1,138 @@
+    <!DOCTYPE html>
+    <html lang="th" xmlns:th="http://www.thymeleaf.org">
+    <body>
+
+    <div th:fragment="picker(startDateValue, endDateValue)"
+        class="promotion-date-picker"
+        data-promotion-date-picker>
+
+    <input type="hidden"
+            name="startDate"
+            th:value="${startDateValue}"
+            data-promotion-start>
+
+    <input type="hidden"
+            name="endDate"
+            th:value="${endDateValue}"
+            data-promotion-end>
+
+    <button class="date-range-trigger"
+            type="button"
+            data-promotion-open
+            aria-haspopup="dialog">
+
+        <span class="date-range-trigger-icon" aria-hidden="true">
+        📅
+        </span>
+
+        <span>
+        <small>ช่วงวันที่โปรโมชัน</small>
+        <strong data-promotion-label>
+            เลือกวันเริ่มต้นและวันสิ้นสุด
+        </strong>
+        </span>
+    </button>
+
+    <dialog class="availability-calendar-dialog"
+            data-promotion-calendar
+            aria-label="เลือกช่วงวันที่โปรโมชัน">
+
+        <div class="availability-calendar-shell">
+
+        <header class="availability-calendar-header">
+            <div>
+            <h2>เลือกช่วงวันที่โปรโมชัน</h2>
+            <p class="muted" data-promotion-help>
+                เลือกวันเริ่มต้นก่อน
+            </p>
+            </div>
+
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-promotion-close
+                    aria-label="ปิดปฏิทิน">
+            ✕
+            </button>
+        </header>
+
+        <div class="calendar-month-navigation">
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-promotion-previous
+                    aria-label="เดือนก่อนหน้า">
+            ←
+            </button>
+
+            <strong data-promotion-month aria-live="polite">
+            เดือนและปี
+            </strong>
+
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-promotion-next
+                    aria-label="เดือนถัดไป">
+            →
+            </button>
+        </div>
+
+        <div class="calendar-weekdays" aria-hidden="true">
+            <span>อา.</span>
+            <span>จ.</span>
+            <span>อ.</span>
+            <span>พ.</span>
+            <span>พฤ.</span>
+            <span>ศ.</span>
+            <span>ส.</span>
+        </div>
+
+        <div class="room-calendar-grid"
+            data-promotion-grid
+            aria-label="ปฏิทินเลือกวันที่โปรโมชัน">
+        </div>
+
+        <p class="calendar-error"
+            data-promotion-date-error
+            role="alert"
+            hidden>
+        </p>
+
+        <div class="calendar-selection-summary">
+            <div>
+            <small>วันเริ่มต้น</small>
+            <strong data-promotion-start-summary>
+                ยังไม่ได้เลือก
+            </strong>
+            </div>
+
+            <span aria-hidden="true">→</span>
+
+            <div>
+            <small>วันสิ้นสุด</small>
+            <strong data-promotion-end-summary>
+                ยังไม่ได้เลือก
+            </strong>
+            </div>
+        </div>
+
+        <footer class="availability-calendar-actions">
+            <button class="btn"
+                    type="button"
+                    data-promotion-clear>
+            เลือกใหม่
+            </button>
+
+            <button class="btn btn-primary"
+                    type="button"
+                    data-promotion-apply
+                    disabled>
+            ยืนยันวันที่
+            </button>
+        </footer>
+
+        </div>
+    </dialog>
+
+    </div>
+
+    </body>
+    </html>
