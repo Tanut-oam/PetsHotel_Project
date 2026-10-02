@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.example.petshotel.mapper.ExtraServiceMapper;
 import com.example.petshotel.service.ExtraServiceService;
 import com.example.petshotel.service.RoomService;
+import org.springframework.security.core.Authentication;
 
 @Controller
 public class HomeController {
@@ -27,7 +28,11 @@ public class HomeController {
     }
 
     @GetMapping("/")
-    public String home(Model model) {
+    public String home(Model model, Authentication authentication) {
+        if (isAdmin(authentication)) {
+            return "redirect:/admin";
+        }
+
         model.addAttribute("rooms", roomService.getActiveRooms().stream()
                 .limit(FEATURED_ROOM_LIMIT)
                 .toList());
@@ -36,5 +41,10 @@ public class HomeController {
                 .map(extraServiceMapper::toResponse)
                 .toList());
         return "index";
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 }
