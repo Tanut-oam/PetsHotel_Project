@@ -1,6 +1,7 @@
 package com.example.petshotel.service.impl;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -40,11 +41,12 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     @Transactional(readOnly = true)
     public List<Promotion> getActivePromotions() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
         return promotionRepository.findAll().stream()
-                .filter(p -> Boolean.TRUE.equals(p.getActive()))
-                .filter(p -> p.getStartDate() != null && !today.isBefore(p.getStartDate()))
-                .filter(p -> p.getEndDate() != null && !today.isAfter(p.getEndDate()))
+                .filter(promotion -> promotion.isAvailableOn(today))
                 .toList();
     }
 

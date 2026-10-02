@@ -112,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
                 petRepository
                         .findByOwner_IdAndActiveTrue(userId)
                         .stream()
-                        .map(Pet::getId)
+                        .map(pet -> pet.getId())
                         .toList();
 
         List<Long> unavailablePetIds =
@@ -253,6 +253,11 @@ public class BookingServiceImpl implements BookingService {
             promotion = promotionRepository.findById(request.getPromotionId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Promotion", request.getPromotionId()));
+
+            validatePromotion(
+                    promotion,
+                    request.getCheckInDate()
+            );
         }
 
         int nights = Math.toIntExact(ChronoUnit.DAYS.between(
@@ -272,6 +277,43 @@ public class BookingServiceImpl implements BookingService {
         booking.setPromotionName(promotion != null ? promotion.getName() : null);
 
         return new PreparedBooking(booking, price);
+    }
+
+    private void validatePromotion(
+            Promotion promotion,
+            LocalDate checkInDate) {
+
+        String promotionName = promotion.getName() == null
+                ? "ที่เลือก"
+                : "“" + promotion.getName() + "”";
+
+        if (!Boolean.TRUE.equals(promotion.getActive())) {
+            throw new IllegalArgumentException(
+                    "โปรโมชัน " + promotionName + " ปิดใช้งานแล้ว"
+            );
+        }
+
+        if (promotion.getStartDate() == null
+                || promotion.getEndDate() == null) {
+            throw new IllegalArgumentException(
+                    "ข้อมูลช่วงเวลาของโปรโมชัน "
+                            + promotionName + " ไม่สมบูรณ์"
+            );
+        }
+
+        if (checkInDate.isBefore(promotion.getStartDate())) {
+            throw new IllegalArgumentException(
+                    "โปรโมชัน " + promotionName
+                            + " ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก"
+            );
+        }
+
+        if (checkInDate.isAfter(promotion.getEndDate())) {
+            throw new IllegalArgumentException(
+                    "โปรโมชัน " + promotionName
+                            + " หมดอายุการใช้งานแล้ว"
+            );
+        }
     }
 
     private void addSelectedServices(
@@ -394,46 +436,52 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse checkIn(Long id) {
-
         Booking booking = findBookingForUpdate(id);
 
-        BookingState state = getState(booking.getStatus());
+        BookingState state =
+                getState(booking.getStatus());
 
-        if (booking.getStatus() == BookingStatus.CONFIRMED) {
-        LocalDate today = LocalDate.now(
+        LocalDate currentDate = LocalDate.now(
                 ZoneId.of("Asia/Bangkok")
         );
 
-        if (today.isBefore(booking.getCheckInDate())) {
+        if (booking.getStatus() == BookingStatus.CONFIRMED
+                && !booking.canCheckInOn(currentDate)) {
             throw new IllegalStateException(
-                    "Cannot check in before the scheduled check-in date"
+                    "ยังไม่สามารถเช็กอินการจองนี้ในวันที่ปัจจุบันได้"
             );
         }
-
-        if (!today.isBefore(booking.getCheckOutDate())) {
-            throw new IllegalStateException(
-                    "Cannot check in on or after the scheduled check-out date"
-            );
-        }
-      }
 
         state.checkIn(booking);
 
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking savedBooking =
+                bookingRepository.save(booking);
 
         return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
     public BookingResponse checkOut(Long id) {
-
         Booking booking = findBookingForUpdate(id);
 
-        BookingState state = getState(booking.getStatus());
+        BookingState state =
+                getState(booking.getStatus());
+
+        LocalDate currentDate = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
+        if (booking.getStatus() == BookingStatus.CHECKED_IN
+                && !booking.canCheckOutOn(currentDate)) {
+            throw new IllegalStateException(
+                    "ยังไม่ถึงวันเช็กเอาต์ของการจองนี้"
+            );
+        }
 
         state.checkOut(booking);
 
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking savedBooking =
+                bookingRepository.save(booking);
 
         return bookingMapper.toResponse(savedBooking);
     }

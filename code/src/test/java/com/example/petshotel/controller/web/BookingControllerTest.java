@@ -485,6 +485,44 @@ class BookingControllerTest {
     }
 
     @Test
+    void earlyCheckInShouldShowDateAndStatusError() throws Exception {
+        account.setRole(UserRole.STAFF);
+
+        when(bookingService.checkIn(1L))
+                .thenThrow(new IllegalStateException("Too early"));
+
+        mvc.perform(post("/admin/bookings/1/check-in")
+                        .with(user(EMAIL).roles("STAFF"))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/bookings"))
+                .andExpect(flash().attribute(
+                        "error",
+                        "ยังไม่สามารถเช็กอินรายการนี้ได้ "
+                                + "กรุณาตรวจสอบวันเช็กอินและสถานะการจอง"
+                ));
+    }
+
+    @Test
+    void earlyCheckOutShouldShowDateAndStatusError() throws Exception {
+        account.setRole(UserRole.STAFF);
+
+        when(bookingService.checkOut(1L))
+                .thenThrow(new IllegalStateException("Too early"));
+
+        mvc.perform(post("/admin/bookings/1/check-out")
+                        .with(user(EMAIL).roles("STAFF"))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/bookings"))
+                .andExpect(flash().attribute(
+                        "error",
+                        "ยังไม่สามารถเช็กเอาต์รายการนี้ได้ "
+                                + "กรุณาตรวจสอบสถานะและวันเช็กเอาต์"
+                ));
+    }
+
+    @Test
     void staffActionWithoutCsrfShouldBeRejected() throws Exception {
         account.setRole(UserRole.STAFF);
 
@@ -584,7 +622,9 @@ class BookingControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/bookings"))
                 .andExpect(flash().attribute(
-                        "error", "Cannot receive payment"
+                        "error",
+                        "ไม่สามารถบันทึกการชำระเงินได้ "
+                                + "กรุณาตรวจสอบสถานะและยอดรวมของการจอง"
                 ));
     }
 

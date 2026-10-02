@@ -513,6 +513,8 @@ class BookingServiceTest {
         promotion.setId(50L);
         promotion.setName("SAVE20");
         promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 10, 1));
+        promotion.setEndDate(LocalDate.of(2026, 10, 31));
 
         when(promotionRepository.findById(50L))
                 .thenReturn(Optional.of(promotion));
@@ -530,6 +532,71 @@ class BookingServiceTest {
 
         promotion.setName("SAVE30");
         assertEquals("SAVE20", saved.getPromotionName());
+    }
+
+    @Test
+    void expiredPromotionShouldReject() {
+        prepareCreate();
+
+        CreateBookingRequest request = validRequest();
+        request.setPromotionId(50L);
+
+        Promotion promotion = new Promotion();
+        promotion.setId(50L);
+        promotion.setName("OLD10");
+        promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 9, 1));
+        promotion.setEndDate(LocalDate.of(2026, 9, 30));
+
+        when(promotionRepository.findById(50L))
+                .thenReturn(Optional.of(promotion));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> bookingService.createBooking(request)
+        );
+
+        assertEquals(
+                "โปรโมชัน “OLD10” หมดอายุการใช้งานแล้ว",
+                exception.getMessage()
+        );
+
+        verify(pricingService, never())
+                .calculate(any(PricingContext.class));
+        verifyNoSave();
+    }
+
+    @Test
+    void promotionBeforeStartDateShouldReject() {
+        prepareCreate();
+
+        CreateBookingRequest request = validRequest();
+        request.setPromotionId(50L);
+
+        Promotion promotion = new Promotion();
+        promotion.setId(50L);
+        promotion.setName("FUTURE10");
+        promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 11, 1));
+        promotion.setEndDate(LocalDate.of(2026, 11, 30));
+
+        when(promotionRepository.findById(50L))
+                .thenReturn(Optional.of(promotion));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> bookingService.createBooking(request)
+        );
+
+        assertEquals(
+                "โปรโมชัน “FUTURE10” "
+                        + "ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก",
+                exception.getMessage()
+        );
+
+        verify(pricingService, never())
+                .calculate(any(PricingContext.class));
+        verifyNoSave();
     }
 
     @Test
@@ -638,16 +705,27 @@ class BookingServiceTest {
     }
 
     @Test
-    void checkOutShouldNotChangePaymentStatus() {
-        Booking booking = existingBooking(BookingStatus.CHECKED_IN);
-        prepareUpdate(booking);
+    void checkOutBeforeScheduledDateShouldReject() {
+        assertCheckOutOn(
+                LocalDate.of(2026, 10, 11),
+                false
+        );
+    }
 
-        BookingResponse response = bookingService.checkOut(1L);
+    @Test
+    void checkOutOnScheduledDateShouldSucceed() {
+        assertCheckOutOn(
+                LocalDate.of(2026, 10, 12),
+                true
+        );
+    }
 
-        assertEquals(BookingStatus.CHECKED_OUT, response.getStatus());
-        assertEquals(BookingStatus.CHECKED_OUT, booking.getStatus());
-        assertEquals(PaymentStatus.UNPAID, booking.getPaymentStatus());
-        verify(bookingRepository).save(booking);
+    @Test
+    void lateCheckOutShouldSucceed() {
+        assertCheckOutOn(
+                LocalDate.of(2026, 10, 13),
+                true
+        );
     }
 
     @Test
@@ -809,6 +887,65 @@ class BookingServiceTest {
                         () -> bookingService.checkIn(1L)
                 );
                 assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
+                verifyNoSave();
+            }
+        }
+    }
+
+    private void assertCheckOutOn(
+            LocalDate currentDate,
+            boolean allowed
+    ) {
+        Booking booking =
+                existingBooking(BookingStatus.CHECKED_IN);
+
+        prepareUpdate(booking);
+
+        ZoneId zone =
+                ZoneId.of("Asia/Bangkok");
+
+        try (MockedStatic<LocalDate> dates =
+                     mockStatic(
+                             LocalDate.class,
+                             CALLS_REAL_METHODS
+                     )) {
+
+            dates.when(
+                    () -> LocalDate.now(zone)
+            ).thenReturn(currentDate);
+
+            if (allowed) {
+                BookingResponse response =
+                        bookingService.checkOut(1L);
+
+                assertEquals(
+                        BookingStatus.CHECKED_OUT,
+                        response.getStatus()
+                );
+
+                assertEquals(
+                        BookingStatus.CHECKED_OUT,
+                        booking.getStatus()
+                );
+
+                assertEquals(
+                        PaymentStatus.UNPAID,
+                        booking.getPaymentStatus()
+                );
+
+                verify(bookingRepository)
+                        .save(booking);
+            } else {
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> bookingService.checkOut(1L)
+                );
+
+                assertEquals(
+                        BookingStatus.CHECKED_IN,
+                        booking.getStatus()
+                );
+
                 verifyNoSave();
             }
         }

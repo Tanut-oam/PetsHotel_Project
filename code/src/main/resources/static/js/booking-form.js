@@ -96,6 +96,83 @@
     promotion.selectedOptions[0]?.textContent.trim()
       || "ไม่ใช้โปรโมชัน";
 
+  function updatePromotionAvailability() {
+    const selectedCheckIn = checkIn.value;
+    const message = byId("promotion-availability-message");
+    let removedMessage = "";
+
+    [...promotion.options].forEach(option => {
+      if (!option.value) return;
+
+      const baseLabel =
+        option.dataset.baseLabel
+        || option.textContent.trim();
+
+      const startDate = option.dataset.startDate;
+      const endDate = option.dataset.endDate;
+
+      const incompletePeriod =
+        !startDate || !endDate;
+
+      const notStarted = Boolean(
+        selectedCheckIn
+        && startDate
+        && selectedCheckIn < startDate
+      );
+
+      const expired = Boolean(
+        selectedCheckIn
+        && endDate
+        && selectedCheckIn > endDate
+      );
+
+      option.disabled =
+        incompletePeriod || notStarted || expired;
+
+      const dateRange =
+        startDate && endDate
+          ? ` · ใช้ได้ ${formatDisplayDate(startDate)}`
+            + ` – ${formatDisplayDate(endDate)}`
+          : "";
+
+      if (incompletePeriod) {
+        option.textContent =
+          `${baseLabel} — ไม่มีข้อมูลช่วงเวลาการใช้งาน`;
+      } else if (expired) {
+        option.textContent =
+          `${baseLabel} — หมดอายุสำหรับวันเช็กอินที่เลือก`;
+      } else if (notStarted) {
+        option.textContent =
+          `${baseLabel} — ยังไม่เริ่มใช้งาน`;
+      } else {
+        option.textContent =
+          baseLabel + dateRange;
+      }
+
+      if (option.disabled && option.selected) {
+        if (expired) {
+          removedMessage =
+            `โปรโมชัน “${baseLabel}” หมดอายุการใช้งานแล้ว`;
+        } else if (notStarted) {
+          removedMessage =
+            `โปรโมชัน “${baseLabel}” ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก`;
+        } else {
+          removedMessage =
+            `โปรโมชัน “${baseLabel}” ไม่มีข้อมูลช่วงเวลาการใช้งาน`;
+        }
+      }
+    });
+
+    if (removedMessage) {
+      promotion.value = "";
+      message.textContent = removedMessage;
+      message.hidden = false;
+    } else {
+      message.textContent = "";
+      message.hidden = true;
+    }
+  }
+
   function nights() {
     if (!checkIn.value || !checkOut.value) return 0;
 
@@ -840,6 +917,7 @@
     approved = false;
     error.hidden = true;
 
+    updatePromotionAvailability();
     syncServices();
     updateSummary();
 
@@ -874,6 +952,7 @@
 
   form.noValidate = true;
 
+  updatePromotionAvailability();
   syncServices();
 
   const errorStep = steps.findIndex(section =>

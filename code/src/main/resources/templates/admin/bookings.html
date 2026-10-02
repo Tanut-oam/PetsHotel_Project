@@ -48,25 +48,124 @@
           <p th:text="${error}"></p>
         </div>
 
-      <div class="toolbar">
-        <label class="field">
-          ค้นหาการจอง
-          <input id="booking-search" type="search"
-                 placeholder="เลขที่ ผู้จอง ห้อง หรือสัตว์เลี้ยง">
-        </label>
+      <section class="admin-booking-controls"
+         aria-label="ค้นหา กรอง และเรียงการจอง">
 
-        <label class="field">
-          สถานะ
-          <select id="booking-filter">
-            <option value="">ทั้งหมด</option>
-            <option value="PENDING">รอยืนยัน</option>
-            <option value="CONFIRMED">ยืนยันแล้ว</option>
-            <option value="CHECKED_IN">เข้าพักแล้ว</option>
-            <option value="CHECKED_OUT">เช็กเอาต์แล้ว</option>
-            <option value="CANCELLED">ยกเลิกแล้ว</option>
-          </select>
-        </label>
-      </div>
+          <div class="admin-booking-toolbar">
+
+            <label class="field admin-booking-search">
+              ค้นหาการจอง
+
+              <input id="booking-search"
+                    type="search"
+                    placeholder="เลขที่ ผู้จอง ห้อง หรือสัตว์เลี้ยง">
+            </label>
+
+            <label class="field">
+              สถานะการจอง
+
+              <select id="booking-filter">
+                <option value="">ทั้งหมด</option>
+                <option value="PENDING">รอยืนยัน</option>
+                <option value="CONFIRMED">ยืนยันแล้ว</option>
+                <option value="CHECKED_IN">เข้าพักแล้ว</option>
+                <option value="CHECKED_OUT">เช็กเอาต์แล้ว</option>
+                <option value="CANCELLED">ยกเลิกแล้ว</option>
+              </select>
+            </label>
+
+            <label class="field">
+              การชำระเงิน
+
+              <select id="booking-payment-filter">
+                <option value="">ทั้งหมด</option>
+                <option value="UNPAID">ยังไม่ชำระ</option>
+                <option value="PAID">ชำระแล้ว</option>
+              </select>
+            </label>
+
+            <label class="field">
+              เรียงตาม
+
+              <select id="booking-sort">
+                <option value="ACTION_FIRST">
+                  งานที่ต้องดำเนินการก่อน
+                </option>
+
+                <option value="CHECK_IN_ASC">
+                  วันเช็กอินใกล้ที่สุด
+                </option>
+
+                <option value="NEWEST">
+                  การจองล่าสุด
+                </option>
+
+                <option value="TOTAL_DESC">
+                  ยอดรวมสูงสุด
+                </option>
+
+                <option value="TOTAL_ASC">
+                  ยอดรวมต่ำสุด
+                </option>
+              </select>
+            </label>
+
+          </div>
+
+          <div class="booking-quick-filters"
+              role="group"
+              aria-label="ตัวกรองด่วน">
+
+            <button class="booking-quick-filter is-active"
+                    type="button"
+                    data-booking-quick-filter="ALL"
+                    aria-pressed="true">
+              ทั้งหมด
+              <span data-quick-count="ALL">0</span>
+            </button>
+
+            <button class="booking-quick-filter"
+                    type="button"
+                    data-booking-quick-filter="ACTION_REQUIRED"
+                    aria-pressed="false">
+              ต้องดำเนินการ
+              <span data-quick-count="ACTION_REQUIRED">0</span>
+            </button>
+
+            <button class="booking-quick-filter"
+                    type="button"
+                    data-booking-quick-filter="CHECK_IN_TODAY"
+                    aria-pressed="false">
+              เช็กอินวันนี้
+              <span data-quick-count="CHECK_IN_TODAY">0</span>
+            </button>
+
+            <button class="booking-quick-filter"
+                    type="button"
+                    data-booking-quick-filter="CHECK_OUT_TODAY"
+                    aria-pressed="false">
+              เช็กเอาต์วันนี้
+              <span data-quick-count="CHECK_OUT_TODAY">0</span>
+            </button>
+
+            <button class="booking-quick-filter"
+                    type="button"
+                    data-booking-quick-filter="UNPAID"
+                    aria-pressed="false">
+              ยังไม่ชำระ
+              <span data-quick-count="UNPAID">0</span>
+            </button>
+
+            <button class="booking-quick-filter"
+                    type="button"
+                    data-booking-quick-filter="UPCOMING_7_DAYS"
+                    aria-pressed="false">
+              7 วันข้างหน้า
+              <span data-quick-count="UPCOMING_7_DAYS">0</span>
+            </button>
+
+          </div>
+        </section>
 
       <p id="booking-count" role="status"
          th:text="${'ทั้งหมด ' + #lists.size(bookings) + ' รายการ'}"></p>
@@ -87,7 +186,16 @@
           <tbody id="booking-rows">
             <tr th:each="booking : ${bookings}"
                 data-booking-row
-                th:attr="data-status=${booking.status.name()}"
+                th:attr="
+                  data-status=${booking.status.name()},
+                  data-payment=${booking.paymentStatus != null
+                    ? booking.paymentStatus.name()
+                    : ''},
+                  data-check-in=${booking.checkInDate},
+                  data-check-out=${booking.checkOutDate},
+                  data-booking-id=${booking.id},
+                  data-total=${booking.totalPrice}
+                "
                 th:classappend="${booking.status.name() == 'CANCELLED'}
                   ? 'booking-row-cancelled'
                   : ''">
@@ -224,7 +332,8 @@
                   </form>
 
                   <form method="post"
-                        th:if="${booking.status.name() == 'CONFIRMED'}"
+                        th:if="${booking.status.name() == 'CONFIRMED'
+                          and booking.checkInAllowed == true}"
                         th:action="@{/admin/bookings/{id}/check-in(
                           id=${booking.id}
                         )}"
@@ -236,8 +345,33 @@
                     </button>
                   </form>
 
+                  <div class="booking-action-note"
+                      th:if="${booking.status.name() == 'CONFIRMED'
+                        and booking.checkInAllowed != true}">
+
+                    <strong>ยังเช็กอินไม่ได้</strong>
+
+                    <span>
+                      ช่วงที่เช็กอินได้:
+                      <span th:text="${#temporals.format(
+                        booking.checkInDate,
+                        'dd/MM/yyyy'
+                      )}">
+                        09/11/2026
+                      </span>
+                      ถึงก่อน
+                      <span th:text="${#temporals.format(
+                        booking.checkOutDate,
+                        'dd/MM/yyyy'
+                      )}">
+                        12/11/2026
+                      </span>
+                    </span>
+                  </div>
+
                   <form method="post"
-                        th:if="${booking.status.name() == 'CHECKED_IN'}"
+                        th:if="${booking.status.name() == 'CHECKED_IN'
+                          and booking.checkOutAllowed == true}"
                         th:action="@{/admin/bookings/{id}/check-out(
                           id=${booking.id}
                         )}"
@@ -248,6 +382,23 @@
                       เช็กเอาต์
                     </button>
                   </form>
+
+                  <div class="booking-action-note"
+                      th:if="${booking.status.name() == 'CHECKED_IN'
+                        and booking.checkOutAllowed != true}">
+
+                    <strong>ยังเช็กเอาต์ไม่ได้</strong>
+
+                    <span>
+                      เช็กเอาต์ได้ตั้งแต่วันที่
+                      <span th:text="${#temporals.format(
+                        booking.checkOutDate,
+                        'dd/MM/yyyy'
+                      )}">
+                        12/11/2026
+                      </span>
+                    </span>
+                  </div>
 
                   <form method="post"
                         th:if="${booking.paymentStatus != null

@@ -5,12 +5,19 @@ import com.example.petshotel.dto.response.BookingResponse;
 
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Component
 public class BookingMapper {
 
     public BookingResponse toResponse(Booking booking) {
+
+        LocalDate currentDate = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
         List<Long> petIds = booking.getBookingPets()
                 .stream()
                 .map(bookingPet -> bookingPet.getPet().getId())
@@ -26,6 +33,12 @@ public class BookingMapper {
                 .status(booking.getStatus())
                 .totalPrice(booking.getTotalPrice())
                 .paymentStatus(booking.getPaymentStatus())
+                .checkInAllowed(
+                        booking.canCheckInOn(currentDate)
+                )
+                .checkOutAllowed(
+                        booking.canCheckOutOn(currentDate)
+                )
                 .roomName(booking.getRoom().getName())
                 .petNames(
                         booking.getBookingPets().stream()
