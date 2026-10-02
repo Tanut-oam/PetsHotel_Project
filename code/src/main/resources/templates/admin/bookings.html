@@ -34,8 +34,19 @@
     <main class="content" data-booking-page="staff">
       <h1>จัดการการจอง</h1>
 
-      <p th:if="${message}" th:text="${message}" role="status"></p>
-      <p th:if="${error}" th:text="${error}" role="alert"></p>
+      <div class="booking-page-alert is-success"
+            th:if="${message}"
+            role="status">
+          <span aria-hidden="true">✓</span>
+          <p th:text="${message}"></p>
+        </div>
+
+        <div class="booking-page-alert is-error"
+            th:if="${error}"
+            role="alert">
+          <span aria-hidden="true">!</span>
+          <p th:text="${error}"></p>
+        </div>
 
       <div class="toolbar">
         <label class="field">
@@ -60,94 +71,180 @@
       <p id="booking-count" role="status"
          th:text="${'ทั้งหมด ' + #lists.size(bookings) + ' รายการ'}"></p>
 
-      <div class="panel table-scroll">
-        <table class="table">
+      <div class="panel table-scroll admin-bookings-panel">
+        <table class="table admin-bookings-table">
           <thead>
             <tr>
-              <th>เลขที่</th>
-              <th>รหัสผู้จอง</th>
-              <th>ห้องพัก</th>
-              <th>สัตว์เลี้ยง</th>
-              <th>วันเข้า–วันออก</th>
+              <th>การจอง</th>
+              <th>ห้องพักและสัตว์เลี้ยง</th>
+              <th>ช่วงวันเข้าพัก</th>
               <th>สถานะ</th>
-              <th>การชำระเงิน</th>
               <th>ยอดรวม</th>
               <th>ดำเนินการ</th>
             </tr>
           </thead>
 
-          <tbody>
+          <tbody id="booking-rows">
             <tr th:each="booking : ${bookings}"
                 data-booking-row
-                th:attr="data-status=${booking.status.name()}">
+                th:attr="data-status=${booking.status.name()}"
+                th:classappend="${booking.status.name() == 'CANCELLED'}
+                  ? 'booking-row-cancelled'
+                  : ''">
 
-              <td data-detail-label="เลขที่"
-                  th:text="${booking.id}"></td>
+              <!-- เลขที่การจองและผู้จอง -->
+              <td data-detail-label="การจอง">
+                <div class="admin-booking-primary">
+                  <strong>
+                    การจอง #
+                    <span th:text="${booking.id}">1</span>
+                  </strong>
 
-              <td data-detail-label="รหัสผู้จอง"
-                  th:text="${booking.userId}"></td>
+                  <small>
+                    รหัสผู้จอง:
+                    <span th:text="${booking.userId}">1</span>
+                  </small>
+                </div>
+              </td>
 
-              <td data-detail-label="ห้องพัก"
-                  th:text="${booking.roomName}"></td>
+              <!-- ห้องพักและสัตว์เลี้ยง -->
+              <td data-detail-label="ห้องพักและสัตว์เลี้ยง">
+                <div class="admin-booking-primary">
+                  <strong th:text="${booking.roomName}">
+                    ชื่อห้องพัก
+                  </strong>
 
-              <td data-detail-label="สัตว์เลี้ยง"
-                  th:text="${booking.petNames}"></td>
+                  <small>
+                    สัตว์เลี้ยง:
+                    <span th:text="${booking.petNames}">
+                      รายชื่อสัตว์เลี้ยง
+                    </span>
+                  </small>
+                </div>
+              </td>
 
-              <td data-detail-label="วันเข้า–วันออก"
-                  th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></td>
+              <!-- วันที่ -->
+              <td data-detail-label="ช่วงวันเข้าพัก">
+                <div class="admin-booking-dates">
+                  <span>
+                    <small>เช็กอิน</small>
 
+                    <strong th:text="${#temporals.format(
+                      booking.checkInDate,
+                      'dd/MM/yyyy'
+                    )}">
+                      02/10/2026
+                    </strong>
+                  </span>
+
+                  <span aria-hidden="true">→</span>
+
+                  <span>
+                    <small>เช็กเอาต์</small>
+
+                    <strong th:text="${#temporals.format(
+                      booking.checkOutDate,
+                      'dd/MM/yyyy'
+                    )}">
+                      04/10/2026
+                    </strong>
+                  </span>
+                </div>
+              </td>
+
+              <!-- สถานะการจองและการชำระเงิน -->
               <td data-detail-label="สถานะ">
-                <span data-status-label
-                      th:attr="data-status-label=${booking.status.name()}"
-                      th:text="${booking.status}"></span>
+                <div class="admin-booking-statuses">
+                  <span class="booking-status-badge"
+                        data-status-label
+                        th:attr="data-status-label=${booking.status.name()}"
+                        th:text="${booking.status}">
+                  </span>
+
+                  <span class="payment-status-badge"
+                        data-payment-label
+                        th:attr="data-payment-label=${
+                          booking.paymentStatus != null
+                            ? booking.paymentStatus.name()
+                            : ''
+                        }"
+                        th:text="${booking.paymentStatus != null
+                          ? booking.paymentStatus
+                          : 'ไม่ระบุ'}">
+                  </span>
+                </div>
               </td>
 
-              <td data-detail-label="การชำระเงิน">
-                <span data-payment-label
-                      th:attr="data-payment-label=${booking.paymentStatus}"
-                      th:text="${booking.paymentStatus}"></span>
+              <!-- ยอดรวม -->
+              <td data-detail-label="ยอดรวม">
+                <strong class="admin-booking-total">
+                  ฿<span th:text="${#numbers.formatDecimal(
+                    booking.totalPrice,
+                    1,
+                    'COMMA',
+                    2,
+                    'POINT'
+                  )}">
+                    0.00
+                  </span>
+                </strong>
               </td>
 
-              <td data-detail-label="ยอดรวม"
-                  th:text="${booking.totalPrice + ' บาท'}"></td>
+              <!-- ปุ่มดำเนินการ -->
+              <td data-detail-label="ดำเนินการ">
+                <div class="admin-booking-actions">
 
-              <td>
-                <div class="booking-actions">
-                  <button type="button" class="btn btn-small"
-                          data-show-details hidden>
-                    ดูข้อมูล
+                  <button type="button"
+                          class="btn btn-small"
+                          data-show-details
+                          hidden>
+                    ดูรายละเอียด
                   </button>
 
                   <a class="btn btn-small"
                     th:if="${booking.paymentStatus != null
                       and booking.paymentStatus.name() == 'PAID'}"
-                    th:href="@{/bookings/{id}/receipt(id=${booking.id})}">
+                    th:href="@{/bookings/{id}/receipt(
+                      id=${booking.id}
+                    )}">
                     ดูใบเสร็จ
                   </a>
 
                   <form method="post"
                         th:if="${booking.status.name() == 'PENDING'}"
-                        th:action="@{/admin/bookings/{id}/confirm(id=${booking.id})}"
+                        th:action="@{/admin/bookings/{id}/confirm(
+                          id=${booking.id}
+                        )}"
                         data-confirm="ยืนยันการจองนี้หรือไม่?">
-                    <button type="submit" class="btn btn-small">
+
+                    <button type="submit"
+                            class="btn btn-small btn-primary">
                       ยืนยันการจอง
                     </button>
                   </form>
 
                   <form method="post"
                         th:if="${booking.status.name() == 'CONFIRMED'}"
-                        th:action="@{/admin/bookings/{id}/check-in(id=${booking.id})}"
+                        th:action="@{/admin/bookings/{id}/check-in(
+                          id=${booking.id}
+                        )}"
                         data-confirm="ยืนยันเช็กอินการจองนี้หรือไม่?">
-                    <button type="submit" class="btn btn-small">
+
+                    <button type="submit"
+                            class="btn btn-small btn-primary">
                       เช็กอิน
                     </button>
                   </form>
 
                   <form method="post"
                         th:if="${booking.status.name() == 'CHECKED_IN'}"
-                        th:action="@{/admin/bookings/{id}/check-out(id=${booking.id})}"
+                        th:action="@{/admin/bookings/{id}/check-out(
+                          id=${booking.id}
+                        )}"
                         data-confirm="ยืนยันเช็กเอาต์การจองนี้หรือไม่?">
-                    <button type="submit" class="btn btn-small">
+
+                    <button type="submit"
+                            class="btn btn-small btn-primary">
                       เช็กเอาต์
                     </button>
                   </form>
@@ -157,25 +254,36 @@
                           and booking.paymentStatus.name() == 'UNPAID'
                           and (booking.status.name() == 'PENDING'
                             or booking.status.name() == 'CONFIRMED')}"
-                        th:action="@{/admin/bookings/{id}/cancel(id=${booking.id})}"
+                        th:action="@{/admin/bookings/{id}/cancel(
+                          id=${booking.id}
+                        )}"
                         data-confirm="ยืนยันยกเลิกการจองนี้หรือไม่?">
-                    <button type="submit" class="btn btn-small">
+
+                    <button type="submit"
+                            class="btn btn-small btn-danger">
                       ยกเลิก
                     </button>
                   </form>
+
                   <form method="post"
-                      th:if="${booking.paymentStatus != null
-                        and booking.paymentStatus.name() == 'UNPAID'
-                        and (booking.status.name() == 'CONFIRMED'
-                          or booking.status.name() == 'CHECKED_IN'
-                          or booking.status.name() == 'CHECKED_OUT')}"
-                      th:action="@{/admin/bookings/{id}/payment/confirm(id=${booking.id})}"
-                      th:attr="data-confirm=${'ได้รับเงินจำนวน '
-                        + booking.totalPrice + ' บาทครบแล้ว และต้องการออกใบเสร็จใช่หรือไม่?'}">
-                  <button type="submit" class="btn btn-small">
-                    บันทึกรับเงิน
-                  </button>
-                </form>
+                        th:if="${booking.paymentStatus != null
+                          and booking.paymentStatus.name() == 'UNPAID'
+                          and (booking.status.name() == 'CONFIRMED'
+                            or booking.status.name() == 'CHECKED_IN'
+                            or booking.status.name() == 'CHECKED_OUT')}"
+                        th:action="@{/admin/bookings/{id}/payment/confirm(
+                          id=${booking.id}
+                        )}"
+                        th:attr="data-confirm=${'ได้รับเงินจำนวน '
+                          + booking.totalPrice
+                          + ' บาทครบแล้ว และต้องการออกใบเสร็จใช่หรือไม่?'}">
+
+                    <button type="submit"
+                            class="btn btn-small btn-primary">
+                      บันทึกรับเงิน
+                    </button>
+                  </form>
+
                 </div>
               </td>
             </tr>
