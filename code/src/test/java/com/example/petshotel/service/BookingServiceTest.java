@@ -513,6 +513,8 @@ class BookingServiceTest {
         promotion.setId(50L);
         promotion.setName("SAVE20");
         promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 10, 1));
+        promotion.setEndDate(LocalDate.of(2026, 10, 31));
 
         when(promotionRepository.findById(50L))
                 .thenReturn(Optional.of(promotion));
@@ -530,6 +532,71 @@ class BookingServiceTest {
 
         promotion.setName("SAVE30");
         assertEquals("SAVE20", saved.getPromotionName());
+    }
+
+    @Test
+    void expiredPromotionShouldReject() {
+        prepareCreate();
+
+        CreateBookingRequest request = validRequest();
+        request.setPromotionId(50L);
+
+        Promotion promotion = new Promotion();
+        promotion.setId(50L);
+        promotion.setName("OLD10");
+        promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 9, 1));
+        promotion.setEndDate(LocalDate.of(2026, 9, 30));
+
+        when(promotionRepository.findById(50L))
+                .thenReturn(Optional.of(promotion));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> bookingService.createBooking(request)
+        );
+
+        assertEquals(
+                "โปรโมชัน “OLD10” หมดอายุการใช้งานแล้ว",
+                exception.getMessage()
+        );
+
+        verify(pricingService, never())
+                .calculate(any(PricingContext.class));
+        verifyNoSave();
+    }
+
+    @Test
+    void promotionBeforeStartDateShouldReject() {
+        prepareCreate();
+
+        CreateBookingRequest request = validRequest();
+        request.setPromotionId(50L);
+
+        Promotion promotion = new Promotion();
+        promotion.setId(50L);
+        promotion.setName("FUTURE10");
+        promotion.setActive(true);
+        promotion.setStartDate(LocalDate.of(2026, 11, 1));
+        promotion.setEndDate(LocalDate.of(2026, 11, 30));
+
+        when(promotionRepository.findById(50L))
+                .thenReturn(Optional.of(promotion));
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> bookingService.createBooking(request)
+        );
+
+        assertEquals(
+                "โปรโมชัน “FUTURE10” "
+                        + "ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก",
+                exception.getMessage()
+        );
+
+        verify(pricingService, never())
+                .calculate(any(PricingContext.class));
+        verifyNoSave();
     }
 
     @Test

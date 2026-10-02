@@ -36,13 +36,30 @@
   let pendingForm = null;
   let approvedForm = null;
 
-  function describeRow(row) {
-    if (!row) return "";
+  function bookingDetailCells(row) {
+    if (!row) return [];
 
-    return [...row.querySelectorAll("[data-detail-label]")]
-      .map(cell =>
-        `${cell.dataset.detailLabel}: ${cell.textContent.trim()}`
+    return [
+      ...row.querySelectorAll(
+        '[data-detail-label]:not([data-detail-label="ดำเนินการ"])'
       )
+    ];
+  }
+
+  function normalizeText(element) {
+    return element.textContent
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function describeRow(row) {
+    return bookingDetailCells(row)
+      .map(cell => {
+        const label = cell.dataset.detailLabel;
+        const value = normalizeText(cell);
+
+        return `${label}: ${value}`;
+      })
       .join("\n");
   }
 
@@ -455,11 +472,7 @@
     let visible = 0;
 
     rows.forEach(row => {
-      const searchable = [
-        ...row.querySelectorAll(
-          "[data-detail-label]"
-        )
-      ]
+      const searchable = bookingDetailCells(row)
         .map(cell =>
           cell.textContent.trim()
         )

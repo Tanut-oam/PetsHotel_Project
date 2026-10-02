@@ -253,6 +253,11 @@ public class BookingServiceImpl implements BookingService {
             promotion = promotionRepository.findById(request.getPromotionId())
                     .orElseThrow(() -> new ResourceNotFoundException(
                             "Promotion", request.getPromotionId()));
+
+            validatePromotion(
+                    promotion,
+                    request.getCheckInDate()
+            );
         }
 
         int nights = Math.toIntExact(ChronoUnit.DAYS.between(
@@ -272,6 +277,43 @@ public class BookingServiceImpl implements BookingService {
         booking.setPromotionName(promotion != null ? promotion.getName() : null);
 
         return new PreparedBooking(booking, price);
+    }
+
+    private void validatePromotion(
+            Promotion promotion,
+            LocalDate checkInDate) {
+
+        String promotionName = promotion.getName() == null
+                ? "ที่เลือก"
+                : "“" + promotion.getName() + "”";
+
+        if (!Boolean.TRUE.equals(promotion.getActive())) {
+            throw new IllegalArgumentException(
+                    "โปรโมชัน " + promotionName + " ปิดใช้งานแล้ว"
+            );
+        }
+
+        if (promotion.getStartDate() == null
+                || promotion.getEndDate() == null) {
+            throw new IllegalArgumentException(
+                    "ข้อมูลช่วงเวลาของโปรโมชัน "
+                            + promotionName + " ไม่สมบูรณ์"
+            );
+        }
+
+        if (checkInDate.isBefore(promotion.getStartDate())) {
+            throw new IllegalArgumentException(
+                    "โปรโมชัน " + promotionName
+                            + " ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก"
+            );
+        }
+
+        if (checkInDate.isAfter(promotion.getEndDate())) {
+            throw new IllegalArgumentException(
+                    "โปรโมชัน " + promotionName
+                            + " หมดอายุการใช้งานแล้ว"
+            );
+        }
     }
 
     private void addSelectedServices(

@@ -458,10 +458,27 @@
 
                 <option th:each="promotion : ${promotions}"
                         th:value="${promotion.id}"
-                        th:text="${promotion.name}">
+                        th:attr="
+                          data-start-date=${promotion.startDate},
+                          data-end-date=${promotion.endDate},
+                          data-base-label=${promotion.name}
+                        "
+                        th:text="|${promotion.name} · ใช้ได้ ${#temporals.format(
+                          promotion.startDate,
+                          'dd/MM/yyyy'
+                        )} – ${#temporals.format(
+                          promotion.endDate,
+                          'dd/MM/yyyy'
+                        )}|">
                 </option>
               </select>
             </label>
+
+            <p id="promotion-availability-message"
+               class="muted"
+               role="status"
+               hidden>
+            </p>
 
             <p class="muted">
               ระบบจะตรวจสอบเงื่อนไขโปรโมชั่น
