@@ -9,6 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+
 class RoleBasedLoginSuccessHandlerTest {
 
     private final RoleBasedLoginSuccessHandler handler = new RoleBasedLoginSuccessHandler();
@@ -35,7 +36,7 @@ class RoleBasedLoginSuccessHandlerTest {
     void customerShouldGoToHome() throws Exception {
         assertEquals("/", redirectFor("ROLE_CUSTOMER"));
     }
-    
+
     @Test
     void shouldReturnToSavedRequestAfterLogin() throws Exception {
         MockHttpServletRequest original = new MockHttpServletRequest("GET", "/bookings/new");
@@ -52,5 +53,21 @@ class RoleBasedLoginSuccessHandlerTest {
 
         assertTrue(response.getRedirectedUrl()
                 .contains("/bookings/new?roomId=1&checkIn=2026-10-10&checkOut=2026-10-12"));
+    }
+
+    @Test
+    void shouldIgnoreSavedErrorPageAfterLogin() throws Exception {
+        MockHttpServletRequest original = new MockHttpServletRequest("GET", "/error");
+        new HttpSessionRequestCache().saveRequest(original, new MockHttpServletResponse());
+
+        MockHttpServletRequest loginRequest = new MockHttpServletRequest("POST", "/login");
+        loginRequest.setSession(original.getSession());
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                "u@example.com", null, AuthorityUtils.createAuthorityList("ROLE_CUSTOMER"));
+
+        handler.onAuthenticationSuccess(loginRequest, response, auth);
+
+        assertEquals("/", response.getRedirectedUrl());
     }
 }
