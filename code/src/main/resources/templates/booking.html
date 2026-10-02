@@ -217,9 +217,10 @@
               th:action="@{/bookings}"
               th:object="${bookingForm}"
               th:attr="
-              data-preview-url=@{/api/bookings/preview-price},
-              data-pet-availability-url=@{/api/bookings/pet-availability}
-            ">
+                data-preview-url=@{/api/bookings/preview-price},
+                data-pet-availability-url=@{/api/bookings/pet-availability},
+                data-back-url=@{/rooms}
+              ">
 
           <div id="server-errors"
                th:if="${#fields.hasAnyErrors()}"

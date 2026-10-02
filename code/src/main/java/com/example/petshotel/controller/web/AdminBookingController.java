@@ -64,10 +64,36 @@ public class AdminBookingController {
         } catch (ResourceNotFoundException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException | IllegalStateException ex) {
-            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            redirectAttributes.addFlashAttribute(
+                    "error",
+                    actionFailureMessage(action)
+            );
         }
 
         return "redirect:/admin/bookings";
+    }
+
+    private String actionFailureMessage(String action) {
+        return switch (action) {
+            case "confirm" ->
+                    "ไม่สามารถยืนยันการจองนี้ได้ "
+                    + "กรุณาตรวจสอบสถานะปัจจุบัน";
+
+            case "check-in" ->
+                    "ยังไม่สามารถเช็กอินรายการนี้ได้ "
+                    + "กรุณาตรวจสอบวันเช็กอินและสถานะการจอง";
+
+            case "check-out" ->
+                    "ยังไม่สามารถเช็กเอาต์รายการนี้ได้ "
+                    + "กรุณาตรวจสอบว่ารายการได้เช็กอินแล้ว";
+
+            case "cancel" ->
+                    "ไม่สามารถยกเลิกการจองนี้ได้ "
+                    + "กรุณาตรวจสอบสถานะการจองและการชำระเงิน";
+
+            default ->
+                    "ไม่สามารถดำเนินการกับการจองนี้ได้";
+        };
     }
 
     private void requireStaff(Principal principal) {
@@ -116,7 +142,9 @@ public class AdminBookingController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             redirectAttributes.addFlashAttribute(
-                    "error", ex.getMessage()
+                    "error",
+                    "ไม่สามารถบันทึกการชำระเงินได้ "
+                            + "กรุณาตรวจสอบสถานะและยอดรวมของการจอง"
             );
         }
 

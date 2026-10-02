@@ -1,13 +1,6 @@
 (() => {
   "use strict";
 
-  const thaiDateFormatter =
-    new Intl.DateTimeFormat("th-TH", {
-      day: "numeric",
-      month: "short",
-      year: "numeric"
-    });
-
   const thaiMonthFormatter =
     new Intl.DateTimeFormat("th-TH", {
       month: "long",
@@ -83,15 +76,25 @@
     return `${year}-${month}-${day}`;
   }
 
-  function formatDate(value) {
+    function formatDate(value) {
     const date = parseIsoDate(value);
 
     if (!date) {
-      return "ยังไม่ได้เลือก";
+        return "ยังไม่ได้เลือก";
     }
 
-    return thaiDateFormatter.format(date);
-  }
+    const day = String(
+        date.getDate()
+    ).padStart(2, "0");
+
+    const month = String(
+        date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+    }
 
   function sameMonth(first, second) {
     return (
@@ -310,7 +313,7 @@
 
       button.setAttribute(
         "aria-label",
-        thaiDateFormatter.format(date)
+        formatDate(dateValue)
       );
 
       if (
