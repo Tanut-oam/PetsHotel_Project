@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -25,6 +26,8 @@ import com.example.petshotel.service.AvailabilityService;
 import com.example.petshotel.service.DashboardService;
 import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.dto.response.MonthlyRevenueResponse;
+import com.example.petshotel.dto.response.RevenueBookingResponse;
+import com.example.petshotel.mapper.RevenueBookingMapper;
 
 @Service 
 public class DashboardServiceImpl implements DashboardService{
@@ -33,16 +36,19 @@ public class DashboardServiceImpl implements DashboardService{
     private final PetRepository petRepository;
     private final AvailabilityService availabilityService;
     private final RecentBookingMapper recentBookingMapper;
+    private final RevenueBookingMapper revenueBookingMapper;
 
     public DashboardServiceImpl(ReceiptRepository receiptRepository, BookingRepository bookingRepository,
         PetRepository petRepository,
         AvailabilityService availabilityService,
-        RecentBookingMapper recentBookingMapper) {
+        RecentBookingMapper recentBookingMapper,
+        RevenueBookingMapper revenueBookingMapper) {
         this.receiptRepository = receiptRepository;
         this.bookingRepository = bookingRepository;
         this.petRepository = petRepository;
         this.availabilityService = availabilityService;
         this.recentBookingMapper = recentBookingMapper;
+        this.revenueBookingMapper = revenueBookingMapper;
     }
 
 
@@ -221,8 +227,12 @@ public class DashboardServiceImpl implements DashboardService{
 
         BigDecimal[] monthlyTotals = new BigDecimal[12];
 
+        List<List<RevenueBookingResponse>> monthlyBookings =
+                new ArrayList<>();
+
         for (int index = 0; index < 12; index++) {
             monthlyTotals[index] = BigDecimal.ZERO;
+            monthlyBookings.add(new ArrayList<>());
         }
 
         for (Receipt receipt : receiptRepository.findAll()) {
@@ -244,15 +254,34 @@ public class DashboardServiceImpl implements DashboardService{
 
             monthlyTotals[monthIndex] = monthlyTotals[monthIndex]
                     .add(receipt.getTotalAmount());
+
+            RevenueBookingResponse response =
+                    revenueBookingMapper.toResponse(receipt);
+
+            monthlyBookings.get(monthIndex).add(response);
         }
 
         List<MonthlyRevenueResponse> months = new ArrayList<>();
 
         for (int index = 0; index < 12; index++) {
+            List<RevenueBookingResponse> bookingsOfMonth =
+                    monthlyBookings.get(index);
+
+            bookingsOfMonth.sort(new Comparator<RevenueBookingResponse>() {
+                @Override
+                public int compare(
+                        RevenueBookingResponse first,
+                        RevenueBookingResponse second) {
+
+                    return first.paidAt().compareTo(second.paidAt());
+                }
+            });
+
             months.add(new MonthlyRevenueResponse(
                     index + 1,
                     monthNames[index],
-                    monthlyTotals[index]
+                    monthlyTotals[index],
+                    List.copyOf(bookingsOfMonth)
             ));
         }
 
