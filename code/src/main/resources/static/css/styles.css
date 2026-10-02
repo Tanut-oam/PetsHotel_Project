@@ -1292,6 +1292,130 @@ small {
     .calendar-selection-summary {
       gap: 8px;
     }
-  
 
-}
+  }
+  
+    /* =========================================================
+   Pet availability in booking form
+   ========================================================= */
+
+  .pet-availability-status {
+    margin: 12px 0 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: .92rem;
+    line-height: 1.45;
+  }
+
+  .pet-availability-status.is-neutral {
+    color: var(--muted);
+    background: #f3f6f3;
+  }
+
+  .pet-availability-status.is-loading {
+    color: #755a18;
+    background: #fff8dc;
+  }
+
+  .pet-availability-status.is-success {
+    color: var(--green-dark);
+    background: var(--green-light);
+  }
+
+  .pet-availability-status.is-warning {
+    color: #805f13;
+    background: #fff5ce;
+  }
+
+  .pet-availability-status.is-error {
+    color: var(--red);
+    background: #fff1f1;
+  }
+
+  .pet-booking-choice {
+    position: relative;
+    transition:
+      border-color .18s ease,
+      background-color .18s ease,
+      opacity .18s ease;
+  }
+
+  .pet-booking-choice.is-checking {
+    cursor: wait;
+    opacity: .62;
+  }
+
+  .pet-booking-choice.is-available {
+    background: #f8fcf9;
+    border-color: #b7d8c3;
+  }
+
+  .pet-booking-choice.is-available:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+
+  .pet-booking-choice.is-unavailable {
+    cursor: not-allowed;
+    color: #7b827e;
+    background: #e8ece9;
+    border-color: #c9d0cb;
+    opacity: 1;
+  }
+
+  .pet-booking-choice.is-unavailable:hover {
+    background: #e8ece9;
+    border-color: #c9d0cb;
+  }
+
+  .pet-booking-choice.is-unavailable input {
+    cursor: not-allowed;
+    accent-color: #9ba39e;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .choice-text strong {
+    color: #6f7672;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-booking-photo {
+    filter: grayscale(100%);
+    opacity: .55;
+    border-color: #bfc6c1;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-booking-photo-placeholder {
+    filter: grayscale(100%);
+    opacity: .55;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-availability-message {
+    color: #767d79;
+  }
+
+  .pet-availability-message {
+    display: block;
+    margin-top: 5px;
+    font-size: .82rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .pet-booking-choice.is-checking
+  .pet-availability-message {
+    color: var(--muted);
+  }
+
+  .pet-booking-choice.is-available
+  .pet-availability-message {
+    color: var(--green);
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-availability-message {
+    color: var(--red);
+  }
+

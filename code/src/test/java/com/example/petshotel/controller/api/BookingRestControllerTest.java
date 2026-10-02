@@ -11,6 +11,7 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
 import com.example.petshotel.dto.response.BookingPriceResponse;
+import com.example.petshotel.dto.response.PetAvailabilityResponse;
 import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.BookingService;
@@ -637,6 +638,87 @@ class BookingRestControllerTest {
 
         verifyNoInteractions(bookingService);
     }
+
+    @Test
+        void petAvailabilityShouldUseLoggedInUser()
+                throws Exception {
+
+        LocalDate checkInDate =
+                LocalDate.of(2026, 10, 10);
+
+        LocalDate checkOutDate =
+                LocalDate.of(2026, 10, 12);
+
+        when(
+                bookingService.getPetAvailability(
+                        10L,
+                        checkInDate,
+                        checkOutDate
+                )
+        ).thenReturn(
+                new PetAvailabilityResponse(
+                        checkInDate,
+                        checkOutDate,
+                        List.of(30L)
+                )
+        );
+
+        mockMvc.perform(
+                get("/api/bookings/pet-availability")
+                        .with(
+                                user(EMAIL)
+                                        .roles("CUSTOMER")
+                        )
+                        .param(
+                                "checkInDate",
+                                "2026-10-10"
+                        )
+                        .param(
+                                "checkOutDate",
+                                "2026-10-12"
+                        )
+        )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.checkInDate")
+                                .value("2026-10-10")
+                )
+                .andExpect(
+                        jsonPath("$.checkOutDate")
+                                .value("2026-10-12")
+                )
+                .andExpect(
+                        jsonPath("$.unavailablePetIds[0]")
+                                .value(30)
+                );
+
+        verify(bookingService)
+                .getPetAvailability(
+                        10L,
+                        checkInDate,
+                        checkOutDate
+                );
+        }
+
+        @Test
+        void anonymousPetAvailabilityShouldReturn401()
+                throws Exception {
+
+        mockMvc.perform(
+                get("/api/bookings/pet-availability")
+                        .param(
+                                "checkInDate",
+                                "2026-10-10"
+                        )
+                        .param(
+                                "checkOutDate",
+                                "2026-10-12"
+                        )
+        )
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(bookingService);
+        }
 
     private User account(UserRole role) {
         User account = new User();

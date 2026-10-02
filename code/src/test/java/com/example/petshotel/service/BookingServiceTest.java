@@ -7,6 +7,7 @@ import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingPriceResponse;
 import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.PetAvailabilityResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 import com.example.petshotel.exception.PetNotAvailableException;
@@ -35,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class BookingServiceTest {
@@ -97,6 +99,84 @@ class BookingServiceTest {
         pet.setOwner(user);
         pet.setActive(true);
     }
+
+    // ---------- PET AVAILABILITY ----------
+
+        @Test
+        void getPetAvailabilityShouldReturnOverlappingActivePets() {
+        LocalDate checkInDate =
+                LocalDate.of(2026, 10, 10);
+
+        LocalDate checkOutDate =
+                LocalDate.of(2026, 10, 12);
+
+        when(
+                petRepository
+                        .findByOwner_IdAndActiveTrue(10L)
+        ).thenReturn(List.of(pet));
+
+        when(
+                bookingPetRepository.findOverlappingPetIds(
+                        eq(List.of(30L)),
+                        eq(checkInDate),
+                        eq(checkOutDate),
+                        anyCollection()
+                )
+        ).thenReturn(List.of(30L));
+
+        PetAvailabilityResponse response =
+                bookingService.getPetAvailability(
+                        10L,
+                        checkInDate,
+                        checkOutDate
+                );
+
+        assertEquals(
+                checkInDate,
+                response.checkInDate()
+        );
+
+        assertEquals(
+                checkOutDate,
+                response.checkOutDate()
+        );
+
+        assertEquals(
+                List.of(30L),
+                response.unavailablePetIds()
+        );
+
+        verify(
+                petRepository
+        ).findByOwner_IdAndActiveTrue(10L);
+        }
+
+        @Test
+        void getPetAvailabilityShouldSkipQueryWhenUserHasNoActivePets() {
+        LocalDate checkInDate =
+                LocalDate.of(2026, 10, 10);
+
+        LocalDate checkOutDate =
+                LocalDate.of(2026, 10, 12);
+
+        when(
+                petRepository
+                        .findByOwner_IdAndActiveTrue(10L)
+        ).thenReturn(List.of());
+
+        PetAvailabilityResponse response =
+                bookingService.getPetAvailability(
+                        10L,
+                        checkInDate,
+                        checkOutDate
+                );
+
+        assertTrue(
+                response.unavailablePetIds().isEmpty()
+        );
+
+        verifyNoInteractions(bookingPetRepository);
+        }
 
     // ---------- CREATE BOOKING ----------
 
