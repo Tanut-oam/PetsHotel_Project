@@ -14,6 +14,7 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportBookingSummary;
 import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.mapper.DailyCareReportMapper;
 import com.example.petshotel.repository.BookingPetRepository;
@@ -21,6 +22,10 @@ import com.example.petshotel.repository.DailyCareReportRepository;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.DailyCareReportService;
 import com.example.petshotel.exception.ResourceNotFoundException;
+import java.util.Collection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 
 @Service
 public class DailyCareReportServiceImpl implements DailyCareReportService {
@@ -228,5 +233,32 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         if(reporDate.isBefore(booking.getCheckInDate()) || reporDate.isAfter(booking.getCheckOutDate())){
             throw new IllegalArgumentException("Report date must be within the stay");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReportBookingSummary> getReportBookingsForOwner(
+            Long currentUserId, Pageable pageable
+    ) {
+        User user = findUser(currentUserId);
+        return reportRepository.findReportBookingsForOwner(user.getId(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyCareReportResponse> getReportsForOwnerBookings(
+            Long currentUserId, Collection<Long> bookingIds
+    ) {
+        User user = findUser(currentUserId);
+
+        if (bookingIds == null || bookingIds.isEmpty()) {
+            return List.of();
+        }
+
+        return reportRepository
+                .findAllForOwnerAndBookingIds(user.getId(), bookingIds)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 }

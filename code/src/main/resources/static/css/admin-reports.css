@@ -313,3 +313,52 @@ textarea.care-report-input {
     padding: 18px 18px 0;
   }
 }
+.report-date-picker {
+  min-width: 0;
+}
+
+.report-date-picker .date-range-trigger {
+  min-height: 48px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.report-date-picker .date-range-trigger strong {
+  margin: 0;
+}
+
+.report-date-picker .calendar-selection-summary {
+  grid-template-columns: 1fr;
+}
+
+.report-date-picker .calendar-day:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.report-date-picker .calendar-day:disabled {
+  cursor: not-allowed;
+}
+
+.report-date-error {
+  color: var(--red);
+}
+.care-report-entry-heading {
+  margin-bottom: 0;
+}
+
+.care-report-more {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.care-report-more > summary {
+  padding-top: 16px;
+  color: var(--green);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.care-report-more[open] > summary {
+  margin-bottom: 16px;
+}

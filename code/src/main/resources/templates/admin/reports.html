@@ -28,7 +28,7 @@
             <div class="report-booking-info">
               <h3 th:text="|การจอง #${booking.key}|">การจอง #1</h3>
               <span th:text="|เจ้าของ: ${booking.value[0].ownerName}|">เจ้าของ</span>
-              <span th:text="|เข้าพัก ${booking.value[0].checkInDate} ถึง ${booking.value[0].checkOutDate}|">วันที่เข้าพัก</span>
+              <span th:text="|เข้าพัก ${#temporals.format(booking.value[0].checkInDate, 'dd/MM/yyyy')} ถึง ${#temporals.format(booking.value[0].checkOutDate, 'dd/MM/yyyy')}|">วันที่เข้าพัก</span>
               <span th:text="|${#lists.size(booking.value)} ตัว|">จำนวนสัตว์</span>
             </div>
             <div class="report-pet-list">

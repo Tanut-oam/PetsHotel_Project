@@ -26,52 +26,87 @@
 
       <div class="customer-booking-list"
            th:unless="${#lists.isEmpty(reports)}">
-        <article class="panel customer-booking"
+        <details class="panel customer-booking"
                  th:each="booking : ${bookingGroups}"
                  th:with="bookingInfo=${bookingsById[booking.key]}">
 
-          <div class="customer-booking-header">
-            <div>
-              <h2 th:text="|การจอง #${booking.key}|">การจอง #1</h2>
-              <p class="muted"
-                 th:if="${bookingInfo != null}"
-                 th:text="|เข้าพัก ${bookingInfo.checkInDate} ถึง ${bookingInfo.checkOutDate}|">
+          <summary class="customer-booking-toggle">
+            <span class="customer-booking-summary">
+              <strong class="customer-booking-title"
+                      th:text="|การจอง #${booking.key}|">
+                การจอง #1
+              </strong>
+              <span class="muted"
+                    th:if="${bookingInfo != null}"
+                    th:text="|เข้าพัก ${#temporals.format(bookingInfo.checkInDate, 'dd/MM/yyyy')} ถึง ${#temporals.format(bookingInfo.checkOutDate, 'dd/MM/yyyy')}|">
                 วันที่เข้าพัก
-              </p>
-            </div>
-
-            <span class="badge"
-                  th:text="|${reportCountsByBooking[booking.key]} รายงาน|">
-              จำนวนรายงาน
+              </span>
+              <span class="muted"
+                    th:text="|สัตว์เลี้ยงที่มีรายงาน ${#maps.size(booking.value)} ตัว|">
+                จำนวนสัตว์เลี้ยง
+              </span>
             </span>
-          </div>
 
-          <p class="customer-booking-caption"
-             th:text="|สัตว์เลี้ยงที่มีรายงาน ${#maps.size(booking.value)} ตัว|">
-            สัตว์เลี้ยงที่มีรายงาน
-          </p>
+            <span class="customer-booking-meta">
+              <span class="badge"
+                    th:text="|${reportCountsByBooking[booking.key]} รายงาน|">
+                จำนวนรายงาน
+              </span>
+              <span class="customer-booking-chevron"
+                    aria-hidden="true"></span>
+            </span>
+          </summary>
 
-          <div class="customer-pet-list">
-            <div class="customer-pet-row"
-                 th:each="petGroup : ${booking.value}"
-                 th:with="latest=${petGroup.value[0]}">
-              <div class="customer-pet-summary">
-                <strong th:text="${latest.petName}">ชื่อสัตว์เลี้ยง</strong>
-                <span class="muted"
-                      th:text="|${#lists.size(petGroup.value)} รายงาน · ล่าสุด ${latest.reportDate}|">
-                  จำนวนและวันที่รายงาน
-                </span>
+          <div class="customer-booking-body">
+            <h2 class="customer-booking-caption">
+              สัตว์เลี้ยงที่มีรายงาน
+            </h2>
+
+            <div class="customer-pet-list">
+              <div class="customer-pet-row"
+                   th:each="petGroup : ${booking.value}"
+                   th:with="latest=${petGroup.value[0]}">
+                <div class="customer-pet-summary">
+                  <strong th:text="${latest.petName}">
+                    ชื่อสัตว์เลี้ยง
+                  </strong>
+                  <span class="muted"
+                        th:text="|${#lists.size(petGroup.value)} รายงาน · ล่าสุด ${#temporals.format(latest.reportDate, 'dd/MM/yyyy')}|">
+                    จำนวนและวันที่รายงาน
+                  </span>
+                </div>
+
+                <a class="btn btn-primary"
+                   th:href="@{/reports/pets/{bookingPetId}(bookingPetId=${petGroup.key})}"
+                   th:aria-label="|ดูรายงานของ ${latest.petName} ในการจอง #${booking.key}|">
+                  ดูรายงาน
+                </a>
               </div>
-
-              <a class="btn btn-primary"
-                 th:href="@{/reports/pets/{bookingPetId}(bookingPetId=${petGroup.key})}"
-                 th:aria-label="|ดูรายงานของ ${latest.petName} ในการจอง #${booking.key}|">
-                ดูรายงาน
-              </a>
             </div>
           </div>
-        </article>
+        </details>
       </div>
+
+      <nav class="customer-report-pagination"
+           th:if="${totalPages > 1}"
+           aria-label="หน้ารายงานการดูแล">
+        <a class="btn"
+           th:if="${page > 0}"
+           th:href="@{/reports(page=${page - 1})}">
+          ← ก่อนหน้า
+        </a>
+
+        <span class="customer-report-page-status"
+              th:text="|หน้า ${page + 1} จาก ${totalPages}|">
+          เลขหน้า
+        </span>
+
+        <a class="btn"
+           th:if="${page + 1 < totalPages}"
+           th:href="@{/reports(page=${page + 1})}">
+          ถัดไป →
+        </a>
+      </nav>
     </main>
   </div>
 
