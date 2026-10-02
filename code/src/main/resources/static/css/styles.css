@@ -2045,21 +2045,18 @@ small {
 }
 
 .admin-booking-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 7px;
-  width: 100%;
 }
 
 .admin-booking-actions form {
-  min-width: 0;
   margin: 0;
 }
 
-.admin-booking-actions form .btn,
-.admin-booking-actions > .btn {
-  width: 100%;
-  min-width: 0;
+.admin-booking-actions .btn {
+  min-width: 96px;
   justify-content: center;
 }
 
@@ -2381,7 +2378,7 @@ small {
 
 .booking-action-note {
   display: grid;
-  grid-column: 1 / -1;
+  flex: 1 0 100%;
   gap: 3px;
   width: 100%;
   min-width: 0;
@@ -2392,7 +2389,6 @@ small {
   border: 1px solid #e6d28f;
   border-radius: 10px;
   line-height: 1.4;
-
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -2410,5 +2406,41 @@ small {
 @media (max-width: 650px) {
   .booking-action-note {
     padding: 10px 12px;
+  }
+}
+
+#dialog-text.is-structured {
+  display: grid;
+  padding: 0;
+  overflow: hidden;
+}
+
+.booking-dialog-detail-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 16px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.booking-dialog-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.booking-dialog-detail-label {
+  color: #657770;
+  font-weight: 700;
+}
+
+.booking-dialog-detail-value {
+  min-width: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .booking-dialog-detail-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
