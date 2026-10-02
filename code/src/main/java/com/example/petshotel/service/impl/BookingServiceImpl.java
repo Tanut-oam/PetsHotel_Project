@@ -68,583 +68,515 @@ import java.time.ZoneId;
 @Transactional
 public class BookingServiceImpl implements BookingService {
 
-    private static final List<BookingStatus>
-            PET_RESERVING_STATUSES = List.of(
-                    BookingStatus.PENDING,
-                    BookingStatus.CONFIRMED,
-                    BookingStatus.CHECKED_IN
-            );
+        private static final List<BookingStatus> PET_RESERVING_STATUSES = List.of(
+                        BookingStatus.PENDING,
+                        BookingStatus.CONFIRMED,
+                        BookingStatus.CHECKED_IN);
 
-    private final BookingRepository bookingRepository;
-    private final BookingPetRepository bookingPetRepository;
-    private final UserRepository userRepository;
-    private final RoomRepository roomRepository;
-    private final PetRepository petRepository;
-    private final PricingService pricingService;
-    private final ExtraServiceRepository extraServiceRepository;
-    private final PromotionRepository promotionRepository;
-    private final AvailabilityService availabilityService;
-    private final ApplicationEventPublisher eventPublisher;
-    private final BookingMapper bookingMapper;
+        private final BookingRepository bookingRepository;
+        private final BookingPetRepository bookingPetRepository;
+        private final UserRepository userRepository;
+        private final RoomRepository roomRepository;
+        private final PetRepository petRepository;
+        private final PricingService pricingService;
+        private final ExtraServiceRepository extraServiceRepository;
+        private final PromotionRepository promotionRepository;
+        private final AvailabilityService availabilityService;
+        private final ApplicationEventPublisher eventPublisher;
+        private final BookingMapper bookingMapper;
 
-    // =========================================================
-    // CREATE BOOKING
-    // =========================================================
+        // =========================================================
+        // CREATE BOOKING
+        // =========================================================
         @Override
         @Transactional(readOnly = true)
         public PetAvailabilityResponse getPetAvailability(
-                Long userId,
-                LocalDate checkInDate,
-                LocalDate checkOutDate) {
+                        Long userId,
+                        LocalDate checkInDate,
+                        LocalDate checkOutDate) {
 
-        if (userId == null) {
-                throw new IllegalArgumentException(
-                        "User ID is required"
-                );
-        }
+                if (userId == null) {
+                        throw new IllegalArgumentException(
+                                        "User ID is required");
+                }
 
-        validateStayDates(
-                checkInDate,
-                checkOutDate
-        );
+                validateStayDates(
+                                checkInDate,
+                                checkOutDate);
 
-        List<Long> activePetIds =
-                petRepository
-                        .findByOwner_IdAndActiveTrue(userId)
-                        .stream()
-                        .map(pet -> pet.getId())
-                        .toList();
-
-        List<Long> unavailablePetIds =
-                activePetIds.isEmpty()
-                        ? List.of()
-                        : bookingPetRepository
-                                .findOverlappingPetIds(
-                                        activePetIds,
-                                        checkInDate,
-                                        checkOutDate,
-                                        PET_RESERVING_STATUSES
-                                );
-
-        return new PetAvailabilityResponse(
-                checkInDate,
-                checkOutDate,
-                unavailablePetIds
-        );
-        }
-
-    @Override
-    @Transactional(readOnly = true)
-    public BookingPriceResponse previewPrice(CreateBookingRequest request) {
-        return prepareBooking(request, false).price();
-    }
-
-    @Override
-    public BookingResponse createBooking(CreateBookingRequest request) {
-        PreparedBooking prepared = prepareBooking(request, true);
-        return bookingMapper.toResponse(
-                bookingRepository.save(prepared.booking())
-        );
-    }
-
-    private PreparedBooking prepareBooking(
-            CreateBookingRequest request, boolean creating) {
-
-        validateCreateRequest(request);
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User", request.getUserId()));
-
-        Room room = (creating
-                ? roomRepository.findByIdForUpdate(request.getRoomId())
-                : roomRepository.findById(request.getRoomId()))
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Room", request.getRoomId()));
-
-        if (room.getStatus() != RoomStatus.ACTIVE) {
-            throw new RoomNotAvailableException(
-                    room.getId(), request.getCheckInDate(),
-                    request.getCheckOutDate());
-        }
-
-        List<Pet> pets = creating
-        ? petRepository.findAllByIdForUpdate(
-                request.getPetIds()
-        )
-        : petRepository.findAllById(
-                request.getPetIds()
-        );
-
-        Set<Long> foundPetIds = pets.stream()
-                .map(pet -> pet.getId()).collect(Collectors.toSet());
-
-        for (Long petId : request.getPetIds()) {
-            if (!foundPetIds.contains(petId)) {
-                throw new ResourceNotFoundException("Pet", petId);
-            }
-        }
-
-        validatePets(user, pets);
-
-        if (pets.size() > room.getCapacity()) {
-            throw new IllegalArgumentException(
-                    "Number of pets exceeds room capacity");
-        }
-
-        // Preview is only a quote, not a reservation.
-        if (creating) {
-        List<Long> overlappingPetIds =
-                bookingPetRepository.findOverlappingPetIds(
-                        request.getPetIds(),
-                        request.getCheckInDate(),
-                        request.getCheckOutDate(),
-                        PET_RESERVING_STATUSES
-                );
-
-        if (!overlappingPetIds.isEmpty()) {
-                Set<Long> overlappingPetIdSet =
-                        new HashSet<>(overlappingPetIds);
-
-                List<String> overlappingPetNames =
-                        pets.stream()
-                                .filter(pet ->
-                                        overlappingPetIdSet.contains(
-                                                pet.getId()
-                                        )
-                                )
-                                .map((Pet pet) -> pet.getName())
+                List<Long> activePetIds = petRepository
+                                .findByOwner_IdAndActiveTrue(userId)
+                                .stream()
+                                .map(pet -> pet.getId())
                                 .toList();
 
-                throw new PetNotAvailableException(
-                        overlappingPetNames,
-                        request.getCheckInDate(),
-                        request.getCheckOutDate()
-                );
+                List<Long> unavailablePetIds = activePetIds.isEmpty()
+                                ? List.of()
+                                : bookingPetRepository
+                                                .findOverlappingPetIds(
+                                                                activePetIds,
+                                                                checkInDate,
+                                                                checkOutDate,
+                                                                PET_RESERVING_STATUSES);
+
+                return new PetAvailabilityResponse(
+                                checkInDate,
+                                checkOutDate,
+                                unavailablePetIds);
         }
 
-        availabilityService.checkRoomAvailable(
-                room.getId(),
-                request.getCheckInDate(),
-                request.getCheckOutDate(),
-                pets.size()
-        );
+        @Override
+        @Transactional(readOnly = true)
+        public BookingPriceResponse previewPrice(CreateBookingRequest request) {
+                return prepareBooking(request, false).price();
         }
 
-        // Transient graph only: preview does not save any of these objects.
-        Booking booking = Booking.builder()
-                .user(user)
-                .room(room)
-                .checkInDate(request.getCheckInDate())
-                .checkOutDate(request.getCheckOutDate())
-                .status(BookingStatus.PENDING)
-                .build();
-
-        pets.forEach(booking::addPet);
-
-        Map<Long, BookingPet> bookingPetsByPetId =
-                booking.getBookingPets().stream().collect(Collectors.toMap(
-                        item -> item.getPet().getId(), item -> item));
-
-        addSelectedServices(booking, request.getServicePetIds(), bookingPetsByPetId);
-
-        Promotion promotion = null;
-        if (request.getPromotionId() != null) {
-            promotion = promotionRepository.findById(request.getPromotionId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Promotion", request.getPromotionId()));
-
-            validatePromotion(
-                    promotion,
-                    request.getCheckInDate()
-            );
+        @Override
+        public BookingResponse createBooking(CreateBookingRequest request) {
+                PreparedBooking prepared = prepareBooking(request, true);
+                return bookingMapper.toResponse(
+                                bookingRepository.save(prepared.booking()));
         }
 
-        int nights = Math.toIntExact(ChronoUnit.DAYS.between(
-                request.getCheckInDate(), request.getCheckOutDate()));
+        private PreparedBooking prepareBooking(CreateBookingRequest request, boolean creating) {
+                validateCreateRequest(request);
+                User user = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFoundException("User", request.getUserId()));
+                Room room = (creating ? roomRepository.findByIdForUpdate(request.getRoomId()): roomRepository.findById(request.getRoomId())).orElseThrow(() -> new ResourceNotFoundException("Room", request.getRoomId()));
 
-        BookingPriceResponse price = pricingService.calculate(new PricingContext(
-                room, pets.size(), nights,
-                request.getCheckInDate(), request.getCheckOutDate(),
-                booking.getExtraServices(), promotion));
-
-        booking.setRoomAmount(price.basePrice());
-        booking.setServiceAmount(price.extraServicesPrice());
-        booking.setSurchargeAmount(price.holidaySurcharge());
-        booking.setDiscountAmount(price.discountAmount());
-        booking.setTotalPrice(price.totalPrice());
-        booking.setPromotion(promotion);
-        booking.setPromotionName(promotion != null ? promotion.getName() : null);
-
-        return new PreparedBooking(booking, price);
-    }
-
-    private void validatePromotion(
-            Promotion promotion,
-            LocalDate checkInDate) {
-
-        String promotionName = promotion.getName() == null
-                ? "ที่เลือก"
-                : "“" + promotion.getName() + "”";
-
-        if (!Boolean.TRUE.equals(promotion.getActive())) {
-            throw new IllegalArgumentException(
-                    "โปรโมชัน " + promotionName + " ปิดใช้งานแล้ว"
-            );
-        }
-
-        if (promotion.getStartDate() == null
-                || promotion.getEndDate() == null) {
-            throw new IllegalArgumentException(
-                    "ข้อมูลช่วงเวลาของโปรโมชัน "
-                            + promotionName + " ไม่สมบูรณ์"
-            );
-        }
-
-        if (checkInDate.isBefore(promotion.getStartDate())) {
-            throw new IllegalArgumentException(
-                    "โปรโมชัน " + promotionName
-                            + " ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก"
-            );
-        }
-
-        if (checkInDate.isAfter(promotion.getEndDate())) {
-            throw new IllegalArgumentException(
-                    "โปรโมชัน " + promotionName
-                            + " หมดอายุการใช้งานแล้ว"
-            );
-        }
-    }
-
-    private void addSelectedServices(
-            Booking booking,
-            Map<Long, List<Long>> servicePetIds,
-            Map<Long, BookingPet> bookingPetsByPetId) {
-
-        if (servicePetIds == null) return;
-
-        for (Map.Entry<Long, List<Long>> entry : servicePetIds.entrySet()) {
-            Long serviceId = entry.getKey();
-            List<Long> recipients = entry.getValue();
-
-            if (serviceId == null) {
-                throw new IllegalArgumentException(
-                        "ไม่พบรหัสบริการเสริม"
-                );
+                if (room.getStatus() != RoomStatus.ACTIVE) {
+                        throw new RoomNotAvailableException(room.getId(), request.getCheckInDate(),request.getCheckOutDate());
                 }
 
-                /*
-                * Checkbox ที่ไม่ได้เลือกอาจถูก Spring แปลงเป็นค่า null
-                * ให้ถือว่าไม่ได้เลือกบริการรายการนั้น
-                */
-                if (recipients == null || recipients.isEmpty()) {
-                continue;
+                List<Pet> pets = creating
+                                ? petRepository.findAllByIdForUpdate(
+                                                request.getPetIds())
+                                : petRepository.findAllById(
+                                                request.getPetIds());
+
+                Set<Long> foundPetIds = pets.stream()
+                                .map(pet -> pet.getId()).collect(Collectors.toSet());
+
+                for (Long petId : request.getPetIds()) {
+                        if (!foundPetIds.contains(petId)) {
+                                throw new ResourceNotFoundException("Pet", petId);
+                        }
                 }
 
-            Set<Long> uniqueRecipients = new HashSet<>();
-            for (Long petId : recipients) {
-                if (petId == null || !bookingPetsByPetId.containsKey(petId)) {
-                    throw new IllegalArgumentException(
-                            "Service recipient must be a pet in this booking");
-                }
-                if (!uniqueRecipients.add(petId)) {
-                    throw new IllegalArgumentException(
-                            "Duplicate service recipient is not allowed");
-                }
-            }
+                validatePets(user, pets);
 
-            ExtraService extra = extraServiceRepository.findById(serviceId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Extra service", serviceId));
-
-            if (!Boolean.TRUE.equals(extra.getActive())
-                    || extra.getPrice() == null
-                    || extra.getPrice().signum() < 0) {
-                throw new IllegalArgumentException(
-                        "Extra service is unavailable: " + serviceId);
-            }
-
-            for (Long petId : recipients) {
-                BookingPet bookingPet = bookingPetsByPetId.get(petId);
-
-                if (bookingPet.getBooking() != booking
-                        || !booking.getBookingPets().contains(bookingPet)) {
-                    throw new IllegalStateException(
-                            "Service recipient belongs to another booking");
+                if (pets.size() > room.getCapacity()) {
+                        throw new IllegalArgumentException(
+                                        "Number of pets exceeds room capacity");
                 }
 
-                BookingExtraService selected = new BookingExtraService();
-                selected.setBookingPet(bookingPet);
-                selected.setExtraService(extra);
-                selected.setQuantity(1);
-                selected.setUnitPrice(extra.getPrice());
-                selected.setTotalPrice(extra.getPrice());
+                // Preview is only a quote, not a reservation.
+                if (creating) {
+                        List<Long> overlappingPetIds = bookingPetRepository.findOverlappingPetIds(
+                                        request.getPetIds(),
+                                        request.getCheckInDate(),
+                                        request.getCheckOutDate(),
+                                        PET_RESERVING_STATUSES);
 
-                booking.addExtraService(selected);
-            }
-        }
-    }
+                        if (!overlappingPetIds.isEmpty()) {
+                                Set<Long> overlappingPetIdSet = new HashSet<>(overlappingPetIds);
 
-    private record PreparedBooking(
-            Booking booking, BookingPriceResponse price) {
-    }
+                                List<String> overlappingPetNames = pets.stream()
+                                                .filter(pet -> overlappingPetIdSet.contains(
+                                                                pet.getId()))
+                                                .map((Pet pet) -> pet.getName())
+                                                .toList();
 
-    // =========================================================
-    // GET BOOKING
-    // =========================================================
+                                throw new PetNotAvailableException(
+                                                overlappingPetNames,
+                                                request.getCheckInDate(),
+                                                request.getCheckOutDate());
+                        }
 
-    @Override
-    @Transactional(readOnly = true)
-    public BookingResponse getBookingById(Long id) {
+                        availabilityService.checkRoomAvailable(
+                                        room.getId(),
+                                        request.getCheckInDate(),
+                                        request.getCheckOutDate(),
+                                        pets.size());
+                }
 
-        Booking booking = findBooking(id);
+                // Transient graph only: preview does not save any of these objects.
+                Booking booking = Booking.builder()
+                                .user(user)
+                                .room(room)
+                                .checkInDate(request.getCheckInDate())
+                                .checkOutDate(request.getCheckOutDate())
+                                .status(BookingStatus.PENDING)
+                                .build();
 
-        return bookingMapper.toResponse(booking);
-    }
+                pets.forEach(booking::addPet);
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<BookingResponse> getAllBookings() {
+                Map<Long, BookingPet> bookingPetsByPetId = booking.getBookingPets().stream().collect(Collectors.toMap(
+                                item -> item.getPet().getId(), item -> item));
 
-        return bookingRepository.findAll()
-                .stream()
-                .map(bookingMapper::toResponse)
-                .toList();
-    }
+                addSelectedServices(booking, request.getServicePetIds(), bookingPetsByPetId);
 
-    // =========================================================
-    // STATE CHANGES
-    // =========================================================
+                Promotion promotion = null;
+                if (request.getPromotionId() != null) {
+                        promotion = promotionRepository.findById(request.getPromotionId())
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Promotion", request.getPromotionId()));
+                        validatePromotion(promotion, LocalDate.now(ZoneId.of("Asia/Bangkok")));
+                }
 
-    @Override
-    public BookingResponse confirmBooking(Long id) {
+                int nights = Math.toIntExact(ChronoUnit.DAYS.between(
+                                request.getCheckInDate(), request.getCheckOutDate()));
 
-        Booking booking = findBookingForUpdate(id);
+                BookingPriceResponse price = pricingService.calculate(new PricingContext(
+                                room, pets.size(), nights,
+                                request.getCheckInDate(), request.getCheckOutDate(),
+                                booking.getExtraServices(), promotion));
 
-        BookingState state = getState(booking.getStatus());
+                booking.setRoomAmount(price.basePrice());
+                booking.setServiceAmount(price.extraServicesPrice());
+                booking.setSurchargeAmount(price.holidaySurcharge());
+                booking.setDiscountAmount(price.discountAmount());
+                booking.setTotalPrice(price.totalPrice());
+                booking.setPromotion(promotion);
+                booking.setPromotionName(promotion != null ? promotion.getName() : null);
 
-        state.confirm(booking);
-
-        Booking savedBooking = bookingRepository.save(booking);
-
-        eventPublisher.publishEvent(
-        new BookingConfirmedEvent(this, savedBooking)
-        );
-
-        return bookingMapper.toResponse(savedBooking);
-    }
-
-    @Override
-    public BookingResponse checkIn(Long id) {
-        Booking booking = findBookingForUpdate(id);
-
-        BookingState state =
-                getState(booking.getStatus());
-
-        LocalDate currentDate = LocalDate.now(
-                ZoneId.of("Asia/Bangkok")
-        );
-
-        if (booking.getStatus() == BookingStatus.CONFIRMED
-                && !booking.canCheckInOn(currentDate)) {
-            throw new IllegalStateException(
-                    "ยังไม่สามารถเช็กอินการจองนี้ในวันที่ปัจจุบันได้"
-            );
-        }
-
-        state.checkIn(booking);
-
-        Booking savedBooking =
-                bookingRepository.save(booking);
-
-        return bookingMapper.toResponse(savedBooking);
-    }
-
-    @Override
-    public BookingResponse checkOut(Long id) {
-        Booking booking = findBookingForUpdate(id);
-
-        BookingState state =
-                getState(booking.getStatus());
-
-        LocalDate currentDate = LocalDate.now(
-                ZoneId.of("Asia/Bangkok")
-        );
-
-        if (booking.getStatus() == BookingStatus.CHECKED_IN
-                && !booking.canCheckOutOn(currentDate)) {
-            throw new IllegalStateException(
-                    "ยังไม่ถึงวันเช็กเอาต์ของการจองนี้"
-            );
-        }
-
-        state.checkOut(booking);
-
-        Booking savedBooking =
-                bookingRepository.save(booking);
-
-        return bookingMapper.toResponse(savedBooking);
-    }
-
-    @Override
-    public BookingResponse cancelBooking(Long id) {
-
-        Booking booking = findBookingForUpdate(id);
-
-        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
-        throw new IllegalStateException(
-                "Paid bookings cannot be cancelled through this operation"
-        );
-      }
-
-        BookingState state = getState(booking.getStatus());
-        state.cancel(booking);
-
-        Booking savedBooking = bookingRepository.save(booking);
-
-        return bookingMapper.toResponse(savedBooking);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingsByUserId(Long userId) {
-        return bookingRepository.findByUserId(userId)
-                .stream()
-                .map(bookingMapper::toResponse)
-                .toList();
-    }
-
-    // =========================================================
-    // PRIVATE HELPER METHODS
-    // =========================================================
-
-    private Booking findBooking(Long id) {
-
-        return bookingRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Booking" , id
-                        )
-                );
-    }
-
-    private Booking findBookingForUpdate(Long id) {
-    return bookingRepository.findByIdForUpdate(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                    "Booking", id
-            ));
-    }
-
-    private void validateStayDates(
-                LocalDate checkInDate,
-                LocalDate checkOutDate) {
-
-        if (checkInDate == null || checkOutDate == null) {
-                throw new IllegalArgumentException(
-                        "Check-in and check-out dates are required"
-                );
-        }
-
-        if (!checkOutDate.isAfter(checkInDate)) {
-                throw new IllegalArgumentException(
-                        "Check-out date must be after check-in date"
-                );
-        }
-        }
-
-    private void validateCreateRequest(CreateBookingRequest request) {
-
-        if (request == null) {
-            throw new IllegalArgumentException(
-                    "Booking request must not be null"
-            );
-        }
-
-        if (request.getUserId() == null) {
-            throw new IllegalArgumentException(
-                    "User ID is required"
-            );
-        }
-
-        if (request.getRoomId() == null) {
-            throw new IllegalArgumentException(
-                    "Room ID is required"
-            );
-        }
-
-        validateStayDates(
-                request.getCheckInDate(),
-                request.getCheckOutDate()
-        );
-
-        if (request.getPetIds() == null
-                || request.getPetIds().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "At least one pet is required"
-            );
+                return new PreparedBooking(booking, price);
         }
 
 
-        if (request.getPetIds().stream().anyMatch(Objects::isNull)) {
-                throw new IllegalArgumentException(
-                        "Pet ID must not be null"
-                );
+
+        private void validatePromotion(Promotion promotion, LocalDate bookingDate) {
+
+                String promotionName = promotion.getName() == null
+                                ? "ที่เลือก"
+                                : "“" + promotion.getName() + "”";
+
+                if (!Boolean.TRUE.equals(promotion.getActive())) {
+                        throw new IllegalArgumentException(
+                                        "โปรโมชัน " + promotionName + " ปิดใช้งานแล้ว");
+                }
+
+                if (promotion.getStartDate() == null
+                                || promotion.getEndDate() == null) {
+                        throw new IllegalArgumentException(
+                                        "ข้อมูลช่วงเวลาของโปรโมชัน "
+                                                        + promotionName + " ไม่สมบูรณ์");
+                }
+
+                if (bookingDate.isBefore(promotion.getStartDate())) {
+                        throw new IllegalArgumentException(
+                                        "โปรโมชัน " + promotionName
+                                                        + " ยังไม่เริ่มใช้งาน");
+                }
+
+                if (bookingDate.isAfter(promotion.getEndDate())) {
+                        throw new IllegalArgumentException(
+                                        "โปรโมชัน " + promotionName
+                                                        + " หมดอายุการใช้งานแล้ว");
+                }
         }
 
-        Set<Long> uniquePetIds = new HashSet<>(request.getPetIds());
+        private void addSelectedServices(
+                        Booking booking,
+                        Map<Long, List<Long>> servicePetIds,
+                        Map<Long, BookingPet> bookingPetsByPetId) {
 
-        if (uniquePetIds.size() != request.getPetIds().size()) {
-                throw new IllegalArgumentException(
-                        "Duplicate pet IDs are not allowed"
-                );
+                if (servicePetIds == null)
+                        return;
+
+                for (Map.Entry<Long, List<Long>> entry : servicePetIds.entrySet()) {
+                        Long serviceId = entry.getKey();
+                        List<Long> recipients = entry.getValue();
+
+                        if (serviceId == null) {
+                                throw new IllegalArgumentException(
+                                                "ไม่พบรหัสบริการเสริม");
+                        }
+
+                        /*
+                         * Checkbox ที่ไม่ได้เลือกอาจถูก Spring แปลงเป็นค่า null
+                         * ให้ถือว่าไม่ได้เลือกบริการรายการนั้น
+                         */
+                        if (recipients == null || recipients.isEmpty()) {
+                                continue;
+                        }
+
+                        Set<Long> uniqueRecipients = new HashSet<>();
+                        for (Long petId : recipients) {
+                                if (petId == null || !bookingPetsByPetId.containsKey(petId)) {
+                                        throw new IllegalArgumentException(
+                                                        "Service recipient must be a pet in this booking");
+                                }
+                                if (!uniqueRecipients.add(petId)) {
+                                        throw new IllegalArgumentException(
+                                                        "Duplicate service recipient is not allowed");
+                                }
+                        }
+
+                        ExtraService extra = extraServiceRepository.findById(serviceId)
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Extra service", serviceId));
+
+                        if (!Boolean.TRUE.equals(extra.getActive())
+                                        || extra.getPrice() == null
+                                        || extra.getPrice().signum() < 0) {
+                                throw new IllegalArgumentException(
+                                                "Extra service is unavailable: " + serviceId);
+                        }
+
+                        for (Long petId : recipients) {
+                                BookingPet bookingPet = bookingPetsByPetId.get(petId);
+
+                                if (bookingPet.getBooking() != booking
+                                                || !booking.getBookingPets().contains(bookingPet)) {
+                                        throw new IllegalStateException(
+                                                        "Service recipient belongs to another booking");
+                                }
+
+                                BookingExtraService selected = new BookingExtraService();
+                                selected.setBookingPet(bookingPet);
+                                selected.setExtraService(extra);
+                                selected.setQuantity(1);
+                                selected.setUnitPrice(extra.getPrice());
+                                selected.setTotalPrice(extra.getPrice());
+
+                                booking.addExtraService(selected);
+                        }
+                }
         }
 
-    }
-
-    private void validatePets(User user, List<Pet> pets) {
-
-        for (Pet pet : pets) {
-
-            if (!Boolean.TRUE.equals(pet.getActive())) {
-                throw new IllegalStateException(
-                        "Pet is inactive: " + pet.getId()
-                );
-            }
-
-            // สัตว์ที่นำมาจองต้องเป็นของ user คนนี้
-            if (pet.getOwner() == null
-                    || !Objects.equals(pet.getOwner().getId(), user.getId())) {
-
-                throw new IllegalArgumentException(
-                        "Pet " + pet.getId()
-                                + " does not belong to user "
-                                + user.getId()
-                );
-            }
+        private record PreparedBooking(
+                        Booking booking, BookingPriceResponse price) {
         }
-    }
 
+        // =========================================================
+        // GET BOOKING
+        // =========================================================
 
-    private BookingState getState(BookingStatus status) {
+        @Override
+        @Transactional(readOnly = true)
+        public BookingResponse getBookingById(Long id) {
 
-        return switch (status) {
+                Booking booking = findBooking(id);
 
-            case PENDING ->
-                    new PendingState();
+                return bookingMapper.toResponse(booking);
+        }
 
-            case CONFIRMED ->
-                    new ConfirmedState();
+        @Override
+        @Transactional(readOnly = true)
+        public List<BookingResponse> getAllBookings() {
 
-            case CHECKED_IN ->
-                    new CheckedInState();
+                return bookingRepository.findAll()
+                                .stream()
+                                .map(bookingMapper::toResponse)
+                                .toList();
+        }
 
-            case CHECKED_OUT ->
-                    new CheckedOutState();
+        // =========================================================
+        // STATE CHANGES
+        // =========================================================
 
-            case CANCELLED ->
-                    new CancelledState();
-        };
-    }
+        @Override
+        public BookingResponse confirmBooking(Long id) {
+
+                Booking booking = findBookingForUpdate(id);
+
+                BookingState state = getState(booking.getStatus());
+
+                state.confirm(booking);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                eventPublisher.publishEvent(
+                                new BookingConfirmedEvent(this, savedBooking));
+
+                return bookingMapper.toResponse(savedBooking);
+        }
+
+        @Override
+        public BookingResponse checkIn(Long id) {
+                Booking booking = findBookingForUpdate(id);
+
+                BookingState state = getState(booking.getStatus());
+
+                LocalDate currentDate = LocalDate.now(
+                                ZoneId.of("Asia/Bangkok"));
+
+                if (booking.getStatus() == BookingStatus.CONFIRMED
+                                && !booking.canCheckInOn(currentDate)) {
+                        throw new IllegalStateException(
+                                        "ยังไม่สามารถเช็กอินการจองนี้ในวันที่ปัจจุบันได้");
+                }
+
+                state.checkIn(booking);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                return bookingMapper.toResponse(savedBooking);
+        }
+
+        @Override
+        public BookingResponse checkOut(Long id) {
+                Booking booking = findBookingForUpdate(id);
+
+                BookingState state = getState(booking.getStatus());
+
+                LocalDate currentDate = LocalDate.now(
+                                ZoneId.of("Asia/Bangkok"));
+
+                if (booking.getStatus() == BookingStatus.CHECKED_IN
+                                && !booking.canCheckOutOn(currentDate)) {
+                        throw new IllegalStateException(
+                                        "ยังไม่ถึงวันเช็กเอาต์ของการจองนี้");
+                }
+
+                state.checkOut(booking);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                return bookingMapper.toResponse(savedBooking);
+        }
+
+        @Override
+        public BookingResponse cancelBooking(Long id) {
+
+                Booking booking = findBookingForUpdate(id);
+
+                if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+                        throw new IllegalStateException(
+                                        "Paid bookings cannot be cancelled through this operation");
+                }
+
+                BookingState state = getState(booking.getStatus());
+                state.cancel(booking);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                return bookingMapper.toResponse(savedBooking);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<BookingResponse> getBookingsByUserId(Long userId) {
+                return bookingRepository.findByUserId(userId)
+                                .stream()
+                                .map(bookingMapper::toResponse)
+                                .toList();
+        }
+
+        // =========================================================
+        // PRIVATE HELPER METHODS
+        // =========================================================
+
+        private Booking findBooking(Long id) {
+
+                return bookingRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Booking", id));
+        }
+
+        private Booking findBookingForUpdate(Long id) {
+                return bookingRepository.findByIdForUpdate(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "Booking", id));
+        }
+
+        private void validateStayDates(
+                        LocalDate checkInDate,
+                        LocalDate checkOutDate) {
+
+                if (checkInDate == null || checkOutDate == null) {
+                        throw new IllegalArgumentException(
+                                        "Check-in and check-out dates are required");
+                }
+
+                if (!checkOutDate.isAfter(checkInDate)) {
+                        throw new IllegalArgumentException(
+                                        "Check-out date must be after check-in date");
+                }
+        }
+
+        private void validateCreateRequest(CreateBookingRequest request) {
+
+                if (request == null) {
+                        throw new IllegalArgumentException(
+                                        "Booking request must not be null");
+                }
+
+                if (request.getUserId() == null) {
+                        throw new IllegalArgumentException(
+                                        "User ID is required");
+                }
+
+                if (request.getRoomId() == null) {
+                        throw new IllegalArgumentException(
+                                        "Room ID is required");
+                }
+
+                validateStayDates(
+                                request.getCheckInDate(),
+                                request.getCheckOutDate());
+
+                if (request.getPetIds() == null
+                                || request.getPetIds().isEmpty()) {
+
+                        throw new IllegalArgumentException(
+                                        "At least one pet is required");
+                }
+
+                if (request.getPetIds().stream().anyMatch(Objects::isNull)) {
+                        throw new IllegalArgumentException(
+                                        "Pet ID must not be null");
+                }
+
+                Set<Long> uniquePetIds = new HashSet<>(request.getPetIds());
+
+                if (uniquePetIds.size() != request.getPetIds().size()) {
+                        throw new IllegalArgumentException(
+                                        "Duplicate pet IDs are not allowed");
+                }
+
+        }
+
+        private void validatePets(User user, List<Pet> pets) {
+
+                for (Pet pet : pets) {
+
+                        if (!Boolean.TRUE.equals(pet.getActive())) {
+                                throw new IllegalStateException(
+                                                "Pet is inactive: " + pet.getId());
+                        }
+
+                        // สัตว์ที่นำมาจองต้องเป็นของ user คนนี้
+                        if (pet.getOwner() == null
+                                        || !Objects.equals(pet.getOwner().getId(), user.getId())) {
+
+                                throw new IllegalArgumentException(
+                                                "Pet " + pet.getId()
+                                                                + " does not belong to user "
+                                                                + user.getId());
+                        }
+                }
+        }
+
+        private BookingState getState(BookingStatus status) {
+
+                return switch (status) {
+
+                        case PENDING ->
+                                new PendingState();
+
+                        case CONFIRMED ->
+                                new ConfirmedState();
+
+                        case CHECKED_IN ->
+                                new CheckedInState();
+
+                        case CHECKED_OUT ->
+                                new CheckedOutState();
+
+                        case CANCELLED ->
+                                new CancelledState();
+                };
+        }
 
 }

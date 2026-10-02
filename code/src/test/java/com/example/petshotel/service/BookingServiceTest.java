@@ -52,7 +52,7 @@ class BookingServiceTest {
     private AvailabilityService availabilityService;
     private ApplicationEventPublisher eventPublisher;
     private BookingServiceImpl bookingService;
-
+    private static LocalDate today() {return LocalDate.now(ZoneId.of("Asia/Bangkok"));}
     private User user;
     private Room room;
     private Pet pet;
@@ -513,8 +513,8 @@ class BookingServiceTest {
         promotion.setId(50L);
         promotion.setName("SAVE20");
         promotion.setActive(true);
-        promotion.setStartDate(LocalDate.of(2026, 10, 1));
-        promotion.setEndDate(LocalDate.of(2026, 10, 31));
+        promotion.setStartDate(today().minusDays(1));
+        promotion.setEndDate(today().plusDays(30));
 
         when(promotionRepository.findById(50L))
                 .thenReturn(Optional.of(promotion));
@@ -545,8 +545,8 @@ class BookingServiceTest {
         promotion.setId(50L);
         promotion.setName("OLD10");
         promotion.setActive(true);
-        promotion.setStartDate(LocalDate.of(2026, 9, 1));
-        promotion.setEndDate(LocalDate.of(2026, 9, 30));
+        promotion.setStartDate(today().minusDays(30));
+        promotion.setEndDate(today().minusDays(1));
 
         when(promotionRepository.findById(50L))
                 .thenReturn(Optional.of(promotion));
@@ -577,8 +577,8 @@ class BookingServiceTest {
         promotion.setId(50L);
         promotion.setName("FUTURE10");
         promotion.setActive(true);
-        promotion.setStartDate(LocalDate.of(2026, 11, 1));
-        promotion.setEndDate(LocalDate.of(2026, 11, 30));
+        promotion.setStartDate(today().plusDays(1));
+        promotion.setEndDate(today().plusDays(30));
 
         when(promotionRepository.findById(50L))
                 .thenReturn(Optional.of(promotion));
@@ -589,8 +589,7 @@ class BookingServiceTest {
         );
 
         assertEquals(
-                "โปรโมชัน “FUTURE10” "
-                        + "ยังไม่เริ่มใช้งานในวันเช็กอินที่เลือก",
+                "โปรโมชัน “FUTURE10” ยังไม่เริ่มใช้งาน",
                 exception.getMessage()
         );
 
@@ -1080,6 +1079,29 @@ class BookingServiceTest {
 
         assertTrue(saved.getExtraServices().isEmpty());
         verifyNoInteractions(extraServiceRepository);
+        }
+
+        @Test
+        void promotionValidTodayShouldApplyEvenIfCheckInIsAfterPromotionEnds() {
+                prepareCreate();
+                CreateBookingRequest request = validRequest();
+                request.setPromotionId(50L);
+                request.setCheckInDate(today().plusDays(20));
+                request.setCheckOutDate(today().plusDays(22));
+
+                Promotion promotion = new Promotion();
+                promotion.setId(50L);
+                promotion.setName("TODAY10");
+                promotion.setActive(true);
+                promotion.setStartDate(today());
+                promotion.setEndDate(today().plusDays(1));
+
+                when(promotionRepository.findById(50L))
+                        .thenReturn(Optional.of(promotion));
+
+                bookingService.createBooking(request);
+
+                assertSame(promotion, capturedBooking().getPromotion());
         }
 
 }
