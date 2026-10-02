@@ -30,16 +30,6 @@ public class PromotionDiscountStrategy implements PricingStrategy {
             return BigDecimal.ZERO;
         }
 
-        if (promotion.getStartDate() != null
-                && context.getCheckIn().isBefore(promotion.getStartDate())) {
-            return BigDecimal.ZERO;
-        }
-
-        if (promotion.getEndDate() != null
-                && context.getCheckIn().isAfter(promotion.getEndDate())) {
-            return BigDecimal.ZERO;
-        }
-
         if (promotion.getType() == null
                 || promotion.getValue() == null
                 || promotion.getValue().signum() < 0) {

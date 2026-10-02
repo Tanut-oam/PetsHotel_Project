@@ -97,7 +97,9 @@
       || "ไม่ใช้โปรโมชัน";
 
   function updatePromotionAvailability() {
-    const selectedCheckIn = checkIn.value;
+    const bookingDate = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Bangkok"
+    });
     const message = byId("promotion-availability-message");
     let removedMessage = "";
 
@@ -115,16 +117,18 @@
         !startDate || !endDate;
 
       const notStarted = Boolean(
-        selectedCheckIn
+        bookingDate
         && startDate
-        && selectedCheckIn < startDate
+        && bookingDate < startDate
       );
 
       const expired = Boolean(
-        selectedCheckIn
+        bookingDate
         && endDate
-        && selectedCheckIn > endDate
+        && bookingDate > endDate
       );
+
+
 
       option.disabled =
         incompletePeriod || notStarted || expired;
@@ -140,7 +144,7 @@
           `${baseLabel} — ไม่มีข้อมูลช่วงเวลาการใช้งาน`;
       } else if (expired) {
         option.textContent =
-          `${baseLabel} — หมดอายุสำหรับวันเช็กอินที่เลือก`;
+          `${baseLabel} — หมดอายุแล้ว`;
       } else if (notStarted) {
         option.textContent =
           `${baseLabel} — ยังไม่เริ่มใช้งาน`;
