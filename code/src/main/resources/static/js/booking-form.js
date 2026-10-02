@@ -28,6 +28,16 @@
   const error = byId("booking-error");
   const dialog = byId("create-dialog");
 
+  const petAvailabilityStatus =
+  byId("pet-availability-status");
+
+  const petCards = [
+    ...form.querySelectorAll("[data-booking-pet]")
+  ];
+
+  const petAvailabilityUrl =
+    form.dataset.petAvailabilityUrl;
+
   const csrfToken =
     document.querySelector('meta[name="_csrf"]')?.content;
 
@@ -44,9 +54,13 @@
   let quoteKey = null;
   let quoteTotal = null;
 
+  let petAvailabilityRequest = null;
+  let petAvailabilityRevision = 0;
+  let petAvailabilityReady = false;
+
   const pets = () => [
     ...form.querySelectorAll('input[name="petIds"]:checked')
-  ];
+  ].filter(input => !input.disabled);
 
   const recipients = group => [
     ...group.querySelectorAll("[data-service-pet]")
@@ -78,6 +92,228 @@
       )
     ) || 0;
   }
+
+    function setPetCardState(
+      card,
+      state,
+      message
+    ) {
+      card.classList.remove(
+        "is-available",
+        "is-unavailable",
+        "is-checking"
+      );
+
+      card.classList.add(`is-${state}`);
+
+      const messageElement =
+        card.querySelector(
+          "[data-pet-availability-message]"
+        );
+
+      messageElement.textContent = message;
+    }
+
+    function setPetsChecking() {
+      petCards.forEach(card => {
+        const input = card.querySelector(
+          "[data-booking-pet-input]"
+        );
+
+        input.disabled = true;
+
+        setPetCardState(
+          card,
+          "checking",
+          "กำลังตรวจสอบ..."
+        );
+      });
+    }
+
+    function petAvailabilityError(body) {
+      if (body?.message) {
+        return body.message;
+      }
+
+      return "ตรวจสอบตารางสัตว์เลี้ยงไม่สำเร็จ";
+    }
+
+    async function refreshPetAvailability() {
+      petAvailabilityRequest?.abort();
+
+      petAvailabilityRequest = null;
+      petAvailabilityReady = false;
+
+      const version = ++petAvailabilityRevision;
+
+      if (
+        !checkIn.value
+        || !checkOut.value
+        || nights() < 1
+      ) {
+        petAvailabilityStatus.textContent =
+          "เลือกวันเช็กอินและเช็กเอาต์ก่อน";
+
+        petAvailabilityStatus.className =
+          "pet-availability-status is-neutral";
+
+        setPetsChecking();
+        syncServices();
+        updateSummary();
+        refreshPrice();
+
+        return;
+      }
+
+      setPetsChecking();
+
+      petAvailabilityStatus.textContent =
+        "กำลังตรวจสอบตารางของสัตว์เลี้ยง...";
+
+      petAvailabilityStatus.className =
+        "pet-availability-status is-loading";
+
+      const controller = new AbortController();
+      petAvailabilityRequest = controller;
+
+      const url = new URL(
+        petAvailabilityUrl,
+        window.location.origin
+      );
+
+      url.searchParams.set(
+        "checkInDate",
+        checkIn.value
+      );
+
+      url.searchParams.set(
+        "checkOutDate",
+        checkOut.value
+      );
+
+      try {
+        const response = await fetch(url, {
+          method: "GET",
+          credentials: "same-origin",
+          headers: {
+            Accept: "application/json"
+          },
+          signal: controller.signal
+        });
+
+        const body = await response
+          .json()
+          .catch(() => null);
+
+        if (version !== petAvailabilityRevision) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            petAvailabilityError(body)
+          );
+        }
+
+        const unavailableIds = new Set(
+          (
+            Array.isArray(body.unavailablePetIds)
+              ? body.unavailablePetIds
+              : []
+          ).map(String)
+        );
+
+        petCards.forEach(card => {
+          const input = card.querySelector(
+            "[data-booking-pet-input]"
+          );
+
+          const unavailable =
+            unavailableIds.has(
+              String(card.dataset.petId)
+            );
+
+          if (unavailable) {
+            input.checked = false;
+            input.disabled = true;
+
+            setPetCardState(
+              card,
+              "unavailable",
+              "มีการจองในช่วงวันที่เลือกแล้ว"
+            );
+
+            return;
+          }
+
+          input.disabled = false;
+
+          setPetCardState(
+            card,
+            "available",
+            "ว่างในช่วงวันที่เลือก"
+          );
+        });
+
+        petAvailabilityReady = true;
+
+        if (unavailableIds.size > 0) {
+          petAvailabilityStatus.textContent =
+            `มีสัตว์เลี้ยง ${unavailableIds.size} ตัว`
+            + " ที่ไม่ว่างในช่วงวันที่เลือก";
+
+          petAvailabilityStatus.className =
+            "pet-availability-status is-warning";
+        } else {
+          petAvailabilityStatus.textContent =
+            "สัตว์เลี้ยงทุกตัวว่างในช่วงวันที่เลือก";
+
+          petAvailabilityStatus.className =
+            "pet-availability-status is-success";
+        }
+
+        syncServices();
+        updateSummary();
+        refreshPrice();
+      } catch (failure) {
+        if (failure.name === "AbortError") {
+          return;
+        }
+
+        if (version !== petAvailabilityRevision) {
+          return;
+        }
+
+        petCards.forEach(card => {
+          const input = card.querySelector(
+            "[data-booking-pet-input]"
+          );
+
+          input.disabled = true;
+
+          setPetCardState(
+            card,
+            "unavailable",
+            "ยังตรวจสอบไม่ได้"
+          );
+        });
+
+        petAvailabilityStatus.textContent =
+          failure.message
+          || "ตรวจสอบตารางสัตว์เลี้ยงไม่สำเร็จ";
+
+        petAvailabilityStatus.className =
+          "pet-availability-status is-error";
+
+        syncServices();
+        updateSummary();
+        clearPrice();
+      } finally {
+        if (petAvailabilityRequest === controller) {
+          petAvailabilityRequest = null;
+        }
+      }
+    }
 
   function syncServices() {
     const selected = new Set(
@@ -438,6 +674,11 @@
     }
 
     if (index === 1) {
+
+      if (!petAvailabilityReady) {
+        return fail(index,"กรุณารอระบบตรวจสอบตารางสัตว์เลี้ยง");
+      }
+
       if (!pets().length) {
         return fail(index, "เลือกสัตว์เลี้ยงอย่างน้อย 1 ตัว");
       }
@@ -562,12 +803,22 @@
     form.requestSubmit(submit);
   });
 
-  function changed() {
+  function changed(changeEvent) {
     approved = false;
     error.hidden = true;
 
     syncServices();
     updateSummary();
+
+    if (
+      changeEvent.target === checkIn
+      || changeEvent.target === checkOut
+    ) {
+      clearPrice();
+      refreshPetAvailability();
+      return;
+    }
+
     refreshPrice();
   }
 
@@ -597,7 +848,7 @@
   );
 
   showStep(errorStep >= 0 ? errorStep : 0, false);
-  refreshPrice();
+  refreshPetAvailability();
 
   byId("server-errors")?.focus();
 
@@ -613,6 +864,6 @@
 
     syncServices();
     showStep(currentStep, false);
-    refreshPrice();
+    refreshPetAvailability();
   });
 })();

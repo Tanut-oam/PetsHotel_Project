@@ -6,6 +6,7 @@ import com.example.petshotel.dto.request.CreateBookingApiRequest;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
 import com.example.petshotel.dto.response.BookingPriceResponse;
+import com.example.petshotel.dto.response.PetAvailabilityResponse;
 import com.example.petshotel.service.BookingService;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
@@ -18,10 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.security.Principal;
 import java.util.List;
 import java.util.Objects;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -70,6 +73,31 @@ public class BookingRestController {
                 .servicePetIds(request.servicePetIds())
                 .promotionId(request.promotionId())
                 .build());
+    }
+
+    @GetMapping("/pet-availability")
+    public PetAvailabilityResponse getPetAvailability(
+            @RequestParam
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate checkInDate,
+
+            @RequestParam
+            @DateTimeFormat(
+                    iso = DateTimeFormat.ISO.DATE
+            )
+            LocalDate checkOutDate,
+
+            Principal principal) {
+
+        User user = currentUser(principal);
+
+        return bookingService.getPetAvailability(
+                user.getId(),
+                checkInDate,
+                checkOutDate
+        );
     }
 
     @GetMapping

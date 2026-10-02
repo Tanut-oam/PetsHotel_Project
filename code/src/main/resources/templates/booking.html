@@ -216,7 +216,10 @@
               method="post"
               th:action="@{/bookings}"
               th:object="${bookingForm}"
-              th:attr="data-preview-url=@{/api/bookings/preview-price}">
+              th:attr="
+              data-preview-url=@{/api/bookings/preview-price},
+              data-pet-availability-url=@{/api/bookings/pet-availability}
+            ">
 
           <div id="server-errors"
                th:if="${#fields.hasAnyErrors()}"
@@ -306,25 +309,39 @@
 
           <!-- ขั้นที่ 2: สัตว์เลี้ยง -->
           <section data-booking-step="1"
-                   aria-labelledby="heading-pets">
+                  aria-labelledby="heading-pets">
 
-            <h2 id="heading-pets" tabindex="-1">
+            <h2 id="heading-pets"
+                tabindex="-1">
               เลือกสัตว์เลี้ยง
             </h2>
 
             <p class="muted">
-              เลือกอย่างน้อย 1 ตัว และไม่เกินความจุห้อง
+              ระบบจะแสดงเฉพาะสัตว์ที่ว่างในช่วงวันที่เลือก
+              เลือกอย่างน้อย 1 ตัวและไม่เกินความจุห้อง
+            </p>
+
+            <p id="pet-availability-status"
+              class="pet-availability-status"
+              role="status"
+              aria-live="polite">
+              กำลังตรวจสอบตารางของสัตว์เลี้ยง...
             </p>
 
             <p th:if="${#lists.isEmpty(pets)}">
               ยังไม่มีสัตว์เลี้ยงที่เลือกได้
-              <a th:href="@{/pets}">ไปเพิ่มสัตว์เลี้ยง</a>
+              <a th:href="@{/pets}">
+                ไปเพิ่มสัตว์เลี้ยง
+              </a>
             </p>
 
             <label th:each="pet : ${pets}"
-                  class="choice pet-booking-choice">
+                  class="choice pet-booking-choice"
+                  data-booking-pet
+                  th:attr="data-pet-id=${pet.id}">
 
               <input type="checkbox"
+                    data-booking-pet-input
                     th:field="*{petIds}"
                     th:value="${pet.id}"
                     th:attr="data-name=${pet.name}">
@@ -347,19 +364,28 @@
                 <strong th:text="${pet.name}">
                   ชื่อสัตว์เลี้ยง
                 </strong>
+
                 <br>
+
                 <small th:text="${pet.type}">
                   ประเภทสัตว์
+                </small>
+
+                <small class="pet-availability-message"
+                      data-pet-availability-message>
+                  กำลังตรวจสอบ...
                 </small>
               </span>
             </label>
 
             <p th:if="${#fields.hasErrors('petIds')}"
-               th:errors="*{petIds}"
-               data-field-error></p>
+              th:errors="*{petIds}"
+              data-field-error>
+            </p>
 
             <p id="pet-selection-count"
-               aria-live="polite"></p>
+              aria-live="polite">
+            </p>
           </section>
 
           <!-- ขั้นที่ 3: บริการเสริม -->

@@ -1292,6 +1292,650 @@ small {
     .calendar-selection-summary {
       gap: 8px;
     }
-  
 
+  }
+  
+    /* =========================================================
+   Pet availability in booking form
+   ========================================================= */
+
+  .pet-availability-status {
+    margin: 12px 0 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: .92rem;
+    line-height: 1.45;
+  }
+
+  .pet-availability-status.is-neutral {
+    color: var(--muted);
+    background: #f3f6f3;
+  }
+
+  .pet-availability-status.is-loading {
+    color: #755a18;
+    background: #fff8dc;
+  }
+
+  .pet-availability-status.is-success {
+    color: var(--green-dark);
+    background: var(--green-light);
+  }
+
+  .pet-availability-status.is-warning {
+    color: #805f13;
+    background: #fff5ce;
+  }
+
+  .pet-availability-status.is-error {
+    color: var(--red);
+    background: #fff1f1;
+  }
+
+  .pet-booking-choice {
+    position: relative;
+    transition:
+      border-color .18s ease,
+      background-color .18s ease,
+      opacity .18s ease;
+  }
+
+  .pet-booking-choice.is-checking {
+    cursor: wait;
+    opacity: .62;
+  }
+
+  .pet-booking-choice.is-available {
+    background: #f8fcf9;
+    border-color: #b7d8c3;
+  }
+
+  .pet-booking-choice.is-available:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+
+  .pet-booking-choice.is-unavailable {
+    cursor: not-allowed;
+    color: #7b827e;
+    background: #e8ece9;
+    border-color: #c9d0cb;
+    opacity: 1;
+  }
+
+  .pet-booking-choice.is-unavailable:hover {
+    background: #e8ece9;
+    border-color: #c9d0cb;
+  }
+
+  .pet-booking-choice.is-unavailable input {
+    cursor: not-allowed;
+    accent-color: #9ba39e;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .choice-text strong {
+    color: #6f7672;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-booking-photo {
+    filter: grayscale(100%);
+    opacity: .55;
+    border-color: #bfc6c1;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-booking-photo-placeholder {
+    filter: grayscale(100%);
+    opacity: .55;
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-availability-message {
+    color: #767d79;
+  }
+
+  .pet-availability-message {
+    display: block;
+    margin-top: 5px;
+    font-size: .82rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .pet-booking-choice.is-checking
+  .pet-availability-message {
+    color: var(--muted);
+  }
+
+  .pet-booking-choice.is-available
+  .pet-availability-message {
+    color: var(--green);
+  }
+
+  .pet-booking-choice.is-unavailable
+  .pet-availability-message {
+    color: var(--red);
+  }
+
+  /* =========================================================
+   Booking and payment status
+   ========================================================= */
+
+.booking-status-badge,
+.payment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* รอยืนยัน */
+.booking-status-badge[data-status-label="PENDING"] {
+  color: #805b00;
+  background: #fff4c7;
+  border-color: #e7c864;
+}
+
+/* ยืนยันแล้ว */
+.booking-status-badge[data-status-label="CONFIRMED"] {
+  color: #17613d;
+  background: #e2f4e9;
+  border-color: #9bcbb0;
+}
+
+/* เข้าพักแล้ว */
+.booking-status-badge[data-status-label="CHECKED_IN"] {
+  color: #175c77;
+  background: #e2f3f8;
+  border-color: #93c8d8;
+}
+
+/* เช็กเอาต์แล้ว */
+.booking-status-badge[data-status-label="CHECKED_OUT"] {
+  color: #505a55;
+  background: #edf0ee;
+  border-color: #cbd2ce;
+}
+
+/* ยกเลิกแล้ว */
+.booking-status-badge[data-status-label="CANCELLED"] {
+  color: #a32e2e;
+  background: #fde8e8;
+  border-color: #eab0b0;
+}
+
+/* ยังไม่ชำระ */
+.payment-status-badge[data-payment-label="UNPAID"] {
+  color: #805b00;
+  background: #fff4c7;
+  border-color: #e7c864;
+}
+
+/* ชำระแล้ว */
+.payment-status-badge[data-payment-label="PAID"] {
+  color: #17613d;
+  background: #e2f4e9;
+  border-color: #9bcbb0;
+}
+
+/* แถวรายการที่ยกเลิก */
+.booking-row-cancelled {
+  background: #fffafa;
+}
+
+.booking-row-cancelled td {
+  color: #7e706f;
+}
+
+/* สถานะด้านบนของหน้ารายละเอียด */
+.booking-detail-status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+/* กล่องแจ้งว่ารายการถูกยกเลิก */
+.booking-cancelled-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  color: #832929;
+  background: #fff1f1;
+  border: 1px solid #edb9b9;
+  border-left: 5px solid #c74848;
+  border-radius: 14px;
+}
+
+.booking-cancelled-notice h2 {
+  margin: 0 0 5px;
+  color: #832929;
+  font-size: 1.1rem;
+}
+
+.booking-cancelled-notice p {
+  margin: 0;
+  color: #8b4a4a;
+  line-height: 1.55;
+}
+
+.booking-cancelled-icon {
+  display: inline-flex;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #c74848;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .booking-status-badge,
+  .payment-status-badge {
+    min-width: 88px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
+  .booking-cancelled-notice {
+    padding: 15px;
+  }
+}
+
+/* =========================================================
+   Room availability search results
+   ========================================================= */
+
+.availability-search-panel {
+  margin-top: 18px;
+}
+
+.availability-search-form {
+  grid-template-columns:
+    minmax(280px, 2fr)
+    minmax(180px, 1fr)
+    minmax(150px, auto);
+  align-items: end;
+}
+
+.availability-search-form
+.btn[type="submit"] {
+  min-height: 68px;
+  padding-inline: 24px;
+  white-space: nowrap;
+}
+
+.availability-search-form .btn {
+  min-height: 48px;
+}
+
+.availability-results {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.availability-result-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.availability-result-header h2 {
+  margin: 2px 0 8px;
+}
+
+.availability-result-eyebrow {
+  margin: 0;
+  color: var(--green);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.availability-result-period {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.availability-result-period strong {
+  color: var(--text);
+}
+
+.availability-result-count {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 110px;
+  padding: 13px 18px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: var(--green);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgb(31 105 76 / 18%);
+}
+
+.availability-result-count strong {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.availability-result-count span {
+  margin-top: 5px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.availability-filter-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-bottom: 20px;
+  padding: 13px 16px;
+  color: var(--green-dark);
+  background: var(--green-light);
+  border: 1px solid #b8d9c5;
+  border-radius: 12px;
+}
+
+.availability-filter-note > span {
+  display: inline-flex;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: var(--green);
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.availability-filter-note p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.availability-result-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.availability-result-table th,
+.availability-result-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.availability-result-table th {
+  color: var(--muted);
+  background: #fafcf9;
+  white-space: nowrap;
+}
+
+/* หมายเลขห้อง */
+.availability-result-table th:nth-child(1),
+.availability-result-table td:nth-child(1) {
+  width: 15%;
+}
+
+/* ชื่อห้อง */
+.availability-result-table th:nth-child(2),
+.availability-result-table td:nth-child(2) {
+  width: 20%;
+}
+
+/* จำนวนสัตว์เลี้ยง */
+.availability-result-table th:nth-child(3),
+.availability-result-table td:nth-child(3) {
+  width: 21%;
+}
+
+/* ราคา */
+.availability-result-table th:nth-child(4),
+.availability-result-table td:nth-child(4) {
+  width: 27%;
+}
+
+/* ปุ่มดำเนินการ */
+.availability-result-table th:nth-child(5),
+.availability-result-table td:nth-child(5) {
+  width: 17%;
+  text-align: center;
+}
+
+.availability-result-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.availability-result-table tbody tr {
+  transition:
+    background-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.availability-result-table tbody tr:hover {
+  background: #f5faf7;
+}
+
+.availability-result-table .btn {
+  min-width: 104px;
+  white-space: nowrap;
+}
+
+.availability-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px;
+  color: #785b17;
+  background: #fff9e8;
+  border: 1px solid #ead69a;
+  border-radius: 14px;
+}
+
+.availability-empty h3 {
+  margin: 0 0 5px;
+  color: #624a12;
+}
+
+.availability-empty p {
+  margin: 0;
+  color: #806b39;
+  line-height: 1.55;
+}
+
+.availability-empty-icon {
+  display: inline-flex;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #b58a27;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .availability-result-header {
+    flex-direction: column;
+  }
+
+  .availability-result-count {
+    width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    gap: 7px;
+  }
+
+  .availability-result-count strong {
+    font-size: 1.2rem;
+  }
+
+  .availability-result-count span {
+    margin-top: 0;
+  }
+
+  .availability-result-table thead {
+    display: none;
+  }
+
+  .availability-result-table,
+  .availability-result-table tbody,
+  .availability-result-table tr,
+  .availability-result-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .availability-result-table tr {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .availability-result-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .availability-result-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 7px 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .availability-result-table td::before {
+    content: attr(data-detail-label);
+    color: var(--muted);
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .availability-result-table td:last-child {
+    padding-top: 12px;
+  }
+
+  .availability-result-table td:last-child .btn {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Shared date range picker
+   ========================================================= */
+
+.shared-date-range-picker {
+  width: 100%;
+  min-width: 0;
+}
+
+.shared-date-range-picker .date-range-trigger {
+  height: 100%;
+}
+
+.home-availability-panel {
+  margin-top: 18px;
+}
+
+.home-availability-form {
+  grid-template-columns:
+    minmax(280px, 2fr)
+    minmax(180px, 1fr)
+    minmax(160px, auto);
+  align-items: end;
+}
+
+.home-availability-form .field {
+  min-width: 0;
+}
+
+.home-availability-form .btn[type="submit"] {
+  min-height: 68px;
+  padding-inline: 24px;
+  white-space: nowrap;
+}
+
+@media (max-width: 850px) {
+  .home-availability-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .home-availability-form
+  .shared-date-range-picker {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .home-availability-form {
+    grid-template-columns: 1fr;
+  }
+
+  .home-availability-form
+  .shared-date-range-picker {
+    grid-column: auto;
+  }
+
+  .home-availability-form
+  .btn[type="submit"] {
+    width: 100%;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 850px) {
+  .availability-search-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .availability-search-form
+  .shared-date-range-picker {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .availability-search-form {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-search-form
+  .shared-date-range-picker {
+    grid-column: auto;
+  }
+
+  .availability-search-form
+  .btn[type="submit"] {
+    width: 100%;
+    min-height: 50px;
+  }
 }

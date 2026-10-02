@@ -16,6 +16,7 @@ import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.dto.request.CreateBookingRequest;
 import com.example.petshotel.dto.response.BookingResponse;
 import com.example.petshotel.dto.response.BookingPriceResponse;
+import com.example.petshotel.dto.response.PetAvailabilityResponse;
 
 import com.example.petshotel.pricing.PricingContext;
 
@@ -89,7 +90,48 @@ public class BookingServiceImpl implements BookingService {
     // =========================================================
     // CREATE BOOKING
     // =========================================================
+        @Override
+        @Transactional(readOnly = true)
+        public PetAvailabilityResponse getPetAvailability(
+                Long userId,
+                LocalDate checkInDate,
+                LocalDate checkOutDate) {
 
+        if (userId == null) {
+                throw new IllegalArgumentException(
+                        "User ID is required"
+                );
+        }
+
+        validateStayDates(
+                checkInDate,
+                checkOutDate
+        );
+
+        List<Long> activePetIds =
+                petRepository
+                        .findByOwner_IdAndActiveTrue(userId)
+                        .stream()
+                        .map(Pet::getId)
+                        .toList();
+
+        List<Long> unavailablePetIds =
+                activePetIds.isEmpty()
+                        ? List.of()
+                        : bookingPetRepository
+                                .findOverlappingPetIds(
+                                        activePetIds,
+                                        checkInDate,
+                                        checkOutDate,
+                                        PET_RESERVING_STATUSES
+                                );
+
+        return new PetAvailabilityResponse(
+                checkInDate,
+                checkOutDate,
+                unavailablePetIds
+        );
+        }
 
     @Override
     @Transactional(readOnly = true)
@@ -445,6 +487,23 @@ public class BookingServiceImpl implements BookingService {
             ));
     }
 
+    private void validateStayDates(
+                LocalDate checkInDate,
+                LocalDate checkOutDate) {
+
+        if (checkInDate == null || checkOutDate == null) {
+                throw new IllegalArgumentException(
+                        "Check-in and check-out dates are required"
+                );
+        }
+
+        if (!checkOutDate.isAfter(checkInDate)) {
+                throw new IllegalArgumentException(
+                        "Check-out date must be after check-in date"
+                );
+        }
+        }
+
     private void validateCreateRequest(CreateBookingRequest request) {
 
         if (request == null) {
@@ -465,6 +524,11 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
+        validateStayDates(
+                request.getCheckInDate(),
+                request.getCheckOutDate()
+        );
+
         if (request.getPetIds() == null
                 || request.getPetIds().isEmpty()) {
 
@@ -473,13 +537,6 @@ public class BookingServiceImpl implements BookingService {
             );
         }
 
-        if (request.getCheckInDate() == null
-                || request.getCheckOutDate() == null) {
-
-            throw new IllegalArgumentException(
-                    "Check-in and check-out dates are required"
-            );
-        }
 
         if (request.getPetIds().stream().anyMatch(Objects::isNull)) {
                 throw new IllegalArgumentException(
@@ -495,13 +552,6 @@ public class BookingServiceImpl implements BookingService {
                 );
         }
 
-        if (!request.getCheckOutDate()
-                .isAfter(request.getCheckInDate())) {
-
-            throw new IllegalArgumentException(
-                    "Check-out date must be after check-in date"
-            );
-        }
     }
 
     private void validatePets(User user, List<Pet> pets) {
