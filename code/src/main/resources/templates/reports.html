@@ -35,7 +35,7 @@
               <h2 th:text="|การจอง #${booking.key}|">การจอง #1</h2>
               <p class="muted"
                  th:if="${bookingInfo != null}"
-                 th:text="|เข้าพัก ${bookingInfo.checkInDate} ถึง ${bookingInfo.checkOutDate}|">
+                 th:text="|เข้าพัก ${#temporals.format(bookingInfo.checkInDate, 'dd/MM/yyyy')} ถึง ${#temporals.format(bookingInfo.checkOutDate, 'dd/MM/yyyy')}|">
                 วันที่เข้าพัก
               </p>
             </div>
@@ -58,7 +58,7 @@
               <div class="customer-pet-summary">
                 <strong th:text="${latest.petName}">ชื่อสัตว์เลี้ยง</strong>
                 <span class="muted"
-                      th:text="|${#lists.size(petGroup.value)} รายงาน · ล่าสุด ${latest.reportDate}|">
+                      th:text="|${#lists.size(petGroup.value)} รายงาน · ล่าสุด ${#temporals.format(latest.reportDate, 'dd/MM/yyyy')}|">
                   จำนวนและวันที่รายงาน
                 </span>
               </div>
