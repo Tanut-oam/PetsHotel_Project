@@ -37,6 +37,8 @@ import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.DashboardServiceImpl;
 import com.example.petshotel.domain.enums.PaymentStatus;
+import com.example.petshotel.mapper.RevenueBookingMapper;
+import com.example.petshotel.dto.response.RevenueBookingResponse;
 
 public class DashboardServiceTest {
     private ReceiptRepository receiptRepository;
@@ -54,7 +56,13 @@ public class DashboardServiceTest {
         availabilityService = mock(AvailabilityService.class);
         recentBookingMapper = new RecentBookingMapper();
 
-        dashboardService = new DashboardServiceImpl(receiptRepository, bookingRepository, petRepository, availabilityService, recentBookingMapper);
+        dashboardService = new DashboardServiceImpl(
+        receiptRepository,
+        bookingRepository,
+        petRepository,
+        availabilityService,
+        recentBookingMapper,
+        new RevenueBookingMapper());
     }
 
     private Receipt receipt(String amount, LocalDate paidDate, PaymentStatus paymentStatus) {
@@ -412,5 +420,128 @@ public class DashboardServiceTest {
             assertEquals(BigDecimal.ZERO, month.totalAmount());
         }
     }
+
+        @Test
+        void includesPaidBookingDetailsUsingSavedReceiptPrices() {
+        Booking paidBooking =
+                recentBooking(LocalDate.of(2025, 9, 30));
+
+        paidBooking.setPaymentStatus(PaymentStatus.PAID);
+        paidBooking.setPaidAt(
+                LocalDate.of(2025, 10, 2).atTime(14, 30));
+
+        paidBooking.setCheckInDate(LocalDate.of(2025, 10, 1));
+        paidBooking.setCheckOutDate(LocalDate.of(2025, 10, 3));
+
+        // ทำให้ราคาบน Booking ต่างจากใบเสร็จ
+        // เพื่อพิสูจน์ว่ารายงานใช้ราคาที่บันทึกใน Receipt
+        paidBooking.setRoomAmount(new BigDecimal("9999.00"));
+
+        Receipt paidReceipt = new Receipt();
+        paidReceipt.setBooking(paidBooking);
+        paidReceipt.setReceiptNumber("RC-TEST-001");
+        paidReceipt.setIssuedAt(
+                LocalDate.of(2025, 10, 2).atTime(14, 30));
+
+        paidReceipt.setRoomAmount(new BigDecimal("2000.00"));
+        paidReceipt.setServiceAmount(new BigDecimal("600.00"));
+        paidReceipt.setSurchargeAmount(new BigDecimal("100.00"));
+        paidReceipt.setDiscountAmount(new BigDecimal("100.00"));
+        paidReceipt.setTotalAmount(new BigDecimal("2600.00"));
+
+        when(receiptRepository.findAll()).thenReturn(List.of(
+                paidReceipt,
+                receipt(
+                        "900.00",
+                        LocalDate.of(2025, 10, 2),
+                        PaymentStatus.UNPAID)
+        ));
+
+        List<MonthlyRevenueResponse> months =
+                dashboardService.getMonthlyRevenue(2025);
+
+        // จองกันยายน แต่จ่ายตุลาคม
+        assertEquals(BigDecimal.ZERO, months.get(8).totalAmount());
+        assertTrue(months.get(8).bookings().isEmpty());
+
+        MonthlyRevenueResponse october = months.get(9);
+
+        assertEquals(new BigDecimal("2600.00"), october.totalAmount());
+        assertEquals(1, october.bookings().size());
+
+        RevenueBookingResponse detail = october.bookings().get(0);
+
+        assertEquals(Long.valueOf(25L), detail.bookingId());
+        assertEquals("Nadia Test", detail.customerName());
+        assertEquals(List.of("Mochi", "Lily"), detail.petNames());
+        assertEquals("A101", detail.roomNumber());
+
+        assertEquals(paidBooking.getCheckInDate(), detail.checkInDate());
+        assertEquals(paidBooking.getCheckOutDate(), detail.checkOutDate());
+        assertEquals(paidBooking.getPaidAt(), detail.paidAt());
+
+        assertEquals("RC-TEST-001", detail.receiptNumber());
+        assertEquals(new BigDecimal("2000.00"), detail.roomAmount());
+        assertEquals(new BigDecimal("600.00"), detail.serviceAmount());
+        assertEquals(new BigDecimal("100.00"), detail.surchargeAmount());
+        assertEquals(new BigDecimal("100.00"), detail.discountAmount());
+        assertEquals(october.totalAmount(), detail.totalAmount());
+        }
+
+        @Test
+        void ordersMonthlyReceiptsByPaidAtOldestFirst() {
+        Receipt earlier = receipt(
+                "500.00",
+                LocalDate.of(2025, 10, 2),
+                PaymentStatus.PAID);
+
+        Receipt latest = receipt(
+                "600.00",
+                LocalDate.of(2025, 10, 20),
+                PaymentStatus.PAID);
+
+        Receipt laterOnSameDay = receipt(
+                "400.00",
+                LocalDate.of(2025, 10, 2),
+                PaymentStatus.PAID);
+
+        laterOnSameDay.getBooking().setPaidAt(
+                LocalDate.of(2025, 10, 2).atTime(18, 30));
+
+        // ส่งรายการแบบไม่เรียง เพื่อให้ Service จัดลำดับเอง
+        when(receiptRepository.findAll()).thenReturn(List.of(
+                latest,
+                laterOnSameDay,
+                earlier
+        ));
+
+        List<MonthlyRevenueResponse> months =
+                dashboardService.getMonthlyRevenue(2025);
+
+        MonthlyRevenueResponse october = months.get(9);
+        List<RevenueBookingResponse> bookings = october.bookings();
+
+        assertEquals(3, bookings.size());
+
+        // รายการแรก: 2 ตุลาคม เวลา 00:00
+        assertEquals(
+                earlier.getBooking().getPaidAt(),
+                bookings.get(0).paidAt());
+
+        // รายการที่สอง: 2 ตุลาคม เวลา 18:30
+        assertEquals(
+                laterOnSameDay.getBooking().getPaidAt(),
+                bookings.get(1).paidAt());
+
+        // รายการสุดท้าย: 20 ตุลาคม
+        assertEquals(
+                latest.getBooking().getPaidAt(),
+                bookings.get(2).paidAt());
+
+        // เปลี่ยนลำดับแล้ว ยอดรวมต้องเท่าเดิม
+        assertEquals(
+                new BigDecimal("1500.00"),
+                october.totalAmount());
+        }
 
 }
