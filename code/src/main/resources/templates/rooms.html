@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ห้องพัก | PetsHotel</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script th:src="@{/js/date-range-picker.js}" defer></script>
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
@@ -16,16 +17,11 @@
       <h1>ห้องพักทั้งหมด</h1>
 
       <section class="panel">
-        <form class="form-grid" th:action="@{/rooms/available}" method="get">
-          <label class="field">
-            เช็กอิน
-            <input type="date" name="checkIn" required>
-          </label>
+        <form class="form-grid availability-search-form"
+              th:action="@{/rooms/available}"
+              method="get">
 
-          <label class="field">
-            เช็กเอาต์
-            <input type="date" name="checkOut" required>
-          </label>
+          <div th:replace="~{fragments/date-range-picker :: picker(null, null)}"></div>
 
           <label class="field">
             จำนวนสัตว์เลี้ยง
