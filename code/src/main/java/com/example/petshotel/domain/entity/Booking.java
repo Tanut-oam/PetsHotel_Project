@@ -107,6 +107,28 @@ public class Booking {
     @Column(precision = 10, scale = 2)
     private BigDecimal paidAmount;
 
+    public boolean canCheckInOn(LocalDate currentDate) {
+        if (currentDate == null
+                || checkInDate == null
+                || checkOutDate == null) {
+            return false;
+        }
+
+        return status == BookingStatus.CONFIRMED
+                && !currentDate.isBefore(checkInDate)
+                && currentDate.isBefore(checkOutDate);
+    }
+
+    public boolean canCheckOutOn(LocalDate currentDate) {
+        if (currentDate == null
+                || checkOutDate == null) {
+            return false;
+        }
+
+        return status == BookingStatus.CHECKED_IN
+                && !currentDate.isBefore(checkOutDate);
+    }
+
     public void addPet(Pet pet) {
         BookingPet bookingPet = BookingPet.builder()
                 .booking(this)

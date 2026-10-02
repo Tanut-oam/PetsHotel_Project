@@ -638,16 +638,27 @@ class BookingServiceTest {
     }
 
     @Test
-    void checkOutShouldNotChangePaymentStatus() {
-        Booking booking = existingBooking(BookingStatus.CHECKED_IN);
-        prepareUpdate(booking);
+    void checkOutBeforeScheduledDateShouldReject() {
+        assertCheckOutOn(
+                LocalDate.of(2026, 10, 11),
+                false
+        );
+    }
 
-        BookingResponse response = bookingService.checkOut(1L);
+    @Test
+    void checkOutOnScheduledDateShouldSucceed() {
+        assertCheckOutOn(
+                LocalDate.of(2026, 10, 12),
+                true
+        );
+    }
 
-        assertEquals(BookingStatus.CHECKED_OUT, response.getStatus());
-        assertEquals(BookingStatus.CHECKED_OUT, booking.getStatus());
-        assertEquals(PaymentStatus.UNPAID, booking.getPaymentStatus());
-        verify(bookingRepository).save(booking);
+    @Test
+    void lateCheckOutShouldSucceed() {
+        assertCheckOutOn(
+                LocalDate.of(2026, 10, 13),
+                true
+        );
     }
 
     @Test
@@ -809,6 +820,65 @@ class BookingServiceTest {
                         () -> bookingService.checkIn(1L)
                 );
                 assertEquals(BookingStatus.CONFIRMED, booking.getStatus());
+                verifyNoSave();
+            }
+        }
+    }
+
+    private void assertCheckOutOn(
+            LocalDate currentDate,
+            boolean allowed
+    ) {
+        Booking booking =
+                existingBooking(BookingStatus.CHECKED_IN);
+
+        prepareUpdate(booking);
+
+        ZoneId zone =
+                ZoneId.of("Asia/Bangkok");
+
+        try (MockedStatic<LocalDate> dates =
+                     mockStatic(
+                             LocalDate.class,
+                             CALLS_REAL_METHODS
+                     )) {
+
+            dates.when(
+                    () -> LocalDate.now(zone)
+            ).thenReturn(currentDate);
+
+            if (allowed) {
+                BookingResponse response =
+                        bookingService.checkOut(1L);
+
+                assertEquals(
+                        BookingStatus.CHECKED_OUT,
+                        response.getStatus()
+                );
+
+                assertEquals(
+                        BookingStatus.CHECKED_OUT,
+                        booking.getStatus()
+                );
+
+                assertEquals(
+                        PaymentStatus.UNPAID,
+                        booking.getPaymentStatus()
+                );
+
+                verify(bookingRepository)
+                        .save(booking);
+            } else {
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> bookingService.checkOut(1L)
+                );
+
+                assertEquals(
+                        BookingStatus.CHECKED_IN,
+                        booking.getStatus()
+                );
+
                 verifyNoSave();
             }
         }

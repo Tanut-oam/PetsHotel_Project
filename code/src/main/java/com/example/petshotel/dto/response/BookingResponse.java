@@ -33,6 +33,10 @@ public class BookingResponse {
 
     private PaymentStatus paymentStatus;
 
+    private Boolean checkInAllowed;
+
+    private Boolean checkOutAllowed;
+
     private String roomName;
 
     private List<String> petNames;

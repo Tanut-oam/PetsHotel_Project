@@ -332,7 +332,8 @@
                   </form>
 
                   <form method="post"
-                        th:if="${booking.status.name() == 'CONFIRMED'}"
+                        th:if="${booking.status.name() == 'CONFIRMED'
+                          and booking.checkInAllowed == true}"
                         th:action="@{/admin/bookings/{id}/check-in(
                           id=${booking.id}
                         )}"
@@ -344,8 +345,33 @@
                     </button>
                   </form>
 
+                  <div class="booking-action-note"
+                      th:if="${booking.status.name() == 'CONFIRMED'
+                        and booking.checkInAllowed != true}">
+
+                    <strong>ยังเช็กอินไม่ได้</strong>
+
+                    <span>
+                      ช่วงที่เช็กอินได้:
+                      <span th:text="${#temporals.format(
+                        booking.checkInDate,
+                        'dd/MM/yyyy'
+                      )}">
+                        09/11/2026
+                      </span>
+                      ถึงก่อน
+                      <span th:text="${#temporals.format(
+                        booking.checkOutDate,
+                        'dd/MM/yyyy'
+                      )}">
+                        12/11/2026
+                      </span>
+                    </span>
+                  </div>
+
                   <form method="post"
-                        th:if="${booking.status.name() == 'CHECKED_IN'}"
+                        th:if="${booking.status.name() == 'CHECKED_IN'
+                          and booking.checkOutAllowed == true}"
                         th:action="@{/admin/bookings/{id}/check-out(
                           id=${booking.id}
                         )}"
@@ -356,6 +382,23 @@
                       เช็กเอาต์
                     </button>
                   </form>
+
+                  <div class="booking-action-note"
+                      th:if="${booking.status.name() == 'CHECKED_IN'
+                        and booking.checkOutAllowed != true}">
+
+                    <strong>ยังเช็กเอาต์ไม่ได้</strong>
+
+                    <span>
+                      เช็กเอาต์ได้ตั้งแต่วันที่
+                      <span th:text="${#temporals.format(
+                        booking.checkOutDate,
+                        'dd/MM/yyyy'
+                      )}">
+                        12/11/2026
+                      </span>
+                    </span>
+                  </div>
 
                   <form method="post"
                         th:if="${booking.paymentStatus != null

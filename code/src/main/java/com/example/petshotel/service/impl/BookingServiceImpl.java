@@ -112,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
                 petRepository
                         .findByOwner_IdAndActiveTrue(userId)
                         .stream()
-                        .map(Pet::getId)
+                        .map(pet -> pet.getId())
                         .toList();
 
         List<Long> unavailablePetIds =
@@ -394,46 +394,52 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse checkIn(Long id) {
-
         Booking booking = findBookingForUpdate(id);
 
-        BookingState state = getState(booking.getStatus());
+        BookingState state =
+                getState(booking.getStatus());
 
-        if (booking.getStatus() == BookingStatus.CONFIRMED) {
-        LocalDate today = LocalDate.now(
+        LocalDate currentDate = LocalDate.now(
                 ZoneId.of("Asia/Bangkok")
         );
 
-        if (today.isBefore(booking.getCheckInDate())) {
+        if (booking.getStatus() == BookingStatus.CONFIRMED
+                && !booking.canCheckInOn(currentDate)) {
             throw new IllegalStateException(
-                    "Cannot check in before the scheduled check-in date"
+                    "ยังไม่สามารถเช็กอินการจองนี้ในวันที่ปัจจุบันได้"
             );
         }
-
-        if (!today.isBefore(booking.getCheckOutDate())) {
-            throw new IllegalStateException(
-                    "Cannot check in on or after the scheduled check-out date"
-            );
-        }
-      }
 
         state.checkIn(booking);
 
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking savedBooking =
+                bookingRepository.save(booking);
 
         return bookingMapper.toResponse(savedBooking);
     }
 
     @Override
     public BookingResponse checkOut(Long id) {
-
         Booking booking = findBookingForUpdate(id);
 
-        BookingState state = getState(booking.getStatus());
+        BookingState state =
+                getState(booking.getStatus());
+
+        LocalDate currentDate = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
+        if (booking.getStatus() == BookingStatus.CHECKED_IN
+                && !booking.canCheckOutOn(currentDate)) {
+            throw new IllegalStateException(
+                    "ยังไม่ถึงวันเช็กเอาต์ของการจองนี้"
+            );
+        }
 
         state.checkOut(booking);
 
-        Booking savedBooking = bookingRepository.save(booking);
+        Booking savedBooking =
+                bookingRepository.save(booking);
 
         return bookingMapper.toResponse(savedBooking);
     }
