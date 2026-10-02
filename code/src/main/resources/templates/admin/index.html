@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PetsHotel Admin</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/admin-dashboard.css}">
 </head>
 <body class="admin">
   <header th:replace="~{fragments/layout :: admin-topbar}"></header>
@@ -94,64 +95,289 @@
                 </tbody>
             </table>
             </div>
-            <div class="section-title">
-              <h2 th:text="|ยอดรับเงินรายเดือน ปี ${dashboard.selectedYear}|">
-                ยอดรับเงินรายเดือน
+            <section id="monthly-revenue">
+              <div class="section-title">
+                <h2 th:text="|ยอดรับเงินรายเดือน ปี ${dashboard.selectedYear}|">
+                  ยอดรับเงินรายเดือน
+                </h2>
+              </div>
+
+              <form class="toolbar"
+                    method="get"
+                    th:action="@{/admin}"
+                    data-revenue-year-form>
+
+                <label class="field">
+                  ปี (ค.ศ.)
+                  <input type="number"
+                        name="year"
+                        th:value="${dashboard.selectedYear}"
+                        min="1"
+                        max="9999"
+                        step="1"
+                        required>
+                </label>
+
+                <button class="btn btn-primary" type="submit">
+                  ดูยอดเงิน
+                </button>
+              </form>
+
+              <p class="revenue-error"
+                data-revenue-error
+                role="alert"
+                hidden></p>
+
+              <p class="revenue-help">
+                นับตามวันที่ยืนยันรับเงิน กดชื่อเดือนเพื่อดูรายการ
+              </p>
+
+              <div class="panel revenue-panel">
+                <div class="revenue-scroll"
+                    tabindex="0"
+                    role="region"
+                    aria-label="ตารางยอดรับเงินรายเดือน เลื่อนเพื่อดูเดือนเพิ่มเติม">
+
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th scope="col">เดือน</th>
+                        <th scope="col">ยอดรับเงิน</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr th:each="month : ${dashboard.monthlyRevenue}">
+                        <td>
+                          <button type="button"
+                                  class="revenue-month-button"
+                                  th:attr="data-revenue-open=|revenue-month-${month.month}|"
+                                  th:text="${month.monthName}">
+                            มกราคม
+                          </button>
+                        </td>
+
+                        <td th:text="|฿${#numbers.formatDecimal(month.totalAmount, 1, 'COMMA', 2, 'POINT')}|">
+                          ฿0.00
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="revenue-total">
+                  <strong>รวมทั้งปี</strong>
+                  <strong th:text="|฿${#numbers.formatDecimal(dashboard.yearlyRevenue, 1, 'COMMA', 2, 'POINT')}|">
+                    ฿0.00
+                  </strong>
+                </div>
+              </div>
+
+              <dialog th:each="month : ${dashboard.monthlyRevenue}"
+                th:id="|revenue-month-${month.month}|"
+                class="revenue-dialog"
+                th:attr="aria-labelledby=|revenue-title-${month.month}|">
+
+          <div class="revenue-dialog-frame">
+
+            <div class="revenue-dialog-header">
+              <h2 th:id="|revenue-title-${month.month}|"
+                  th:text="|รายการรับเงิน ${month.monthName} ${dashboard.selectedYear}|">
+                รายการรับเงิน
               </h2>
+
+              <form method="dialog">
+                <button class="btn" type="submit" autofocus>
+                  ปิด
+                </button>
+              </form>
             </div>
 
-            <form class="toolbar" method="get" th:action="@{/admin}">
-              <label class="field">
-                ปี (ค.ศ.)
-                <input type="number"
-                      name="year"
-                      th:value="${dashboard.selectedYear}"
-                      min="1"
-                      max="9999"
-                      step="1"
-                      required>
-              </label>
+            <div class="revenue-dialog-summary">
+              <span th:text="|${#lists.size(month.bookings)} รายการ|">
+                0 รายการ
+              </span>
 
-              <button class="btn btn-primary" type="submit">
-                ดูยอดเงิน
-              </button>
-            </form>
-
-            <div class="panel revenue-panel">
-              <div class="revenue-scroll"
-                  tabindex="0"
-                  role="region"
-                  aria-label="ตารางยอดรับเงินรายเดือน เลื่อนเพื่อดูเดือนเพิ่มเติม">
-
-                <table class="table">
-                  <thead>
-                    <tr>
-                      <th scope="col">เดือน</th>
-                      <th scope="col">ยอดรับเงิน</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    <tr th:each="month : ${dashboard.monthlyRevenue}">
-                      <td th:text="${month.monthName}">มกราคม</td>
-                      <td
-                        th:text="|฿${#numbers.formatDecimal(month.totalAmount, 1, 'COMMA', 2, 'POINT')}|">
-                        ฿0.00
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div class="revenue-total">
-                <strong>รวมทั้งปี</strong>
-                <strong
-                  th:text="|฿${#numbers.formatDecimal(dashboard.yearlyRevenue, 1, 'COMMA', 2, 'POINT')}|">
-                  ฿0.00
-                </strong>
-              </div>
+              <strong th:text="|ยอดรวม ฿${#numbers.formatDecimal(month.totalAmount, 1, 'COMMA', 2, 'POINT')}|">
+                ยอดรวม ฿0.00
+              </strong>
             </div>
+
+            <div class="revenue-dialog-table-scroll"
+                tabindex="0"
+                role="region"
+                aria-label="รายการรับเงินของเดือน เลื่อนเพื่อดูรายการเพิ่มเติม">
+
+              <table class="table revenue-popup-table">
+                <thead>
+                  <tr>
+                    <th scope="col">การจอง</th>
+                    <th scope="col">ลูกค้า</th>
+                    <th scope="col">วันที่รับเงิน</th>
+                    <th scope="col">ยอดรับเงิน</th>
+                    <th scope="col">รายละเอียด</th>
+                  </tr>
+                </thead>
+
+                <tbody th:if="${#lists.isEmpty(month.bookings)}">
+                  <tr>
+                    <td colspan="5" class="revenue-empty">
+                      เดือนนี้ยังไม่มีรายการที่ยืนยันรับเงินแล้ว
+                    </td>
+                  </tr>
+                </tbody>
+
+                <tbody th:each="entry : ${month.bookings}">
+                  <!-- แถวสรุปที่มองเห็นทันที -->
+                  <tr>
+                    <td th:text="|#${entry.bookingId}|">
+                      #0
+                    </td>
+
+                    <td th:text="${entry.customerName}">
+                      ชื่อลูกค้า
+                    </td>
+
+                    <td th:text="${#temporals.format(entry.paidAt, 'dd/MM/yyyy HH:mm')}">
+                      วันที่รับเงิน
+                    </td>
+
+                    <td th:text="|฿${#numbers.formatDecimal(entry.totalAmount, 1, 'COMMA', 2, 'POINT')}|">
+                      ฿0.00
+                    </td>
+
+                    <td>
+                      <button class="btn btn-small"
+                              type="button"
+                              aria-expanded="false"
+                              th:attr="data-revenue-detail=|revenue-detail-${month.month}-${entry.bookingId}|,
+                                      aria-controls=|revenue-detail-${month.month}-${entry.bookingId}|">
+                        ดูรายละเอียด
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- แถวรายละเอียด ซ่อนไว้จนกว่าจะกดปุ่ม -->
+                  <tr class="revenue-detail-row"
+                      th:id="|revenue-detail-${month.month}-${entry.bookingId}|"
+                      hidden>
+                    <td colspan="5">
+                      <div class="revenue-detail-content">
+
+                        <div class="revenue-booking-heading">
+                          <h3 th:text="|รายละเอียดการจอง #${entry.bookingId}|">
+                            รายละเอียดการจอง
+                          </h3>
+
+                          <span class="badge">รับเงินแล้ว</span>
+                        </div>
+
+                        <dl class="revenue-booking-info">
+                          <div>
+                            <dt>สัตว์เลี้ยง</dt>
+                            <dd th:text="${#lists.isEmpty(entry.petNames)
+                                          ? 'ไม่ระบุ'
+                                          : #strings.listJoin(entry.petNames, ', ')}">
+                              ชื่อสัตว์เลี้ยง
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>ห้อง</dt>
+                            <dd th:text="${entry.roomNumber}">
+                              A101
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>วันเข้าพัก</dt>
+                            <dd th:text="${entry.checkInDate == null
+                                          ? 'ไม่ระบุ'
+                                          : #temporals.format(entry.checkInDate, 'dd/MM/yyyy')}">
+                              วันเข้าพัก
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>วันออก</dt>
+                            <dd th:text="${entry.checkOutDate == null
+                                          ? 'ไม่ระบุ'
+                                          : #temporals.format(entry.checkOutDate, 'dd/MM/yyyy')}">
+                              วันออก
+                            </dd>
+                          </div>
+                        </dl>
+
+                        <dl class="revenue-price-list">
+                          <div>
+                            <dt>ค่าห้อง</dt>
+                            <dd th:text="${entry.roomAmount == null
+                                          ? '—'
+                                          : '฿' + #numbers.formatDecimal(entry.roomAmount, 1, 'COMMA', 2, 'POINT')}">
+                              ฿0.00
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>บริการเสริม</dt>
+                            <dd th:text="${entry.serviceAmount == null
+                                          ? '—'
+                                          : '฿' + #numbers.formatDecimal(entry.serviceAmount, 1, 'COMMA', 2, 'POINT')}">
+                              ฿0.00
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>ค่าใช้จ่ายเพิ่มเติม</dt>
+                            <dd th:text="${entry.surchargeAmount == null
+                                          ? '—'
+                                          : '฿' + #numbers.formatDecimal(entry.surchargeAmount, 1, 'COMMA', 2, 'POINT')}">
+                              ฿0.00
+                            </dd>
+                          </div>
+
+                          <div>
+                            <dt>ส่วนลด</dt>
+                            <dd th:text="${entry.discountAmount == null
+                                          ? '—'
+                                          : '฿' + #numbers.formatDecimal(entry.discountAmount, 1, 'COMMA', 2, 'POINT')}">
+                              ฿0.00
+                            </dd>
+                          </div>
+
+                          <div class="revenue-booking-total">
+                            <dt>ยอดรับเงิน</dt>
+                            <dd th:text="|฿${#numbers.formatDecimal(entry.totalAmount, 1, 'COMMA', 2, 'POINT')}|">
+                              ฿0.00
+                            </dd>
+                          </div>
+                        </dl>
+
+                        <div class="revenue-receipt-link">
+                          <span th:text="|ใบเสร็จ ${entry.receiptNumber}|">
+                            เลขใบเสร็จ
+                          </span>
+
+                          <a class="btn btn-small"
+                            th:href="@{/bookings/{id}/receipt(id=${entry.bookingId})}"
+                            target="_blank"
+                            rel="noopener">
+                            ดูใบเสร็จ
+                          </a>
+                        </div>
+
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </dialog>
+            </section>
     </main>
   </div>
+  <script th:src="@{/js/dashboard-revenue.js}" defer></script>
 </body>
 </html>

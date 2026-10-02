@@ -98,7 +98,9 @@
                 </span>
               </td>
 
-              <td th:text="${promotion.endDate}">2026-12-31</td>
+              <td th:text="${#temporals.format(promotion.endDate, 'dd/MM/yyyy')}">
+                31/12/2026
+              </td>
 
             <td>
             <span th:if="${promotion.active}" class="badge">
@@ -182,19 +184,16 @@
                     required>
             </label>
 
-            <label class="field">
-                วันเริ่มต้น
-                <input type="date"
-                    th:field="*{startDate}"
-                    required>
-            </label>
-
-            <label class="field">
-                วันสิ้นสุด
-                <input type="date"
-                    th:field="*{endDate}"
-                    required>
-            </label>
+            <div class="admin-dialog-full">
+              <div th:replace="~{
+                fragments/promotion-date-picker
+                :: picker(
+                  *{startDate},
+                  *{endDate}
+                )
+              }">
+              </div>
+            </div>
 
             <label class="admin-dialog-check">
                 <input type="checkbox" th:field="*{active}">
@@ -219,5 +218,6 @@
 </div>
     <script th:src="@{/js/admin-form-dialog.js}" defer></script>
     <script th:src="@{/js/admin-list-filter.js}" defer></script>
+    <script th:src="@{/js/promotion-date-picker.js}" defer></script>
 </body>
 </html>
