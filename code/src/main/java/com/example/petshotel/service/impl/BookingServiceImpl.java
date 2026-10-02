@@ -243,12 +243,19 @@ public class BookingServiceImpl implements BookingService {
             Long serviceId = entry.getKey();
             List<Long> recipients = entry.getValue();
 
-            if (serviceId == null || recipients == null) {
+            if (serviceId == null) {
                 throw new IllegalArgumentException(
-                        "Service ID and recipient list are required");
-            }
+                        "ไม่พบรหัสบริการเสริม"
+                );
+                }
 
-            if (recipients.isEmpty()) continue;
+                /*
+                * Checkbox ที่ไม่ได้เลือกอาจถูก Spring แปลงเป็นค่า null
+                * ให้ถือว่าไม่ได้เลือกบริการรายการนั้น
+                */
+                if (recipients == null || recipients.isEmpty()) {
+                continue;
+                }
 
             Set<Long> uniqueRecipients = new HashSet<>();
             for (Long petId : recipients) {

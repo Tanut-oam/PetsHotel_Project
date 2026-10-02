@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -843,4 +844,25 @@ class BookingServiceTest {
         assertEquals(new BigDecimal("600.00"),
                 response.getExtraServices().get(0).totalPrice());
     }
+
+        @Test
+        void nullServiceRecipientListShouldBeIgnored() {
+        prepareCreate();
+
+        CreateBookingRequest request = validRequest();
+
+        Map<Long, List<Long>> selections =
+                new HashMap<>();
+
+        selections.put(40L, null);
+        request.setServicePetIds(selections);
+
+        bookingService.createBooking(request);
+
+        Booking saved = capturedBooking();
+
+        assertTrue(saved.getExtraServices().isEmpty());
+        verifyNoInteractions(extraServiceRepository);
+        }
+
 }

@@ -23,6 +23,8 @@ import com.example.petshotel.exception.GlobalExceptionHandler;
 import com.example.petshotel.mapper.AvailabilityMapper;
 import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.service.AvailabilityService;
+import com.example.petshotel.dto.response.RoomAvailabilityCalendarResponse;
+import com.example.petshotel.dto.response.UnavailableDateRangeResponse;
 
 class AvailabilityRestControllerTest {
 
@@ -110,4 +112,82 @@ class AvailabilityRestControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.path").value("/api/room/available"));
     }
+
+        @Test
+        void availabilityCalendarShouldReturnUnavailableRanges()
+                throws Exception {
+
+        LocalDate fromDate =
+                LocalDate.of(2026, 10, 1);
+
+        LocalDate toDate =
+                LocalDate.of(2026, 11, 1);
+
+        RoomAvailabilityCalendarResponse response =
+                new RoomAvailabilityCalendarResponse(
+                        1L,
+                        fromDate,
+                        toDate,
+                        List.of(
+                                new UnavailableDateRangeResponse(
+                                        LocalDate.of(
+                                                2026,
+                                                10,
+                                                2
+                                        ),
+                                        LocalDate.of(
+                                                2026,
+                                                10,
+                                                5
+                                        )
+                                )
+                        )
+                );
+
+        when(
+                availabilityService
+                        .getRoomAvailabilityCalendar(
+                                1L,
+                                fromDate,
+                                toDate
+                        )
+        ).thenReturn(response);
+
+        mockMvc.perform(
+                get(
+                        "/api/room/1/"
+                        + "availability-calendar"
+                )
+                        .param(
+                                "fromDate",
+                                "2026-10-01"
+                        )
+                        .param(
+                                "toDate",
+                                "2026-11-01"
+                        )
+        )
+                .andExpect(status().isOk())
+                .andExpect(
+                        jsonPath("$.roomId")
+                                .value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.unavailableRanges.length()"
+                        ).value(1)
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.unavailableRanges[0]"
+                                + ".unavailableFrom"
+                        ).value("2026-10-02")
+                )
+                .andExpect(
+                        jsonPath(
+                                "$.unavailableRanges[0]"
+                                + ".availableAgainOn"
+                        ).value("2026-10-05")
+                );
+        }
 }

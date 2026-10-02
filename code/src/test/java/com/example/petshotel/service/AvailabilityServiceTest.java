@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.petshotel.domain.entity.Room;
+import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.exception.ResourceNotFoundException;
@@ -29,6 +30,7 @@ import com.example.petshotel.exception.RoomNotAvailableException;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.impl.AvailabilityServiceImpl;
+import com.example.petshotel.dto.response.RoomAvailabilityCalendarResponse;
 
 class AvailabilityServiceTest {
 
@@ -127,7 +129,7 @@ class AvailabilityServiceTest {
 
         RoomNotAvailableException ex = assertThrows(RoomNotAvailableException.class,
             () -> availabilityService.checkRoomAvailable(1L, checkIn, checkOut, 1));
-        assertTrue(ex.getMessage().contains("Room 1 is not available"));
+        assertTrue(ex.getMessage().contains("ห้องที่เลือกไม่ว่าง"));
     }
 
     @Test
@@ -174,6 +176,115 @@ class AvailabilityServiceTest {
         booked(1L, true);
 
         assertTrue(availabilityService.findAvailableRooms(checkIn, checkOut, 1).isEmpty());
+    }
+
+    // ---------- ปฏิทินวันที่ห้องไม่ว่าง ----------
+
+    @Test
+    void availabilityCalendarShouldReturnUnavailableRanges() {
+        LocalDate fromDate =
+                LocalDate.of(2026, 10, 1);
+
+        LocalDate toDate =
+                LocalDate.of(2026, 11, 1);
+
+        Booking existingBooking = Booking.builder()
+                .id(50L)
+                .room(room(1L, 2, RoomStatus.ACTIVE))
+                .checkInDate(
+                        LocalDate.of(2026, 10, 2)
+                )
+                .checkOutDate(
+                        LocalDate.of(2026, 10, 5)
+                )
+                .status(BookingStatus.CONFIRMED)
+                .build();
+
+        when(roomRepository.findById(1L))
+                .thenReturn(
+                        Optional.of(
+                                room(
+                                        1L,
+                                        2,
+                                        RoomStatus.ACTIVE
+                                )
+                        )
+                );
+
+        when(
+                bookingRepository
+                        .findOverlappingBookingsByRoom(
+                                eq(1L),
+                                eq(fromDate),
+                                eq(toDate),
+                                anyCollection()
+                        )
+        ).thenReturn(List.of(existingBooking));
+
+        RoomAvailabilityCalendarResponse result =
+                availabilityService
+                        .getRoomAvailabilityCalendar(
+                                1L,
+                                fromDate,
+                                toDate
+                        );
+
+        assertEquals(1L, result.roomId());
+        assertEquals(fromDate, result.fromDate());
+        assertEquals(toDate, result.toDate());
+        assertEquals(
+                1,
+                result.unavailableRanges().size()
+        );
+
+        assertEquals(
+                LocalDate.of(2026, 10, 2),
+                result.unavailableRanges()
+                        .get(0)
+                        .unavailableFrom()
+        );
+
+        assertEquals(
+                LocalDate.of(2026, 10, 5),
+                result.unavailableRanges()
+                        .get(0)
+                        .availableAgainOn()
+        );
+    }
+
+    @Test
+    void availabilityCalendarShouldRejectRangeLongerThanOneYear() {
+        LocalDate fromDate =
+                LocalDate.of(2026, 1, 1);
+
+        LocalDate toDate =
+                LocalDate.of(2027, 1, 3);
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> availabilityService
+                                .getRoomAvailabilityCalendar(
+                                        1L,
+                                        fromDate,
+                                        toDate
+                                )
+                );
+
+        assertEquals(
+                "สามารถดูปฏิทินล่วงหน้าได้ไม่เกิน 1 ปี",
+                exception.getMessage()
+        );
+
+        verify(
+                bookingRepository,
+                never()
+        ).findOverlappingBookingsByRoom(
+                any(),
+                any(),
+                any(),
+                anyCollection()
+        );
     }
 
     // ---------- ตรวจข้อมูลที่ส่งเข้ามา ----------
