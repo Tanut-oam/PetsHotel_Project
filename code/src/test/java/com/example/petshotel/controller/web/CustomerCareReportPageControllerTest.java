@@ -22,19 +22,20 @@ import com.example.petshotel.dto.response.DailyCareReportResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
-import com.example.petshotel.service.BookingService;
-
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import com.example.petshotel.dto.response.ReportBookingSummary;
 class CustomerCareReportPageControllerTest {
 
     private final DailyCareReportService reportService =
             mock(DailyCareReportService.class);
     private final CurrentUserService currentUserService =
             mock(CurrentUserService.class);
-    private final BookingService bookingService = mock(BookingService.class);
+    
 
     private final MockMvc mockMvc = MockMvcBuilders
         .standaloneSetup(new CustomerCareReportPageController(
-                reportService, currentUserService,bookingService))
+                reportService, currentUserService))
         .setViewResolvers(new InternalResourceViewResolver(
                 "/test-views/", ".html"))
         .build();
@@ -46,6 +47,12 @@ class CustomerCareReportPageControllerTest {
         owner.setId(7L);
         owner.setActive(true);
 
+        ReportBookingSummary booking = new ReportBookingSummary(
+                3L,
+                LocalDate.of(2026, 9, 25),
+                LocalDate.of(2026, 9, 27)
+        );
+
         DailyCareReportResponse report =
                 new DailyCareReportResponse(
                         1L, 2L, 3L, 4L, "Mochi", 5L,
@@ -54,24 +61,31 @@ class CustomerCareReportPageControllerTest {
                         "แปรงขน", "ร่าเริง", "ปกติ", null,
                         LocalDateTime.of(2026, 9, 25, 10, 0)
                 );
+
         List<DailyCareReportResponse> reports = List.of(report);
+        PageRequest firstPage = PageRequest.of(0, 5);
 
         when(currentUserService.getByEmail("owner@example.com"))
                 .thenReturn(owner);
-        when(reportService.getReportsForOwner(7L))
+        when(reportService.getReportBookingsForOwner(7L, firstPage))
+                .thenReturn(new PageImpl<>(
+                        List.of(booking), firstPage, 1));
+        when(reportService.getReportsForOwnerBookings(7L, List.of(3L)))
                 .thenReturn(reports);
-        when(bookingService.getBookingsByUserId(7L))
-        .thenReturn(List.of());
-        
+
         mockMvc.perform(get("/reports")
                 .principal(() -> "owner@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("reports"))
-                .andExpect(model().attribute("reports", reports));
+                .andExpect(model().attribute("reports", reports))
+                .andExpect(model().attribute("page", 0))
+                .andExpect(model().attribute("totalPages", 1));
 
-        verify(reportService).getReportsForOwner(7L);
+        verify(reportService)
+                .getReportBookingsForOwner(7L, firstPage);
+        verify(reportService)
+                .getReportsForOwnerBookings(7L, List.of(3L));
     }
-
     @Test
     void showReportsShouldRejectMissingLogin() throws Exception {
         mockMvc.perform(get("/reports"))
