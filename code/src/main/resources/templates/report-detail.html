@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>รายละเอียดรายงานการดูแล | PetsHotel</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/customer-report-date-picker.css}">
+  <script th:src="@{/js/customer-report-date-picker.js}" defer></script>
 </head>
 <body>
   <header th:replace="~{fragments/layout :: topbar}"></header>
@@ -26,120 +28,149 @@
         ข้อมูลการจอง
       </p>
 
-      <div class="grid">
-        <section class="panel" aria-labelledby="report-dates-heading">
-          <h2 id="report-dates-heading">เลือกวันที่รายงาน</h2>
+      <div class="customer-report-date-toolbar"
+           th:if="${reportCount > 1}"
+           th:attr="data-selected-date=${selectedReport.reportDate}"
+           data-customer-report-date-picker>
+        <strong>วันที่รายงาน</strong>
 
-          <nav aria-label="วันที่รายงาน">
-            <div class="row"
-                 style="justify-content: flex-start; flex-wrap: wrap;">
-              <a th:each="item : ${pageReports}"
-                 th:class="${item.id == selectedReport.id
-                     ? 'btn btn-small btn-primary'
-                     : 'btn btn-small'}"
-                 th:href="@{/reports/pets/{bookingPetId}(
-                     bookingPetId=${bookingPetId},
-                     page=${page},
-                     reportId=${item.id})}"
-                 th:attr="aria-current=${item.id == selectedReport.id ? 'date' : null}"
-                 th:text="${#temporals.format(item.reportDate, 'dd/MM/yyyy')}">
-                วันที่รายงาน
-              </a>
-            </div>
-          </nav>
+        <button class="customer-report-date-toggle"
+                type="button"
+                data-calendar-toggle
+                aria-expanded="false"
+                aria-controls="customer-report-calendar">
+          <span class="material-symbols-outlined"
+                aria-hidden="true">calendar_month</span>
+          <time th:datetime="${selectedReport.reportDate}"
+                th:text="${#temporals.format(
+                    selectedReport.reportDate, 'dd/MM/yyyy')}">
+            วันที่รายงาน
+          </time>
+          <span aria-hidden="true">⌄</span>
+        </button>
 
-          <nav class="row"
-               th:if="${totalPages > 1}"
-               aria-label="หน้าของวันที่รายงาน"
-               style="margin-top: 18px;">
-            <a th:if="${page > 0}"
-               th:href="@{/reports/pets/{bookingPetId}(
-                   bookingPetId=${bookingPetId},
-                   page=${page - 1})}">
-              ← ก่อนหน้า
-            </a>
+        <div id="customer-report-calendar"
+             class="customer-report-date-popup"
+             data-calendar-popup
+             hidden>
+          <div class="calendar-month-navigation">
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-calendar-previous
+                    aria-label="เดือนก่อนหน้า">←</button>
 
-            <span th:text="|หน้า ${page + 1} จาก ${totalPages}|">
-              เลขหน้า
-            </span>
+            <strong data-calendar-month
+                    aria-live="polite">เดือนและปี</strong>
 
-            <a th:if="${page + 1 < totalPages}"
-               th:href="@{/reports/pets/{bookingPetId}(
-                   bookingPetId=${bookingPetId},
-                   page=${page + 1})}">
-              ถัดไป →
-            </a>
-          </nav>
-        </section>
-
-        <article class="panel">
-          <div class="row">
-            <h2>
-              วันที่
-              <time th:datetime="${selectedReport.reportDate}"
-                    th:text="${#temporals.format(selectedReport.reportDate, 'dd/MM/yyyy')}">
-                วันที่รายงาน
-              </time>
-            </h2>
-            <span class="badge"
-                  th:text="|การจอง #${bookingId}|">
-              เลขการจอง
-            </span>
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-calendar-next
+                    aria-label="เดือนถัดไป">→</button>
           </div>
 
-          <div class="grid cols-3">
-            <section>
-              <h3>อาหาร</h3>
-              <p>
-                เช้า:
-                <span th:text="${#strings.isEmpty(selectedReport.feedingMorning)
-                    ? '—' : selectedReport.feedingMorning}">—</span>
-              </p>
-              <p>
-                เย็น:
-                <span th:text="${#strings.isEmpty(selectedReport.feedingEvening)
-                    ? '—' : selectedReport.feedingEvening}">—</span>
-              </p>
-            </section>
-
-            <section>
-              <h3>กิจกรรมและความสะอาด</h3>
-              <p>
-                เดินเล่น:
-                <span th:text="${selectedReport.walkingMinutes == null
-                    ? '—' : selectedReport.walkingMinutes + ' นาที'}">—</span>
-              </p>
-              <p>
-                ดูแลความสะอาด:
-                <span th:text="${#strings.isEmpty(selectedReport.grooming)
-                    ? '—' : selectedReport.grooming}">—</span>
-              </p>
-            </section>
-
-            <section>
-              <h3>อารมณ์และสุขภาพ</h3>
-              <p>
-                อารมณ์:
-                <span th:text="${#strings.isEmpty(selectedReport.mood)
-                    ? '—' : selectedReport.mood}">—</span>
-              </p>
-              <p>
-                สุขภาพ:
-                <span th:text="${#strings.isEmpty(selectedReport.healthNote)
-                    ? '—' : selectedReport.healthNote}">—</span>
-              </p>
-            </section>
+          <div class="calendar-weekdays"
+               aria-hidden="true">
+            <span>อา.</span>
+            <span>จ.</span>
+            <span>อ.</span>
+            <span>พ.</span>
+            <span>พฤ.</span>
+            <span>ศ.</span>
+            <span>ส.</span>
           </div>
 
-          <p>
-            <strong>หมายเหตุเพิ่มเติม:</strong>
-            <span th:text="${#strings.isEmpty(selectedReport.generalNote)
-                ? 'ไม่มี' : selectedReport.generalNote}">
-              ไม่มี
-            </span>
+          <div class="room-calendar-grid customer-report-date-grid"
+               data-calendar-grid
+               role="group"
+               aria-label="วันที่มีรายงาน">
+          </div>
+
+          <p class="customer-report-date-help">
+            เลือกได้เฉพาะวันที่มีรายงาน
           </p>
-        </article>
+        </div>
+
+        <div hidden>
+          <a th:each="item : ${reportDates}"
+             th:attr="data-report-date=${item.reportDate}"
+             th:href="@{/reports/pets/{bookingPetId}(
+                 bookingPetId=${bookingPetId},
+                 reportId=${item.id})}">
+          </a>
+        </div>
       </div>
+
+      <article class="panel">
+        <div class="row">
+          <h2>
+            วันที่
+            <time th:datetime="${selectedReport.reportDate}"
+                  th:text="${#temporals.format(
+                      selectedReport.reportDate, 'dd/MM/yyyy')}">
+              วันที่รายงาน
+            </time>
+          </h2>
+
+          <span class="badge"
+                th:text="|การจอง #${bookingId}|">
+            เลขการจอง
+          </span>
+        </div>
+
+        <div class="grid cols-3">
+          <section>
+            <h3>อาหาร</h3>
+            <p>
+              เช้า:
+              <span th:text="${#strings.isEmpty(
+                  selectedReport.feedingMorning)
+                  ? '—' : selectedReport.feedingMorning}">—</span>
+            </p>
+            <p>
+              เย็น:
+              <span th:text="${#strings.isEmpty(
+                  selectedReport.feedingEvening)
+                  ? '—' : selectedReport.feedingEvening}">—</span>
+            </p>
+          </section>
+
+          <section>
+            <h3>กิจกรรมและความสะอาด</h3>
+            <p>
+              เดินเล่น:
+              <span th:text="${selectedReport.walkingMinutes == null
+                  ? '—' : selectedReport.walkingMinutes + ' นาที'}">—</span>
+            </p>
+            <p>
+              ดูแลความสะอาด:
+              <span th:text="${#strings.isEmpty(selectedReport.grooming)
+                  ? '—' : selectedReport.grooming}">—</span>
+            </p>
+          </section>
+
+          <section>
+            <h3>อารมณ์และสุขภาพ</h3>
+            <p>
+              อารมณ์:
+              <span th:text="${#strings.isEmpty(selectedReport.mood)
+                  ? '—' : selectedReport.mood}">—</span>
+            </p>
+            <p>
+              สุขภาพ:
+              <span th:text="${#strings.isEmpty(selectedReport.healthNote)
+                  ? '—' : selectedReport.healthNote}">—</span>
+            </p>
+          </section>
+        </div>
+
+        <p>
+          <strong>หมายเหตุเพิ่มเติม:</strong>
+          <span th:text="${#strings.isEmpty(selectedReport.generalNote)
+              ? 'ไม่มี' : selectedReport.generalNote}">
+            ไม่มี
+          </span>
+        </p>
+      </article>
     </main>
   </div>
 

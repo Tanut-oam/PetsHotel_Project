@@ -1,39 +1,35 @@
 package com.example.petshotel.controller.web;
 
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportBookingSummary;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
 
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-
-import com.example.petshotel.dto.response.DailyCareReportResponse;
-import com.example.petshotel.dto.response.ReportBookingSummary;
-
-import java.util.List;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import java.util.Map;
-import org.springframework.data.domain.Page;
-
-@Controller 
+@Controller
 public class CustomerCareReportPageController {
     private final DailyCareReportService reportService;
     private final CurrentUserService currentUserService;
 
-
-    public CustomerCareReportPageController(DailyCareReportService reportService,
+    public CustomerCareReportPageController(
+            DailyCareReportService reportService,
             CurrentUserService currentUserService) {
         this.reportService = reportService;
         this.currentUserService = currentUserService;
@@ -65,7 +61,9 @@ public class CustomerCareReportPageController {
                 .toList();
 
         List<DailyCareReportResponse> reports =
-                reportService.getReportsForOwnerBookings(owner.getId(), bookingIds);
+                reportService.getReportsForOwnerBookings(
+                        owner.getId(), bookingIds
+                );
 
         Map<Long, Map<Long, List<DailyCareReportResponse>>> bookingGroups =
                 new LinkedHashMap<>();
@@ -107,16 +105,17 @@ public class CustomerCareReportPageController {
     @GetMapping("/reports/pets/{bookingPetId}")
     public String showPetReports(
             @PathVariable Long bookingPetId,
-            @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "reportId", required = false) Long reportId,
             Principal principal,
-            Model model) {
-
+            Model model
+    ) {
         User owner = requireActiveUser(principal);
 
         List<DailyCareReportResponse> reports;
         try {
-            reports = reportService.getReportsByBookingPet(bookingPetId, owner.getId());
+            reports = reportService.getReportsByBookingPet(
+                    bookingPetId, owner.getId()
+            );
         } catch (ResourceNotFoundException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
@@ -125,33 +124,31 @@ public class CustomerCareReportPageController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
-        int pageSize = 10;
-        int totalPages = (reports.size() + pageSize - 1) / pageSize;
+        int selectedIndex = 0;
 
-        if (page < 0 || page >= totalPages) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        if (reportId != null) {
+            selectedIndex = -1;
+
+            for (int i = 0; i < reports.size(); i++) {
+                if (reports.get(i).id().equals(reportId)) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+
+            if (selectedIndex == -1) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            }
         }
 
-        int from = page * pageSize;
-        List<DailyCareReportResponse> pageReports =
-                reports.subList(from, Math.min(from + pageSize, reports.size()));
-
-        DailyCareReportResponse selectedReport = reportId == null
-                ? pageReports.get(0)
-                : pageReports.stream()
-                        .filter(report -> report.id().equals(reportId))
-                        .findFirst()
-                        .orElseThrow(() ->
-                                new ResponseStatusException(HttpStatus.NOT_FOUND));
+        DailyCareReportResponse selectedReport = reports.get(selectedIndex);
 
         model.addAttribute("petName", reports.get(0).petName());
         model.addAttribute("bookingId", reports.get(0).bookingId());
         model.addAttribute("bookingPetId", bookingPetId);
         model.addAttribute("reportCount", reports.size());
-        model.addAttribute("pageReports", pageReports);
+        model.addAttribute("reportDates", reports);
         model.addAttribute("selectedReport", selectedReport);
-        model.addAttribute("page", page);
-        model.addAttribute("totalPages", totalPages);
 
         return "report-detail";
     }
@@ -174,5 +171,4 @@ public class CustomerCareReportPageController {
 
         return user;
     }
-
 }
