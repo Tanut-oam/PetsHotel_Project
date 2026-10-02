@@ -15,8 +15,8 @@
       <h1>ค้นหาห้องว่าง</h1>
 
 
-    <section class="panel">
-      <form class="form-grid" th:action="@{/rooms/available}" method="get" data-date-range>
+    <section class="panel availability-search-panel">
+      <form class="form-grid availability-search-form" th:action="@{/rooms/available}" method="get" data-date-range>
         <label class="field">
           เช็กอิน
           <input type="date" name="checkIn" th:value="${search.checkIn}" required data-check-in>
@@ -35,39 +35,124 @@
 
     <p class="error" th:if="${error}" th:text="${error}"></p>
 
-    <section class="panel" th:if="${result != null}">
-      <h2>
-        ห้องว่าง
-        <span th:text="${#temporals.format(result.checkIn, 'dd/MM/yyyy')}"></span> –
-        <span th:text="${#temporals.format(result.checkOut, 'dd/MM/yyyy')}"></span>
-        (<span th:text="${result.petCount}"></span> ตัว)
-      </h2>
+    <section class="panel availability-results"
+            th:if="${result != null}">
 
-      <p th:if="${#lists.isEmpty(result.availableRooms)}">ไม่มีห้องว่างในช่วงวันที่เลือก</p>
+      <div class="availability-result-header">
+        <div>
+          <p class="availability-result-eyebrow">
+            ผลการค้นหาห้องว่าง
+          </p>
 
-      <table th:unless="${#lists.isEmpty(result.availableRooms)}">
-        <thead>
-          <tr>
-            <th>หมายเลขห้อง</th>
-            <th>ชื่อห้อง</th>
-            <th>รับได้ (ตัว)</th>
-            <th>ราคา/ตัว/คืน</th>
-            <th>การดำเนินการ</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr th:each="room : ${result.availableRooms}">
-            <td th:text="${room.roomNumber}">A101</td>
-            <td th:text="${room.name}">Deluxe</td>
-            <td th:text="${room.capacity}">3</td>
-            <td th:text="${#numbers.formatDecimal(room.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')} + ' บาท'">500.00 บาท</td>
-            <td>
-              <a class="btn btn-small btn-primary"
-                 th:href="@{/bookings/new(roomId=${room.id}, checkIn=${result.checkIn}, checkOut=${result.checkOut})}">จองห้องนี้</a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <h2>
+            <span th:text="${#lists.size(result.availableRooms)}">0</span>
+            ห้องที่พร้อมให้จอง
+          </h2>
+
+          <p class="availability-result-period">
+            สำหรับสัตว์เลี้ยง
+            <strong th:text="${result.petCount}">1</strong>
+            ตัว ตั้งแต่วันที่
+            <strong th:text="${#temporals.format(result.checkIn, 'dd/MM/yyyy')}">
+              09/11/2026
+            </strong>
+            ถึง
+            <strong th:text="${#temporals.format(result.checkOut, 'dd/MM/yyyy')}">
+              12/11/2026
+            </strong>
+          </p>
+        </div>
+
+        <div class="availability-result-count"
+            th:unless="${#lists.isEmpty(result.availableRooms)}">
+          <strong th:text="${#lists.size(result.availableRooms)}">3</strong>
+          <span>ห้องว่าง</span>
+        </div>
+      </div>
+
+      <div class="availability-filter-note"
+          th:unless="${#lists.isEmpty(result.availableRooms)}">
+        <span aria-hidden="true">✓</span>
+
+        <p>
+          ระบบแสดงเฉพาะห้องที่เปิดใช้งาน รองรับจำนวนสัตว์เลี้ยงที่เลือก
+          และไม่มีการจองอื่นทับซ้อนในช่วงวันที่นี้
+        </p>
+      </div>
+
+      <div class="availability-empty"
+          th:if="${#lists.isEmpty(result.availableRooms)}">
+        <span class="availability-empty-icon" aria-hidden="true">⌕</span>
+
+        <div>
+          <h3>ไม่พบห้องว่างในช่วงวันที่เลือก</h3>
+          <p>
+            ลองเปลี่ยนวันเช็กอิน วันเช็กเอาต์
+            หรือลดจำนวนสัตว์เลี้ยงแล้วค้นหาอีกครั้ง
+          </p>
+        </div>
+      </div>
+
+      <div class="table-wrap"
+          th:unless="${#lists.isEmpty(result.availableRooms)}">
+
+        <table class="availability-result-table">
+          <thead>
+            <tr>
+              <th>หมายเลขห้อง</th>
+              <th>ชื่อห้อง</th>
+              <th>รองรับสัตว์เลี้ยง</th>
+              <th>ราคาต่อคืน</th>
+              <th>ดำเนินการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr th:each="room : ${result.availableRooms}">
+              <td data-detail-label="หมายเลขห้อง">
+                <strong th:text="${room.roomNumber}">A101</strong>
+              </td>
+
+              <td data-detail-label="ชื่อห้อง"
+                  th:text="${room.name}">
+                Deluxe
+              </td>
+
+              <td data-detail-label="รองรับสัตว์เลี้ยง">
+                สูงสุด
+                <span th:text="${room.capacity}">3</span>
+                ตัว
+              </td>
+
+              <td data-detail-label="ราคาต่อคืน">
+                <strong>
+                  ฿<span th:text="${#numbers.formatDecimal(
+                    room.pricePerPetPerNight,
+                    1,
+                    'COMMA',
+                    2,
+                    'POINT'
+                  )}">
+                    500.00
+                  </span>
+                </strong>
+                <span class="muted"> / ตัว / คืน</span>
+              </td>
+
+              <td data-detail-label="ดำเนินการ">
+                <a class="btn btn-small btn-primary"
+                  th:href="@{/bookings/new(
+                    roomId=${room.id},
+                    checkIn=${result.checkIn},
+                    checkOut=${result.checkOut}
+                  )}">
+                  จองห้องนี้
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
   </div>
