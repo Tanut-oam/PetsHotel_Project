@@ -876,5 +876,422 @@ small {
   .customer-sidebar a.active {
     border-bottom-color: var(--green);
   }
+}
+
+    /* =========================================================
+    Room availability calendar
+    ========================================================= */
+
+  .room-booking-panel {
+    align-self: start;
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  .room-price {
+    margin-bottom: 6px;
+    color: var(--green-dark);
+    font-size: 1.65rem;
+  }
+
+  .room-price small {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  .booking-help {
+    margin-bottom: 18px;
+    line-height: 1.55;
+  }
+
+  .booking-compact-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 105px;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .date-range-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    min-height: 68px;
+    padding: 10px 12px;
+    color: var(--text);
+    text-align: left;
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .date-range-trigger:hover,
+  .date-range-trigger:focus-visible {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgb(36 96 70 / 12%);
+    outline: none;
+  }
+
+  .date-range-trigger-icon {
+    display: grid;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    background: var(--green-light);
+    border-radius: 10px;
+  }
+
+  .date-range-trigger small,
+  .date-range-trigger strong {
+    display: block;
+  }
+
+  .date-range-trigger strong {
+    margin-top: 2px;
+    overflow: hidden;
+    font-size: .9rem;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+  }
+
+  .pet-count-field {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    min-height: 68px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+
+  .pet-count-field span {
+    margin-bottom: 3px;
+    color: var(--muted);
+    font-size: .78rem;
+  }
+
+  .pet-count-field select {
+    width: 100%;
+    padding: 3px 0;
+    color: var(--text);
+    font-weight: 700;
+    background: transparent;
+    border: 0;
+    outline: none;
+  }
+
+  .room-availability-status {
+    min-height: 40px;
+    margin: 12px 0;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: .9rem;
+    line-height: 1.4;
+  }
+
+  .room-availability-status.is-neutral {
+    color: var(--muted);
+    background: #f3f6f3;
+  }
+
+  .room-availability-status.is-loading {
+    color: #755a18;
+    background: #fff8dc;
+  }
+
+  .room-availability-status.is-success {
+    color: var(--green-dark);
+    background: var(--green-light);
+  }
+
+  .room-availability-status.is-error {
+    color: var(--red);
+    background: #fff1f1;
+  }
+
+  .room-booking-button {
+    display: flex;
+    width: 100%;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .room-booking-button[aria-disabled="true"] {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: .5;
+  }
+
+  /* Calendar dialog */
+
+  .availability-calendar-dialog {
+    width: min(440px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    padding: 0;
+    overflow: auto;
+    color: var(--text);
+    background: var(--white);
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 24px 70px rgb(15 40 25 / 25%);
+  }
+
+  .availability-calendar-dialog::backdrop {
+    background: rgb(19 38 28 / 55%);
+    backdrop-filter: blur(2px);
+  }
+
+  .availability-calendar-shell {
+    padding: 20px;
+  }
+
+  .availability-calendar-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .availability-calendar-header h2 {
+    margin-bottom: 3px;
+  }
+
+  .availability-calendar-header p {
+    margin-bottom: 0;
+    font-size: .9rem;
+  }
+
+  .calendar-icon-button {
+    display: grid;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    place-items: center;
+    color: var(--green-dark);
+    background: var(--green-light);
+    border: 0;
+    border-radius: 50%;
+    font-size: 1.35rem;
+    font-weight: 700;
+  }
+
+  .calendar-icon-button:hover:not(:disabled) {
+    color: var(--white);
+    background: var(--green);
+  }
+
+  .calendar-icon-button:disabled {
+    cursor: not-allowed;
+    opacity: .35;
+  }
+
+  .calendar-month-navigation {
+    display: grid;
+    grid-template-columns: 38px 1fr 38px;
+    gap: 10px;
+    align-items: center;
+    margin: 20px 0 14px;
+    text-align: center;
+  }
+
+  .calendar-weekdays,
+  .room-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+
+  .calendar-weekdays {
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: .78rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .calendar-day,
+  .calendar-day-empty {
+    aspect-ratio: 1;
+    min-width: 0;
+  }
+
+  .calendar-day {
+    position: relative;
+    display: grid;
+    padding: 0;
+    place-items: center;
+    color: var(--text);
+    background: var(--white);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: .9rem;
+  }
+
+  .calendar-day:hover:not(:disabled) {
+    color: var(--green-dark);
+    background: var(--green-light);
+    border-color: #a7cdb6;
+  }
+
+  .calendar-day.is-outside-range {
+    color: #b8c1bb;
+    background: transparent;
+  }
+
+  .calendar-day.is-unavailable {
+    color: #9b7777;
+    text-decoration: line-through;
+    background: #f8ecec;
+  }
+
+  .calendar-day.is-unavailable:disabled {
+    cursor: not-allowed;
+    opacity: .72;
+  }
+
+  .calendar-day.is-checkout-boundary {
+    color: var(--green-dark);
+    text-decoration: none;
+    background:
+      linear-gradient(
+        135deg,
+        #f8ecec 0 48%,
+        var(--green-light) 48% 100%
+      );
+    border-color: #a7cdb6;
+  }
+
+  .calendar-day.is-selected {
+    color: var(--white);
+    text-decoration: none;
+    background: var(--green);
+    border-color: var(--green);
+    font-weight: 700;
+  }
+
+  .calendar-day.is-check-in::after,
+  .calendar-day.is-check-out::after {
+    position: absolute;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    content: "";
+    background: currentColor;
+    border-radius: 50%;
+  }
+
+  .calendar-loading,
+  .calendar-error {
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .calendar-loading {
+    color: var(--muted);
+    background: #f3f6f3;
+  }
+
+  .calendar-error {
+    color: var(--red);
+    background: #fff1f1;
+  }
+
+  .calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: .78rem;
+  }
+
+  .calendar-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .calendar-legend-mark {
+    width: 11px;
+    height: 11px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+  }
+
+  .calendar-legend-mark.is-available {
+    background: var(--white);
+  }
+
+  .calendar-legend-mark.is-selected {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .calendar-legend-mark.is-unavailable {
+    background: #f8ecec;
+    border-color: #e7b1b1;
+  }
+
+  .calendar-selection-summary {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin-top: 16px;
+    padding: 12px;
+    background: #f5f8f5;
+    border-radius: 12px;
+  }
+
+  .calendar-selection-summary div {
+    min-width: 0;
+  }
+
+  .calendar-selection-summary small,
+  .calendar-selection-summary strong {
+    display: block;
+  }
+
+  .calendar-selection-summary strong {
+    margin-top: 2px;
+    font-size: .9rem;
+  }
+
+  .availability-calendar-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  @media (max-width: 420px) {
+    .room-booking-panel {
+      padding: 18px;
+    }
+
+    .booking-compact-fields {
+      grid-template-columns: minmax(0, 1fr) 90px;
+    }
+
+    .availability-calendar-shell {
+      padding: 16px;
+    }
+
+    .calendar-weekdays,
+    .room-calendar-grid {
+      gap: 3px;
+    }
+
+    .calendar-selection-summary {
+      gap: 8px;
+    }
+  
 
 }
