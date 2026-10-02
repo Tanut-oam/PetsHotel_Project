@@ -135,41 +135,424 @@
     });
   });
 
-  const search = byId("booking-search");
-  const filter = byId("booking-filter");
+    const search = byId("booking-search");
+  const statusFilter = byId("booking-filter");
 
-  // หน้ารายละเอียดไม่มีตาราง จบการทำงานส่วนกรองตรงนี้
-  if (!search || !filter) return;
+  const paymentFilter =
+    byId("booking-payment-filter");
 
-  const rows = [...page.querySelectorAll("[data-booking-row]")];
+  const sortSelect =
+    byId("booking-sort");
+
+  const quickFilterButtons = [
+    ...page.querySelectorAll(
+      "[data-booking-quick-filter]"
+    )
+  ];
+
+  /*
+   * หน้ารายละเอียดไม่มีตาราง
+   * จึงจบการทำงานของส่วนกรองตรงนี้
+   */
+  if (!search || !statusFilter) {
+    return;
+  }
+
+  const rows = [
+    ...page.querySelectorAll(
+      "[data-booking-row]"
+    )
+  ];
+
+  const rowsContainer =
+    byId("booking-rows")
+    || rows[0]?.parentElement;
+
+  let activeQuickFilter = "ALL";
+
+  function toIsoDate(date) {
+    const year = date.getFullYear();
+
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function addDays(date, amount) {
+    const result = new Date(date);
+
+    result.setDate(
+      result.getDate() + amount
+    );
+
+    return result;
+  }
+
+  const todayDate = new Date();
+  const today = toIsoDate(todayDate);
+
+  /*
+   * นับวันนี้รวมเป็นวันแรก
+   * จึงเพิ่มอีก 6 วัน
+   */
+  const upcomingEnd =
+    toIsoDate(addDays(todayDate, 6));
+
+  function isActionRequired(row) {
+    const status = row.dataset.status;
+    const checkIn = row.dataset.checkIn;
+    const checkOut = row.dataset.checkOut;
+
+    if (status === "PENDING") {
+      return true;
+    }
+
+    if (
+      status === "CONFIRMED"
+      && checkIn
+      && checkIn <= today
+    ) {
+      return true;
+    }
+
+    return (
+      status === "CHECKED_IN"
+      && checkOut
+      && checkOut <= today
+    );
+  }
+
+  function matchesQuickFilter(
+    row,
+    quickFilter
+  ) {
+    const status = row.dataset.status;
+    const payment = row.dataset.payment;
+    const checkIn = row.dataset.checkIn;
+    const checkOut = row.dataset.checkOut;
+
+    switch (quickFilter) {
+      case "ACTION_REQUIRED":
+        return isActionRequired(row);
+
+      case "CHECK_IN_TODAY":
+        return (
+          status === "CONFIRMED"
+          && checkIn === today
+        );
+
+      case "CHECK_OUT_TODAY":
+        return (
+          status === "CHECKED_IN"
+          && checkOut === today
+        );
+
+      case "UNPAID":
+        return (
+          payment === "UNPAID"
+          && status !== "CANCELLED"
+        );
+
+      case "UPCOMING_7_DAYS":
+        return (
+          status !== "CANCELLED"
+          && status !== "CHECKED_OUT"
+          && checkIn
+          && checkIn >= today
+          && checkIn <= upcomingEnd
+        );
+
+      default:
+        return true;
+    }
+  }
+
+  function actionPriority(row) {
+    const status = row.dataset.status;
+    const checkIn = row.dataset.checkIn;
+    const checkOut = row.dataset.checkOut;
+    const payment = row.dataset.payment;
+
+    if (status === "PENDING") {
+      return 0;
+    }
+
+    if (
+      status === "CONFIRMED"
+      && checkIn === today
+    ) {
+      return 1;
+    }
+
+    if (
+      status === "CHECKED_IN"
+      && checkOut === today
+    ) {
+      return 2;
+    }
+
+    if (
+      status === "CONFIRMED"
+      && checkIn < today
+    ) {
+      return 3;
+    }
+
+    if (
+      status === "CHECKED_IN"
+      && checkOut < today
+    ) {
+      return 4;
+    }
+
+    if (status === "CHECKED_IN") {
+      return 5;
+    }
+
+    if (
+      payment === "UNPAID"
+      && status !== "CANCELLED"
+    ) {
+      return 6;
+    }
+
+    if (status === "CONFIRMED") {
+      return 7;
+    }
+
+    if (status === "CHECKED_OUT") {
+      return 8;
+    }
+
+    if (status === "CANCELLED") {
+      return 9;
+    }
+
+    return 10;
+  }
+
+  function compareRows(first, second) {
+    const selectedSort =
+      sortSelect?.value || "";
+
+    const firstId =
+      Number(first.dataset.bookingId || 0);
+
+    const secondId =
+      Number(second.dataset.bookingId || 0);
+
+    const firstTotal =
+      Number(first.dataset.total || 0);
+
+    const secondTotal =
+      Number(second.dataset.total || 0);
+
+    const firstCheckIn =
+      first.dataset.checkIn || "9999-12-31";
+
+    const secondCheckIn =
+      second.dataset.checkIn || "9999-12-31";
+
+    switch (selectedSort) {
+      case "CHECK_IN_ASC":
+        return (
+          firstCheckIn.localeCompare(
+            secondCheckIn
+          )
+          || secondId - firstId
+        );
+
+      case "NEWEST":
+        return secondId - firstId;
+
+      case "TOTAL_DESC":
+        return (
+          secondTotal - firstTotal
+          || secondId - firstId
+        );
+
+      case "TOTAL_ASC":
+        return (
+          firstTotal - secondTotal
+          || secondId - firstId
+        );
+
+      case "ACTION_FIRST":
+        return (
+          actionPriority(first)
+          - actionPriority(second)
+          || firstCheckIn.localeCompare(
+            secondCheckIn
+          )
+          || secondId - firstId
+        );
+
+      default:
+        return 0;
+    }
+  }
+
+  function sortRows() {
+    if (!sortSelect || !rowsContainer) {
+      return;
+    }
+
+    const sortedRows =
+      [...rows].sort(compareRows);
+
+    sortedRows.forEach(row => {
+      rowsContainer.append(row);
+    });
+  }
+
+  function updateQuickCounts() {
+    const filters = [
+      "ALL",
+      "ACTION_REQUIRED",
+      "CHECK_IN_TODAY",
+      "CHECK_OUT_TODAY",
+      "UNPAID",
+      "UPCOMING_7_DAYS"
+    ];
+
+    filters.forEach(filterName => {
+      const count =
+        filterName === "ALL"
+          ? rows.length
+          : rows.filter(row =>
+              matchesQuickFilter(
+                row,
+                filterName
+              )
+            ).length;
+
+      const output =
+        page.querySelector(
+          `[data-quick-count="${filterName}"]`
+        );
+
+      if (output) {
+        output.textContent =
+          String(count);
+      }
+    });
+  }
 
   function applyFilter() {
-    const query = search.value.trim().toLocaleLowerCase("th");
+    sortRows();
+
+    const query =
+      search.value
+        .trim()
+        .toLocaleLowerCase("th");
+
     let visible = 0;
 
     rows.forEach(row => {
-      const searchable = [...row.querySelectorAll("[data-detail-label]")]
-        .map(cell => cell.textContent.trim())
+      const searchable = [
+        ...row.querySelectorAll(
+          "[data-detail-label]"
+        )
+      ]
+        .map(cell =>
+          cell.textContent.trim()
+        )
         .join(" ")
         .toLocaleLowerCase("th");
 
-      const matchesText = searchable.includes(query);
+      const matchesText =
+        searchable.includes(query);
+
       const matchesStatus =
-        !filter.value || row.dataset.status === filter.value;
+        !statusFilter.value
+        || row.dataset.status
+          === statusFilter.value;
 
-      row.hidden = !(matchesText && matchesStatus);
+      const matchesPayment =
+        !paymentFilter?.value
+        || row.dataset.payment
+          === paymentFilter.value;
 
-      if (!row.hidden) visible++;
+      const matchesQuick =
+        matchesQuickFilter(
+          row,
+          activeQuickFilter
+        );
+
+      row.hidden = !(
+        matchesText
+        && matchesStatus
+        && matchesPayment
+        && matchesQuick
+      );
+
+      if (!row.hidden) {
+        visible += 1;
+      }
     });
 
     byId("booking-count").textContent =
       `แสดง ${visible} จาก ${rows.length} รายการ`;
 
-    byId("booking-empty").hidden = visible > 0;
+    byId("booking-empty").hidden =
+      visible > 0;
   }
 
-  search.addEventListener("input", applyFilter);
-  filter.addEventListener("change", applyFilter);
+  function selectQuickFilter(button) {
+    activeQuickFilter =
+      button.dataset.bookingQuickFilter
+      || "ALL";
 
+    quickFilterButtons.forEach(item => {
+      const active = item === button;
+
+      item.classList.toggle(
+        "is-active",
+        active
+      );
+
+      item.setAttribute(
+        "aria-pressed",
+        String(active)
+      );
+    });
+
+    applyFilter();
+  }
+
+  search.addEventListener(
+    "input",
+    applyFilter
+  );
+
+  statusFilter.addEventListener(
+    "change",
+    applyFilter
+  );
+
+  paymentFilter?.addEventListener(
+    "change",
+    applyFilter
+  );
+
+  sortSelect?.addEventListener(
+    "change",
+    applyFilter
+  );
+
+  quickFilterButtons.forEach(button => {
+    button.addEventListener(
+      "click",
+      () => selectQuickFilter(button)
+    );
+  });
+
+  updateQuickCounts();
   applyFilter();
 })();
