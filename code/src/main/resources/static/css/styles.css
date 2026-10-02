@@ -150,7 +150,7 @@ small {
   color: white;
   background:
     linear-gradient(90deg, rgba(22, 49, 34, .92), rgba(22, 49, 34, .20)),
-    url("assets/hero.jpg") center / cover;
+    url("../images/hero.webp") center / cover;
 }
 
 .hero h1 {
