@@ -1419,3 +1419,140 @@ small {
     color: var(--red);
   }
 
+  /* =========================================================
+   Booking and payment status
+   ========================================================= */
+
+.booking-status-badge,
+.payment-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* รอยืนยัน */
+.booking-status-badge[data-status-label="PENDING"] {
+  color: #805b00;
+  background: #fff4c7;
+  border-color: #e7c864;
+}
+
+/* ยืนยันแล้ว */
+.booking-status-badge[data-status-label="CONFIRMED"] {
+  color: #17613d;
+  background: #e2f4e9;
+  border-color: #9bcbb0;
+}
+
+/* เข้าพักแล้ว */
+.booking-status-badge[data-status-label="CHECKED_IN"] {
+  color: #175c77;
+  background: #e2f3f8;
+  border-color: #93c8d8;
+}
+
+/* เช็กเอาต์แล้ว */
+.booking-status-badge[data-status-label="CHECKED_OUT"] {
+  color: #505a55;
+  background: #edf0ee;
+  border-color: #cbd2ce;
+}
+
+/* ยกเลิกแล้ว */
+.booking-status-badge[data-status-label="CANCELLED"] {
+  color: #a32e2e;
+  background: #fde8e8;
+  border-color: #eab0b0;
+}
+
+/* ยังไม่ชำระ */
+.payment-status-badge[data-payment-label="UNPAID"] {
+  color: #805b00;
+  background: #fff4c7;
+  border-color: #e7c864;
+}
+
+/* ชำระแล้ว */
+.payment-status-badge[data-payment-label="PAID"] {
+  color: #17613d;
+  background: #e2f4e9;
+  border-color: #9bcbb0;
+}
+
+/* แถวรายการที่ยกเลิก */
+.booking-row-cancelled {
+  background: #fffafa;
+}
+
+.booking-row-cancelled td {
+  color: #7e706f;
+}
+
+/* สถานะด้านบนของหน้ารายละเอียด */
+.booking-detail-status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+/* กล่องแจ้งว่ารายการถูกยกเลิก */
+.booking-cancelled-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 18px 20px;
+  color: #832929;
+  background: #fff1f1;
+  border: 1px solid #edb9b9;
+  border-left: 5px solid #c74848;
+  border-radius: 14px;
+}
+
+.booking-cancelled-notice h2 {
+  margin: 0 0 5px;
+  color: #832929;
+  font-size: 1.1rem;
+}
+
+.booking-cancelled-notice p {
+  margin: 0;
+  color: #8b4a4a;
+  line-height: 1.55;
+}
+
+.booking-cancelled-icon {
+  display: inline-flex;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #c74848;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .booking-status-badge,
+  .payment-status-badge {
+    min-width: 88px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
+  .booking-cancelled-notice {
+    padding: 15px;
+  }
+}

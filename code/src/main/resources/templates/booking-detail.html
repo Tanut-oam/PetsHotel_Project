@@ -135,6 +135,40 @@
          th:text="${error}"
          role="alert"></p>
 
+         <div class="booking-detail-status-summary">
+            <span class="booking-status-badge"
+                  data-status-label
+                  th:attr="data-status-label=${booking.status}"
+                  th:text="${booking.status}">
+            </span>
+
+            <span class="payment-status-badge"
+                  data-payment-label
+                  th:attr="data-payment-label=${booking.paymentStatus}"
+                  th:text="${booking.paymentStatus}">
+            </span>
+          </div>
+
+          <section class="booking-cancelled-notice"
+                  th:if="${booking.status != null
+                    and booking.status.name() == 'CANCELLED'}"
+                  role="status">
+
+            <span class="booking-cancelled-icon"
+                  aria-hidden="true">
+              ✕
+            </span>
+
+            <div>
+              <h2>การจองนี้ถูกยกเลิกแล้ว</h2>
+
+              <p>
+                ห้องพักและช่วงวันที่ของรายการนี้ไม่ถูกสงวนไว้แล้ว
+                หากต้องการเข้าพัก กรุณาสร้างการจองใหม่
+              </p>
+            </div>
+          </section>
+
       <section id="booking-detail" class="panel">
         <div class="booking-detail-grid">
           <section class="booking-information">
@@ -165,16 +199,20 @@
 
               <dt>สถานะ</dt>
               <dd>
-                <span data-status-label
-                      th:attr="data-status-label=${booking.status}"
-                      th:text="${booking.status}"></span>
+                <span class="booking-status-badge"
+                    data-status-label
+                    th:attr="data-status-label=${booking.status}"
+                    th:text="${booking.status}">
+              </span>
               </dd>
 
               <dt>การชำระเงิน</dt>
               <dd>
-                <span data-payment-label
+                  <span class="payment-status-badge"
+                      data-payment-label
                       th:attr="data-payment-label=${booking.paymentStatus}"
-                      th:text="${booking.paymentStatus}"></span>
+                      th:text="${booking.paymentStatus}">
+                </span>
               </dd>
 
               <dt>โปรโมชันตอนจอง</dt>
@@ -267,10 +305,12 @@
           </form>
         </div>
 
-        <p class="muted">
+       <p class="muted"
+          th:if="${booking.status != null
+            and booking.status.name() != 'CANCELLED'}">
           ยกเลิกได้เฉพาะรายการที่ยังไม่ชำระเงิน
           และอยู่ในสถานะรอยืนยันหรือยืนยันแล้ว
-        </p>
+      </p>
       </section>
 
       <dialog id="booking-dialog" aria-labelledby="dialog-title">

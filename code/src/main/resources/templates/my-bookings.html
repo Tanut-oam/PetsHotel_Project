@@ -73,7 +73,9 @@
           <tbody id="booking-rows">
             <tr th:each="booking : ${bookings}"
                 data-booking-row
-                th:attr="data-status=${booking.status.name()}">
+                th:attr="data-status=${booking.status.name()}"
+                th:classappend="${booking.status.name() == 'CANCELLED'}
+                  ? 'booking-row-cancelled' : ''">
 
               <td data-detail-label="เลขที่" th:text="${booking.id}"></td>
               <td data-detail-label="สัตว์เลี้ยง" th:text="${booking.petNames}"></td>
@@ -82,15 +84,19 @@
                   th:text="${booking.checkInDate + ' – ' + booking.checkOutDate}"></td>
 
               <td data-detail-label="สถานะ">
-                <span data-status-label
+                <span class="booking-status-badge"
+                      data-status-label
                       th:attr="data-status-label=${booking.status.name()}"
-                      th:text="${booking.status}"></span>
+                      th:text="${booking.status}">
+                </span>
               </td>
 
               <td data-detail-label="การชำระเงิน">
-                <span data-payment-label
+                <span class="payment-status-badge"
+                      data-payment-label
                       th:attr="data-payment-label=${booking.paymentStatus}"
-                      th:text="${booking.paymentStatus}"></span>
+                      th:text="${booking.paymentStatus}">
+                </span>
               </td>
 
               <td data-detail-label="ยอดรวม"
