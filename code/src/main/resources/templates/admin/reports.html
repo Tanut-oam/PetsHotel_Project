@@ -6,42 +6,161 @@
   <title>รายงานการดูแล | PetsHotel Admin</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
   <link rel="stylesheet" th:href="@{/css/admin-reports.css}">
+  <link rel="stylesheet" th:href="@{/css/admin-report-list.css}">
 </head>
 <body class="admin">
   <header th:replace="~{fragments/layout :: admin-topbar}"></header>
+
   <div class="layout">
     <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
+
     <main class="content">
-      <div class="section-title"><h1>รายงานการดูแล</h1></div>
-      <div th:if="${message}" class="flash-notice flash-success" th:text="${message}" role="status"></div>
-      <div th:if="${error}" class="flash-notice flash-error" th:text="${error}" role="alert"></div>
+      <div class="section-title">
+        <h1>รายงานการดูแล</h1>
+      </div>
+
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           th:text="${message}"
+           role="status"></div>
+
+      <div th:if="${error}"
+           class="flash-notice flash-error"
+           th:text="${error}"
+           role="alert"></div>
 
       <section aria-labelledby="care-bookings-heading">
-        <div class="section-title">
-          <h2 id="care-bookings-heading">การจองและรายงานการดูแล</h2>
+        <form class="admin-care-filters"
+              method="get"
+              th:action="@{/admin/reports}">
+
+          <label class="admin-care-filter-field admin-care-search">
+            ค้นหาการจอง
+            <input type="search"
+                   name="query"
+                   maxlength="100"
+                   placeholder="ชื่อเจ้าของ อีเมล สัตว์เลี้ยง หรือ #การจอง"
+                   th:value="${query}">
+          </label>
+
+          <label class="admin-care-filter-field admin-care-date">
+            วันที่มีรายงาน
+            <input type="date"
+                   name="reportDate"
+                   th:value="${reportDate}">
+          </label>
+
+          <button class="btn btn-primary" type="submit">
+            ค้นหา
+          </button>
+
+          <a class="btn"
+             th:if="${hasFilters}"
+             th:href="@{/admin/reports}">
+            ล้างตัวกรอง
+          </a>
+        </form>
+
+        <div class="admin-care-list-heading">
+          <h2 id="care-bookings-heading">
+            การจองและรายงานการดูแล
+          </h2>
+          <span class="muted"
+                th:text="|${resultCount} การจอง · แสดง 5 การจองต่อหน้า|">
+            จำนวนการจอง
+          </span>
         </div>
-        <div class="panel" th:if="${reportableBookings.isEmpty()}" role="status">
-          ยังไม่มีการจองที่พร้อมบันทึกรายงาน
+
+        <div class="panel"
+             th:if="${reportableBookings.isEmpty()}"
+             role="status">
+          <span th:if="${hasFilters}">
+            ไม่พบการจองที่ตรงกับตัวกรอง
+          </span>
+          <span th:unless="${hasFilters}">
+            ยังไม่มีการจองที่พร้อมบันทึกรายงาน
+          </span>
         </div>
-        <div class="report-booking-list" th:unless="${reportableBookings.isEmpty()}">
-          <article class="panel report-booking" th:each="booking : ${reportableBookings}">
-            <div class="report-booking-info">
-              <h3 th:text="|การจอง #${booking.key}|">การจอง #1</h3>
-              <span th:text="|เจ้าของ: ${booking.value[0].ownerName}|">เจ้าของ</span>
-              <span th:text="|เข้าพัก ${#temporals.format(booking.value[0].checkInDate, 'dd/MM/yyyy')} ถึง ${#temporals.format(booking.value[0].checkOutDate, 'dd/MM/yyyy')}|">วันที่เข้าพัก</span>
-              <span th:text="|${#lists.size(booking.value)} ตัว|">จำนวนสัตว์</span>
+
+        <div class="admin-care-booking-list"
+             th:unless="${reportableBookings.isEmpty()}">
+
+          <details class="panel admin-care-booking"
+                   th:each="booking : ${reportableBookings}">
+
+            <summary class="admin-care-booking-toggle">
+              <span class="admin-care-booking-summary">
+                <strong th:text="|การจอง #${booking.key}|">
+                  การจอง #1
+                </strong>
+
+                <span th:text="|เจ้าของ: ${booking.value[0].ownerName}|">
+                  ชื่อเจ้าของ
+                </span>
+
+                <span class="muted"
+                      th:text="${booking.value[0].ownerEmail}">
+                  อีเมลเจ้าของ
+                </span>
+
+                <span class="muted"
+                      th:text="|เข้าพัก ${#temporals.format(booking.value[0].checkInDate, 'dd/MM/yyyy')} ถึง ${#temporals.format(booking.value[0].checkOutDate, 'dd/MM/yyyy')} · ${#lists.size(booking.value)} ตัว|">
+                  ช่วงเข้าพักและจำนวนสัตว์
+                </span>
+              </span>
+
+              <span class="admin-care-booking-meta">
+                <span class="badge"
+                      th:text="${reportCountsByBooking[booking.key] == 0 ? 'ยังไม่มีรายงาน' : reportCountsByBooking[booking.key] + ' รายงาน'}">
+                  จำนวนรายงาน
+                </span>
+                <span class="admin-care-chevron"
+                      aria-hidden="true"></span>
+              </span>
+            </summary>
+
+            <div class="admin-care-booking-body">
+              <div class="report-pet-list">
+                <a class="report-pet-button"
+                   th:each="pet : ${booking.value}"
+                   th:with="petReports=${reportsByBookingPet[pet.bookingPetId]}"
+                   th:href="@{/admin/reports/pets/{id}(id=${pet.bookingPetId})}"
+                   th:aria-label="|ดูรายละเอียดและรายงานของ ${pet.petName} ในการจอง #${booking.key}|">
+
+                  <strong th:text="${pet.petName}">
+                    ชื่อสัตว์เลี้ยง
+                  </strong>
+
+                  <span th:text="${petReports == null ? 'ยังไม่มีรายงาน' : #lists.size(petReports) + ' รายงาน'}">
+                    จำนวนรายงาน
+                  </span>
+                </a>
+              </div>
             </div>
-            <div class="report-pet-list">
-              <a class="report-pet-button"
-                 th:each="pet : ${booking.value}"
-                 th:href="@{/admin/reports/pets/{id}(id=${pet.bookingPetId})}"
-                 th:attr="aria-label=|ดูรายละเอียดและรายงานของ ${pet.petName}|">
-                <strong th:text="${pet.petName}">ชื่อสัตว์</strong>
-                <span th:text="${reportsByBookingPet[pet.bookingPetId] == null ? 'ยังไม่มีรายงาน' : #lists.size(reportsByBookingPet[pet.bookingPetId]) + ' รายงาน'}">จำนวนรายงาน</span>
-              </a>
-            </div>
-          </article>
+          </details>
         </div>
+
+        <nav class="admin-care-pagination"
+             th:if="${totalPages > 1}"
+             aria-label="หน้ารายการการจอง">
+
+          <a class="btn"
+             th:if="${page > 0}"
+             th:href="@{/admin/reports(page=${page - 1}, query=${query}, reportDate=${reportDate})}">
+            ← ก่อนหน้า
+          </a>
+
+          <span class="admin-care-page-status"
+                th:text="|หน้า ${page + 1} จาก ${totalPages}|">
+            เลขหน้า
+          </span>
+
+          <a class="btn"
+             th:if="${page + 1 < totalPages}"
+             th:href="@{/admin/reports(page=${page + 1}, query=${query}, reportDate=${reportDate})}">
+            ถัดไป →
+          </a>
+        </nav>
       </section>
     </main>
   </div>

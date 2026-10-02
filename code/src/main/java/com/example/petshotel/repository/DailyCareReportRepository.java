@@ -68,7 +68,38 @@ public interface DailyCareReportRepository extends JpaRepository<DailyCareReport
             @Param("ownerId") Long ownerId,
             Pageable pageable
     );
-
+    @Query(
+        value = """
+            select new com.example.petshotel.dto.response.ReportBookingSummary(
+                booking.id, booking.checkInDate, booking.checkOutDate
+            )
+            from Booking booking
+            where booking.user.id = :ownerId
+            and exists (
+                select report.id
+                from DailyCareReport report
+                where report.bookingPet.booking.id = booking.id
+                    and report.reportDate = :reportDate
+            )
+            order by booking.checkInDate desc, booking.id desc
+            """,
+        countQuery = """
+            select count(booking.id)
+            from Booking booking
+            where booking.user.id = :ownerId
+            and exists (
+                select report.id
+                from DailyCareReport report
+                where report.bookingPet.booking.id = booking.id
+                    and report.reportDate = :reportDate
+            )
+            """
+    )
+    Page<ReportBookingSummary> findReportBookingsForOwnerOnDate(
+            @Param("ownerId") Long ownerId,
+            @Param("reportDate") LocalDate reportDate,
+            Pageable pageable
+    );
     @EntityGraph(attributePaths = {
         "bookingPet.pet",
         "bookingPet.booking.user",

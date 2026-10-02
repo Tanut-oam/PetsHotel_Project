@@ -24,7 +24,11 @@ import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
-
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import org.springframework.format.annotation.DateTimeFormat;
 import jakarta.validation.Valid;
 
 @Controller
@@ -41,27 +45,134 @@ public class AdminCareReportPageController {
     }
 
     @GetMapping("/admin/reports")
-    public String showReports(Principal principal, Model model) {
+    public String showReports(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "reportDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate reportDate,
+            Principal principal,
+            Model model
+    ) {
         User user = requireActiveUser(principal);
 
-        var reports = reportService.getAllReportsForStaffAndAdmin(user.getId());
-        model.addAttribute("reports", reports);
-        model.addAttribute(
-                "reportsByBookingPet",
+        if (page < 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        List<DailyCareReportResponse> reports =
+                reportService.getAllReportsForStaffAndAdmin(user.getId());
+
+        Map<Long, List<DailyCareReportResponse>> reportsByBookingPet =
                 reports.stream().collect(
                         Collectors.groupingBy(
-                                DailyCareReportResponse::bookingPetId)));
+                                DailyCareReportResponse::bookingPetId
+                        )
+                );
 
-        var bookingPetOptions =
-                reportService.getReportableBookingPetsForStaffAndAdmin(user.getId());
-        model.addAttribute("bookingPetOptions", bookingPetOptions);
-        model.addAttribute(
-                "reportableBookings",
+        List<ReportableBookingPetResponse> bookingPetOptions =
+                reportService.getReportableBookingPetsForStaffAndAdmin(
+                        user.getId()
+                );
+
+        Map<Long, List<ReportableBookingPetResponse>> allBookings =
                 bookingPetOptions.stream().collect(
                         Collectors.groupingBy(
                                 ReportableBookingPetResponse::bookingId,
                                 LinkedHashMap::new,
-                                Collectors.toList())));
+                                Collectors.toList()
+                        )
+                );
+
+        String searchText = query == null ? "" : query.trim();
+        String normalizedQuery = searchText.toLowerCase(Locale.ROOT);
+
+        List<Map.Entry<Long, List<ReportableBookingPetResponse>>> matches =
+                allBookings.entrySet().stream()
+                        .filter(entry -> {
+                            List<ReportableBookingPetResponse> pets =
+                                    entry.getValue();
+                            ReportableBookingPetResponse first = pets.get(0);
+
+                            String petNames = pets.stream()
+                                    .map(ReportableBookingPetResponse::petName)
+                                    .collect(Collectors.joining(" "));
+
+                            String searchable = (
+                                    "การจอง #" + entry.getKey()
+                                            + " " + first.ownerName()
+                                            + " " + first.ownerEmail()
+                                            + " " + petNames
+                            ).toLowerCase(Locale.ROOT);
+
+                            boolean matchesText =
+                                    normalizedQuery.isEmpty()
+                                            || searchable.contains(
+                                                    normalizedQuery
+                                            );
+
+                            boolean matchesDate = reportDate == null
+                                    || pets.stream().anyMatch(pet ->
+                                            reportsByBookingPet.getOrDefault(
+                                                    pet.bookingPetId(),
+                                                    List.of()
+                                            ).stream().anyMatch(report ->
+                                                    reportDate.equals(
+                                                            report.reportDate()
+                                                    )
+                                            )
+                                    );
+
+                            return matchesText && matchesDate;
+                        })
+                        .toList();
+
+        int totalPages = (matches.size() + 4) / 5;
+
+        if (page > 0 && page >= totalPages) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        Map<Long, List<ReportableBookingPetResponse>> pageBookings =
+                new LinkedHashMap<>();
+
+        matches.stream()
+                .skip((long) page * 5)
+                .limit(5)
+                .forEach(entry -> pageBookings.put(
+                        entry.getKey(),
+                        entry.getValue()
+                ));
+
+        Map<Long, Long> reportCountsByBooking = new LinkedHashMap<>();
+
+        pageBookings.forEach((bookingId, pets) -> {
+            long count = pets.stream()
+                    .mapToLong(pet ->
+                            reportsByBookingPet.getOrDefault(
+                                    pet.bookingPetId(),
+                                    List.of()
+                            ).size()
+                    )
+                    .sum();
+
+            reportCountsByBooking.put(bookingId, count);
+        });
+
+        model.addAttribute("reports", reports);
+        model.addAttribute("reportsByBookingPet", reportsByBookingPet);
+        model.addAttribute("bookingPetOptions", bookingPetOptions);
+        model.addAttribute("reportableBookings", pageBookings);
+        model.addAttribute("reportCountsByBooking", reportCountsByBooking);
+        model.addAttribute("resultCount", matches.size());
+        model.addAttribute("page", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("query", searchText);
+        model.addAttribute("reportDate", reportDate);
+        model.addAttribute(
+                "hasFilters",
+                !searchText.isEmpty() || reportDate != null
+        );
 
         return "admin/reports";
     }

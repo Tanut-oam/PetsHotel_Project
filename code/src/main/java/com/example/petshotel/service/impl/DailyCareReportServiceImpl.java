@@ -139,6 +139,7 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
                         booking.getId(),
                         pet.getName(),
                         owner.getFirstName() + " " + owner.getLastName(),
+                        owner.getEmail(),
                         booking.getCheckInDate(),
                         booking.getCheckOutDate(),
                         pet.getType(),
@@ -243,6 +244,24 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         User user = findUser(currentUserId);
         return reportRepository.findReportBookingsForOwner(user.getId(), pageable);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReportBookingSummary> getReportBookingsForOwnerOnDate(Long currentUserId,
+        LocalDate reportDate,Pageable pageable
+    ) {
+        if (reportDate == null) {
+            throw new IllegalArgumentException("Report date is required");
+        }
+
+        User user = findUser(currentUserId);
+
+        return reportRepository.findReportBookingsForOwnerOnDate(
+                user.getId(),
+                reportDate,
+                pageable
+        );
+}
 
     @Override
     @Transactional(readOnly = true)

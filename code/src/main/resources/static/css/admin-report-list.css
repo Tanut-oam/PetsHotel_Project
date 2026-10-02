@@ -1,0 +1,169 @@
+.admin-care-filters {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px;
+  margin-bottom: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+}
+
+.admin-care-filter-field {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.admin-care-filter-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--text);
+  font: inherit;
+}
+
+.admin-care-search {
+  flex: 1 1 280px;
+}
+
+.admin-care-date {
+  flex: 0 1 205px;
+}
+
+.admin-care-filters > .btn {
+  min-height: 44px;
+}
+
+.admin-care-list-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 14px;
+}
+
+.admin-care-list-heading h2 {
+  margin: 0;
+}
+
+.admin-care-booking-list {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-care-booking {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-care-booking-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px 22px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.admin-care-booking-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.admin-care-booking-toggle::marker {
+  content: "";
+}
+
+.admin-care-booking-toggle:hover {
+  background: var(--background);
+}
+
+.admin-care-booking-toggle:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -4px;
+}
+
+.admin-care-booking-summary {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.admin-care-booking-summary strong {
+  font-size: 1.1rem;
+}
+
+.admin-care-booking-summary span {
+  overflow-wrap: anywhere;
+}
+
+.admin-care-booking-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.admin-care-chevron {
+  width: 10px;
+  height: 10px;
+  margin-right: 3px;
+  border-right: 2px solid var(--green);
+  border-bottom: 2px solid var(--green);
+  transform: rotate(45deg);
+}
+
+.admin-care-booking[open] .admin-care-chevron {
+  transform: rotate(225deg);
+}
+
+.admin-care-booking-body {
+  padding: 0 22px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-care-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.admin-care-page-status {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .admin-care-filters {
+    padding: 14px;
+  }
+
+  .admin-care-search,
+  .admin-care-date {
+    flex: 1 1 100%;
+  }
+
+  .admin-care-booking-toggle {
+    padding: 16px;
+  }
+
+  .admin-care-booking-meta {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .admin-care-booking-body {
+    padding: 0 16px 16px;
+  }
+}

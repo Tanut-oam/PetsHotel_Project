@@ -215,4 +215,51 @@ class CustomerCareReportPageControllerTest {
                 .principal(() -> "owner@example.com"))
                 .andExpect(status().isNotFound());
     }
+    @Test
+    void showReportsShouldFilterBookingsByReportDate() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        LocalDate reportDate = LocalDate.of(2026, 10, 3);
+        PageRequest firstPage = PageRequest.of(0, 5);
+
+        ReportBookingSummary booking = new ReportBookingSummary(
+                3L,
+                LocalDate.of(2026, 10, 2),
+                LocalDate.of(2026, 10, 5)
+        );
+
+        DailyCareReportResponse report = new DailyCareReportResponse(
+                11L, 2L, 3L, 4L, "Mochi", 5L,
+                reportDate,
+                null, null, null,
+                null, null, null, null,
+                LocalDateTime.of(2026, 10, 3, 10, 0)
+        );
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
+        when(reportService.getReportBookingsForOwnerOnDate(
+                7L, reportDate, firstPage))
+                .thenReturn(new PageImpl<>(
+                        List.of(booking), firstPage, 1));
+        when(reportService.getReportsForOwnerBookings(
+                7L, List.of(3L)))
+                .thenReturn(List.of(report));
+
+        mockMvc.perform(get("/reports")
+                .principal(() -> "owner@example.com")
+                .param("reportDate", "2026-10-03"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("reports"))
+                .andExpect(model().attribute("reportDate", reportDate))
+                .andExpect(model().attribute("totalBookings", 1L))
+                .andExpect(model().attribute("totalPages", 1))
+                .andExpect(model().attribute(
+                        "reports", List.of(report)));
+
+        verify(reportService).getReportBookingsForOwnerOnDate(
+                7L, reportDate, firstPage);
+    }
 }

@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
-
+import java.time.LocalDate;
+import org.springframework.format.annotation.DateTimeFormat;
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
 import com.example.petshotel.dto.response.ReportBookingSummary;
@@ -37,7 +38,9 @@ public class CustomerCareReportPageController {
 
     @GetMapping("/reports")
     public String showReports(
-            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "page", defaultValue = "0") int page,@RequestParam(name = "reportDate", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate reportDate,
             Principal principal,
             Model model
     ) {
@@ -47,14 +50,15 @@ public class CustomerCareReportPageController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 
-        Page<ReportBookingSummary> bookingPage =
-                reportService.getReportBookingsForOwner(
-                        owner.getId(), PageRequest.of(page, 5)
-                );
+        PageRequest pageRequest = PageRequest.of(page, 5);
 
-        if (page > 0 && page >= bookingPage.getTotalPages()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        Page<ReportBookingSummary> bookingPage = reportDate == null
+                ? reportService.getReportBookingsForOwner(
+                        owner.getId(), pageRequest
+                )
+                : reportService.getReportBookingsForOwnerOnDate(
+                        owner.getId(), reportDate, pageRequest
+                );
 
         List<Long> bookingIds = bookingPage.getContent().stream()
                 .map(ReportBookingSummary::id)
@@ -98,7 +102,8 @@ public class CustomerCareReportPageController {
         model.addAttribute("bookingsById", bookingsById);
         model.addAttribute("page", page);
         model.addAttribute("totalPages", bookingPage.getTotalPages());
-
+        model.addAttribute("reportDate", reportDate);
+        model.addAttribute("totalBookings", bookingPage.getTotalElements());
         return "reports";
     }
 
