@@ -30,8 +30,11 @@ import java.util.Locale;
 import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import jakarta.validation.Valid;
+import java.util.Objects;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
+@RequestMapping("/admin/reports")
 public class AdminCareReportPageController {
 
     private final DailyCareReportService reportService;
@@ -44,7 +47,7 @@ public class AdminCareReportPageController {
         this.currentUserService = currentUserService;
     }
 
-    @GetMapping("/admin/reports")
+    @GetMapping
     public String showReports(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "query", required = false) String query,
@@ -66,7 +69,7 @@ public class AdminCareReportPageController {
         Map<Long, List<DailyCareReportResponse>> reportsByBookingPet =
                 reports.stream().collect(
                         Collectors.groupingBy(
-                                DailyCareReportResponse::bookingPetId
+                                report -> Objects.requireNonNull(report).bookingPetId()
                         )
                 );
 
@@ -78,7 +81,7 @@ public class AdminCareReportPageController {
         Map<Long, List<ReportableBookingPetResponse>> allBookings =
                 bookingPetOptions.stream().collect(
                         Collectors.groupingBy(
-                                ReportableBookingPetResponse::bookingId,
+                                pet -> Objects.requireNonNull(pet).bookingId(),
                                 LinkedHashMap::new,
                                 Collectors.toList()
                         )
@@ -95,7 +98,7 @@ public class AdminCareReportPageController {
                             ReportableBookingPetResponse first = pets.get(0);
 
                             String petNames = pets.stream()
-                                    .map(ReportableBookingPetResponse::petName)
+                                    .map(pet -> Objects.requireNonNull(pet).petName())
                                     .collect(Collectors.joining(" "));
 
                             String searchable = (
@@ -177,7 +180,7 @@ public class AdminCareReportPageController {
         return "admin/reports";
     }
 
-    @GetMapping("/admin/reports/pets/{bookingPetId}")
+    @GetMapping("/pets/{bookingPetId}")
     public String showPetReports(
             @PathVariable Long bookingPetId,
             @RequestParam(name = "reportId", required = false) Long reportId,
@@ -219,7 +222,7 @@ public class AdminCareReportPageController {
         return "admin/report-detail";
     }
 
-    @PostMapping("/admin/reports")
+    @PostMapping
     public String createReport(
             Principal principal,
             @RequestParam(name = "bookingPetId", required = false) Long bookingPetId,
@@ -257,7 +260,7 @@ public class AdminCareReportPageController {
         return "redirect:" + target;
     }
 
-    @PostMapping("/admin/reports/{reportId}/edit")
+    @PostMapping("/{reportId}/edit")
     public String updateReport(
             @PathVariable Long reportId,
             Principal principal,
