@@ -23,8 +23,11 @@ import com.example.petshotel.dto.response.ReportBookingSummary;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
+import java.util.Objects;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
+@RequestMapping("/reports")
 public class CustomerCareReportPageController {
     private final DailyCareReportService reportService;
     private final CurrentUserService currentUserService;
@@ -36,7 +39,7 @@ public class CustomerCareReportPageController {
         this.currentUserService = currentUserService;
     }
 
-    @GetMapping("/reports")
+    @GetMapping
     public String showReports(
             @RequestParam(name = "page", defaultValue = "0") int page,@RequestParam(name = "reportDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -61,7 +64,7 @@ public class CustomerCareReportPageController {
                 );
 
         List<Long> bookingIds = bookingPage.getContent().stream()
-                .map(ReportBookingSummary::id)
+                .map(booking -> Objects.requireNonNull(booking).id())
                 .toList();
 
         List<DailyCareReportResponse> reports =
@@ -91,7 +94,12 @@ public class CustomerCareReportPageController {
                 ).add(report);
 
                 reportCountsByBooking.merge(
-                        report.bookingId(), 1L, Long::sum
+                        report.bookingId(),
+                        1L,
+                        (currentCount, increment) -> Long.sum(
+                                Objects.requireNonNull(currentCount),
+                                Objects.requireNonNull(increment)
+                        )
                 );
             }
         }
@@ -107,7 +115,7 @@ public class CustomerCareReportPageController {
         return "reports";
     }
 
-    @GetMapping("/reports/pets/{bookingPetId}")
+    @GetMapping("/pets/{bookingPetId}")
     public String showPetReports(
             @PathVariable Long bookingPetId,
             @RequestParam(name = "reportId", required = false) Long reportId,
