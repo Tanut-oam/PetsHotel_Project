@@ -1,0 +1,95 @@
+@startuml domain-model
+left to right direction
+skinparam defaultFontName "Tahoma"
+skinparam classAttributeIconSize 0
+hide circle
+
+title PetStay - Domain Model
+
+' ---------- Users and pets ----------
+
+class User <<Entity>> {
+  firstName: String
+  lastName: String
+  role: UserRole
+}
+
+class Pet <<Entity>> {
+  name: String
+  type: PetType
+  active: Boolean
+}
+
+class Room <<Entity>> {
+  roomNumber: String
+  capacity: Integer
+  pricePerPetPerNight: BigDecimal
+}
+
+' ---------- Bookings and care ----------
+
+class Booking <<Entity>> {
+  checkInDate: LocalDate
+  checkOutDate: LocalDate
+  status: BookingStatus
+  paymentStatus: PaymentStatus
+  totalPrice: BigDecimal
+}
+
+class BookingPet <<Entity>>
+
+class DailyCareReport <<Entity>> {
+  reportDate: LocalDate
+  feedingMorning: String
+  feedingEvening: String
+  mood: String
+  healthNote: String
+}
+
+' ---------- Offers and payment ----------
+
+class Promotion <<Entity>> {
+  name: String
+  type: PromotionType
+  value: BigDecimal
+}
+
+class ExtraService <<Entity>> {
+  name: String
+  price: BigDecimal
+}
+
+class BookingExtraService <<Entity>> {
+  quantity: Integer
+  unitPrice: BigDecimal
+  totalPrice: BigDecimal
+}
+
+class Receipt <<Entity>> {
+  receiptNumber: String
+  issuedAt: LocalDateTime
+  totalAmount: BigDecimal
+}
+
+' ---------- Relationships ----------
+
+User "1" -- "0..*" Pet : owns
+User "1" -- "0..*" Booking : makes
+User "1" -- "0..*" DailyCareReport : records
+
+Room "1" -- "0..*" Booking : hosts
+Booking "1" *-- "1..*" BookingPet : includes
+Pet "1" -- "0..*" BookingPet : stays in
+BookingPet "1" -- "0..*" DailyCareReport : has
+
+Promotion "0..1" -- "0..*" Booking : applied to
+Booking "1" *-- "0..*" BookingExtraService : selects
+ExtraService "1" -- "0..*" BookingExtraService : chosen as
+BookingPet "0..1" -- "0..*" BookingExtraService : assigned to
+Booking "1" -- "0..1" Receipt : has
+
+note right of DailyCareReport
+  One report per BookingPet and reportDate.
+end note
+
+@enduml
