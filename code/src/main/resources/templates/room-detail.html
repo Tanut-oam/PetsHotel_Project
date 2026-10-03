@@ -129,7 +129,7 @@
                id="room-booking-widget"
                th:attr="
                  data-room-id=${room.id},
-                 data-calendar-url=@{/api/room/{roomId}/availability-calendar(
+                 data-calendar-url=@{/api/rooms/{roomId}/availability-calendar(
                    roomId=${room.id}
                  )},
                  data-booking-url=@{/bookings/new}

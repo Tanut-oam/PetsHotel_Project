@@ -57,7 +57,7 @@ class AvailabilityRestControllerTest {
         when(availabilityService.findAvailableRooms(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 3), 2))
                 .thenReturn(List.of(room));
 
-        mockMvc.perform(get("/api/room/available")
+        mockMvc.perform(get("/api/rooms/available")
                 .param("checkIn", "2026-10-01")
                 .param("checkOut", "2026-10-03")
                 .param("petCount", "2"))
@@ -69,7 +69,7 @@ class AvailabilityRestControllerTest {
 
     @Test
     void findAvailableRoomsShouldReturnBadRequestWhenPetCountMissing() throws Exception {
-        mockMvc.perform(get("/api/room/available")
+        mockMvc.perform(get("/api/rooms/available")
                 .param("checkIn", "2026-10-01")
                 .param("checkOut", "2026-10-03"))
                 .andExpect(status().isBadRequest());
@@ -79,7 +79,7 @@ class AvailabilityRestControllerTest {
 
     @Test
     void findAvailableRoomsShouldReturnBadRequestWhenPetCountIsZero() throws Exception {
-        mockMvc.perform(get("/api/room/available")
+        mockMvc.perform(get("/api/rooms/available")
                 .param("checkIn", "2026-10-01")
                 .param("checkOut", "2026-10-03")
                 .param("petCount", "0"))
@@ -90,7 +90,7 @@ class AvailabilityRestControllerTest {
 
     @Test
     void shouldReturnFieldErrorWhenPetCountIsZero() throws Exception {
-        mockMvc.perform(get("/api/room/available")
+        mockMvc.perform(get("/api/rooms/available")
                 .param("checkIn", "2026-10-01")
                 .param("checkOut", "2026-10-03")
                 .param("petCount", "0"))
@@ -104,13 +104,13 @@ class AvailabilityRestControllerTest {
         when(availabilityService.findAvailableRooms(any(), any(), anyInt()))
                 .thenThrow(new IllegalArgumentException("วันที่ Check-out ต้องอยู่หลังวันที่ Check-in"));
 
-        mockMvc.perform(get("/api/room/available")
+        mockMvc.perform(get("/api/rooms/available")
                 .param("checkIn", "2026-10-03")
                 .param("checkOut", "2026-10-01")
                 .param("petCount", "1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.path").value("/api/room/available"));
+                .andExpect(jsonPath("$.path").value("/api/rooms/available"));
     }
 
         @Test
@@ -155,7 +155,7 @@ class AvailabilityRestControllerTest {
 
         mockMvc.perform(
                 get(
-                        "/api/room/1/"
+                        "/api/rooms/1/"
                         + "availability-calendar"
                 )
                         .param(
