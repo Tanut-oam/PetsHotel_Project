@@ -27,6 +27,7 @@ import com.example.petshotel.dto.response.ReportBookingSummary;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
+import org.springframework.security.access.AccessDeniedException;
 
 class CustomerCareReportPageControllerTest {
 
@@ -208,7 +209,7 @@ class CustomerCareReportPageControllerTest {
         when(currentUserService.getByEmail("owner@example.com"))
                 .thenReturn(owner);
         when(reportService.getReportsByBookingPet(99L, 7L))
-                .thenThrow(new IllegalArgumentException(
+                .thenThrow(new AccessDeniedException(
                         "You cannot view this care report"));
 
         mockMvc.perform(get("/reports/pets/99")
