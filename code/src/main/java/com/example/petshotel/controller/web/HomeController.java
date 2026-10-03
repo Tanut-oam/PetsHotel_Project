@@ -1,5 +1,6 @@
 package com.example.petshotel.controller.web;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.example.petshotel.mapper.ExtraServiceMapper;
 import com.example.petshotel.service.ExtraServiceService;
 import com.example.petshotel.service.RoomService;
-import org.springframework.security.core.Authentication;
 
 @Controller
 public class HomeController {
@@ -29,6 +29,10 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model, Authentication authentication) {
+        // ยังไม่ล็อกอิน → ไปหน้า login ก่อน (หลังล็อกอินจะไปหน้าแรกตาม role)
+        if (authentication == null) {
+            return "redirect:/login";
+        }
         if (isAdmin(authentication)) {
             return "redirect:/admin";
         }
