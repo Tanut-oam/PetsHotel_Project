@@ -86,7 +86,7 @@ class RoomRestControllerTest {
                     "pricePerPetPerNight": 500
                     }
                     """))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.roomNumber").value("101"));
 
