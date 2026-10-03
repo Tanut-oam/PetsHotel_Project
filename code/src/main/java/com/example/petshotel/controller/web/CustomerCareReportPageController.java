@@ -25,6 +25,7 @@ import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
 import java.util.Objects;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.security.access.AccessDeniedException;
 
 @Controller
 @RequestMapping("/reports")
@@ -129,7 +130,7 @@ public class CustomerCareReportPageController {
             reports = reportService.getReportsByBookingPet(
                     bookingPetId, owner.getId()
             );
-        } catch (ResourceNotFoundException | IllegalArgumentException e) {
+        } catch (ResourceNotFoundException | AccessDeniedException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
 

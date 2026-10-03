@@ -69,9 +69,9 @@ public class DailyCareReportRestController {
                 + "· ลูกค้าดูได้เฉพาะรายงานของการจองที่ตนเป็นเจ้าของ")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "ดึงรายงานสำเร็จ"),
-        @ApiResponse(responseCode = "400", description = "รหัสไม่ถูกต้องหรือไม่มีสิทธิ์อ่านรายงานตามกฎปัจจุบัน"),
+        @ApiResponse(responseCode = "400", description = "รหัสรายงานไม่ถูกต้อง"),
         @ApiResponse(responseCode = "401", description = "ยังไม่ได้เข้าสู่ระบบ"),
-        @ApiResponse(responseCode = "403", description = "บัญชีถูกปิดใช้งาน"),
+        @ApiResponse(responseCode = "403", description = "บัญชีถูกปิดใช้งานหรือไม่มีสิทธิ์อ่านรายงาน"),
         @ApiResponse(responseCode = "404", description = "ไม่พบรายงาน")
     })
     @GetMapping("/{reportId}")
@@ -86,9 +86,9 @@ public class DailyCareReportRestController {
                 + "· ลูกค้าดูได้เฉพาะรายงานของการจองที่ตนเป็นเจ้าของ")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "ดึงรายการรายงานสำเร็จ"),
-        @ApiResponse(responseCode = "400", description = "รหัสไม่ถูกต้องหรือไม่มีสิทธิ์อ่านรายงานตามกฎปัจจุบัน"),
+        @ApiResponse(responseCode = "400", description = "รหัสสัตว์เลี้ยงในการจองไม่ถูกต้อง"),
         @ApiResponse(responseCode = "401", description = "ยังไม่ได้เข้าสู่ระบบ"),
-        @ApiResponse(responseCode = "403", description = "บัญชีถูกปิดใช้งาน"),
+        @ApiResponse(responseCode = "403", description = "บัญชีถูกปิดใช้งานหรือไม่มีสิทธิ์อ่านรายงาน"),
         @ApiResponse(responseCode = "404", description = "ไม่พบสัตว์เลี้ยงในการจอง")
     })
     @GetMapping("/booking-pets/{bookingPetId}")
@@ -104,9 +104,9 @@ public class DailyCareReportRestController {
                 + "· ห้ามซ้ำกับรายงานของสัตว์เลี้ยงตัวเดียวกันในวันเดียวกัน")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "แก้ไขรายงานสำเร็จ"),
-        @ApiResponse(responseCode = "400", description = "ข้อมูลไม่ถูกต้อง วันที่อยู่นอกช่วงเข้าพัก หรือไม่มีสิทธิ์แก้ไข"),
+        @ApiResponse(responseCode = "400", description = "ข้อมูลไม่ถูกต้องหรือวันที่อยู่นอกช่วงเข้าพัก"),
         @ApiResponse(responseCode = "401", description = "ยังไม่ได้เข้าสู่ระบบ"),
-        @ApiResponse(responseCode = "403", description = "บัญชีถูกปิดใช้งานหรือ CSRF token ไม่ถูกต้อง"),
+        @ApiResponse(responseCode = "403", description = "บัญชีถูกปิดใช้งาน ไม่มีสิทธิ์แก้ไข หรือ CSRF token ไม่ถูกต้อง"),
         @ApiResponse(responseCode = "404", description = "ไม่พบรายงานหรือสัตว์เลี้ยงในการจอง"),
         @ApiResponse(responseCode = "409", description = "มีรายงานของสัตว์เลี้ยงในวันที่เลือกแล้ว")
     })

@@ -25,7 +25,7 @@ import com.example.petshotel.exception.ResourceNotFoundException;
 import java.util.Collection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 public class DailyCareReportServiceImpl implements DailyCareReportService {
@@ -214,7 +214,7 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
 
     private  void requireStaffOrAdmin(User user){
         if (user.getRole() != UserRole.STAFF && user.getRole() != UserRole.ADMIN){
-            throw new IllegalArgumentException("Only staff or admin can change care reports");
+            throw new AccessDeniedException("Only staff or admin can change care reports");
         }
     }
 
@@ -225,7 +225,7 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         }
 
         if(user.getRole() != UserRole.CUSTOMER || !booking.getUser().getId().equals(user.getId())){
-            throw new IllegalArgumentException("You cannot view this care report");
+            throw new AccessDeniedException("You cannot view this care report");
         }
     }
 

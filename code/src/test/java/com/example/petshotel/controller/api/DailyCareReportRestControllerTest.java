@@ -31,6 +31,7 @@ import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
 
+import org.springframework.security.access.AccessDeniedException;
 class DailyCareReportRestControllerTest {
 
     private DailyCareReportService reportService;
@@ -122,6 +123,19 @@ class DailyCareReportRestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(100))
                 .andExpect(jsonPath("$.petName").value("Mochi"));
+
+        verify(reportService).getReportById(100L, 5L);
+    }
+
+    @Test
+    void getReportByIdShouldReturnForbiddenWhenAccessDenied() throws Exception {
+        when(reportService.getReportById(100L, 5L))
+                .thenThrow(new AccessDeniedException("You cannot view this care report"));
+
+        mockMvc.perform(get("/api/care-reports/100")
+                .principal(() -> "staff@example.com"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
 
         verify(reportService).getReportById(100L, 5L);
     }

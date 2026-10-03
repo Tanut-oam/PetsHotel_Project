@@ -28,6 +28,7 @@ import com.example.petshotel.service.impl.DailyCareReportServiceImpl;
 import java.time.LocalDateTime;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 
 public class DailyCareReportServiceTest {
     private DailyCareReportRepository reportRepository;
@@ -147,7 +148,7 @@ public class DailyCareReportServiceTest {
             .thenReturn(Optional.of(staff));
 
     assertThrows(
-            IllegalArgumentException.class,
+            AccessDeniedException.class,
             () -> reportService.createReport(21L, 5L, request)
     );
 
@@ -268,7 +269,7 @@ public class DailyCareReportServiceTest {
             .thenReturn(Optional.of(report));
 
     assertThrows(
-            IllegalArgumentException.class,
+            AccessDeniedException.class,
             () -> reportService.getReportById(100L, 9L)
     );
     }
@@ -301,7 +302,7 @@ public class DailyCareReportServiceTest {
         .thenReturn(Optional.of(staff));
 
     assertThrows(
-        IllegalArgumentException.class,
+        AccessDeniedException.class,
         () -> reportService.getAllReportsForStaffAndAdmin(5L)
     );
 
@@ -569,7 +570,7 @@ public class DailyCareReportServiceTest {
             .thenReturn(Optional.of(customer));
 
     assertThrows(
-            IllegalArgumentException.class,
+            AccessDeniedException.class,
             () -> reportService.updateReport(100L, 8L, updateRequest)
     );
 
@@ -658,7 +659,7 @@ void getReportableBookingPetsShouldReturnOptionsForAdmin() {
                 .thenReturn(Optional.of(customer));
 
         assertThrows(
-                IllegalArgumentException.class,
+                AccessDeniedException.class,
                 () -> reportService.getReportableBookingPetsForStaffAndAdmin(8L)
         );
 
