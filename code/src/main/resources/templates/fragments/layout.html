@@ -54,14 +54,14 @@
 </header>
 
 <aside class="sidebar admin-sidebar" th:fragment="admin-sidebar" aria-label="เมนูผู้ดูแล">
-  <a th:href="@{/admin}"><span class="material-symbols-outlined" aria-hidden="true">dashboard</span><span>ภาพรวม</span></a>
+  <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}"><span class="material-symbols-outlined" aria-hidden="true">dashboard</span><span>ภาพรวม</span></a>
   <a th:href="@{/admin/bookings}"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span>จัดการการจอง</span></a>
-  <a th:href="@{/admin/rooms}"><span class="material-symbols-outlined" aria-hidden="true">bed</span><span>จัดการห้องพัก</span></a>
-  <a th:href="@{/admin/pets}"><span class="material-symbols-outlined" aria-hidden="true">pets</span><span>สัตว์เลี้ยง</span></a>
-  <a th:href="@{/admin/services}"><span class="material-symbols-outlined" aria-hidden="true">room_service</span><span>บริการเสริม</span></a>
-  <a th:href="@{/admin/promotions}"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span><span>โปรโมชัน</span></a>
+  <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/rooms}"><span class="material-symbols-outlined" aria-hidden="true">bed</span><span>จัดการห้องพัก</span></a>
+  <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/pets}"><span class="material-symbols-outlined" aria-hidden="true">pets</span><span>สัตว์เลี้ยง</span></a>
+  <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/services}"><span class="material-symbols-outlined" aria-hidden="true">room_service</span><span>บริการเสริม</span></a>
+  <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/promotions}"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span><span>โปรโมชัน</span></a>
   <a th:href="@{/admin/reports}"><span class="material-symbols-outlined" aria-hidden="true">description</span><span>รายงานการดูแล</span></a>
-  <a th:href="@{/admin/users}"><span class="material-symbols-outlined" aria-hidden="true">group</span><span>สมาชิก</span></a>
+  <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}"><span class="material-symbols-outlined" aria-hidden="true">group</span><span>สมาชิก</span></a>
   <a th:href="@{/profile}"><span class="material-symbols-outlined" aria-hidden="true">account_circle</span><span>บัญชีของฉัน</span></a>
 
   <script>
