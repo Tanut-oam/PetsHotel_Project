@@ -88,8 +88,4 @@ ExtraService "1" -- "0..*" BookingExtraService : chosen as
 BookingPet "0..1" -- "0..*" BookingExtraService : assigned to
 Booking "1" -- "0..1" Receipt : has
 
-note right of DailyCareReport
-  One report per BookingPet and reportDate.
-end note
-
 @enduml
