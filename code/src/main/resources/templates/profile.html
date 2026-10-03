@@ -6,11 +6,11 @@
   <title>บัญชีของฉัน | PetsHotel</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
-<body th:classappend="${#authorization.expression('hasRole(''ADMIN'')')} ? 'admin'">
-  <header th:replace="${#authorization.expression('hasRole(''ADMIN'')')} ? ~{fragments/layout :: admin-topbar} : ~{fragments/layout :: topbar}"></header>
+<body th:classappend="${#authorization.expression('hasAnyRole(''STAFF'', ''ADMIN'')')} ? 'admin'">
+  <header th:replace="${#authorization.expression('hasAnyRole(''STAFF'', ''ADMIN'')')} ? ~{fragments/layout :: admin-topbar} : ~{fragments/layout :: topbar}"></header>
 
   <div class="layout">
-    <aside th:replace="${#authorization.expression('hasRole(''ADMIN'')')} ? ~{fragments/layout :: admin-sidebar} : ~{fragments/layout :: sidebar}"></aside>
+    <aside th:replace="${#authorization.expression('hasAnyRole(''STAFF'', ''ADMIN'')')} ? ~{fragments/layout :: admin-sidebar} : ~{fragments/layout :: sidebar}"></aside>
 
     <main class="content">
       <h1>บัญชีของฉัน</h1>

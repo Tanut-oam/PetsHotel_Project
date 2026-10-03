@@ -45,9 +45,11 @@
 
 <!-- ===== ฝั่งแอดมิน ===== -->
 <header class="topbar" th:fragment="admin-topbar">
-  <a class="brand" th:href="@{/admin}">🐾 PetsHotel Admin</a>
+  <a class="brand" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">🐾 PetsHotel Admin</a>
+  <a class="brand" sec:authorize="hasRole('STAFF')" th:href="@{/admin/bookings}">🐾 PetsHotel Staff</a>
   <div class="top-actions">
-    <span>ผู้ดูแลระบบ</span>
+    <span sec:authorize="hasRole('ADMIN')">ผู้ดูแลระบบ</span>
+    <span sec:authorize="hasRole('STAFF')">พนักงาน</span>
   </div>
 </header>
 
