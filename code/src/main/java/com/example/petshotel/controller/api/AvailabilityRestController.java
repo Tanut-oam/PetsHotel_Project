@@ -21,7 +21,7 @@ import com.example.petshotel.service.AvailabilityService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/room")
+@RequestMapping("/api/rooms")
 public class AvailabilityRestController {
 
     private final AvailabilityService availabilityService;

@@ -232,7 +232,7 @@ class RoomControllerTest {
         @Test
         @WithMockUser(roles = "CUSTOMER")
         void customerCannotPatchRoomStatus() throws Exception {
-                mockMvc.perform(patch("/api/room/1/status")
+                mockMvc.perform(patch("/api/rooms/1/status")
                                 .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"status\":\"INACTIVE\"}"))

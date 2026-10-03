@@ -34,19 +34,19 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/error",
                         "/css/**", "/js/**", "/images/**", "/uploads/**",
                         "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/room/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
                 .requestMatchers("/rooms/available").permitAll()
 
                 // ADMIN เท่านั้น (ห้อง / โปรโมชั่น / บริการเสริม)
                 .requestMatchers("/admin/bookings", "/admin/bookings/**").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/admin/**", "/dashboard/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/room/**",
+                .requestMatchers(HttpMethod.POST, "/api/rooms/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/room/**",
+                .requestMatchers(HttpMethod.PUT, "/api/rooms/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/room/**",
+                .requestMatchers(HttpMethod.DELETE, "/api/rooms/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PATCH, "/api/room/**",
+                .requestMatchers(HttpMethod.PATCH, "/api/rooms/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
                         .requestMatchers(
                         HttpMethod.GET,
