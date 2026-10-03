@@ -6,6 +6,7 @@
   <title>รายงานการดูแลสัตว์ | PetsHotel Admin</title>
   <link rel="stylesheet" th:href="@{/css/styles.css}">
   <link rel="stylesheet" th:href="@{/css/admin-reports.css}">
+  <link rel="stylesheet" th:href="@{/css/customer-report-date-picker.css}">
 </head>
 <body class="admin">
   <header th:replace="~{fragments/layout :: admin-topbar}"></header>
@@ -119,9 +120,67 @@
             ยังไม่มีรายงานสำหรับสัตว์ตัวนี้
           </div>
 
-          <div class="care-report-history" th:unless="${reports.isEmpty()}">
+          <div class="customer-report-date-toolbar"
+               th:if="${#lists.size(reports) > 1}"
+               th:attr="data-selected-date=${selectedReport.reportDate}"
+               data-customer-report-date-picker>
+            <strong>วันที่รายงาน</strong>
+
+            <button class="customer-report-date-toggle"
+                    type="button"
+                    data-calendar-toggle
+                    aria-expanded="false"
+                    aria-controls="admin-report-calendar">
+              <span class="material-symbols-outlined"
+                    aria-hidden="true">calendar_month</span>
+              <time th:datetime="${selectedReport.reportDate}"
+                    th:text="${#temporals.format(selectedReport.reportDate, 'dd/MM/yyyy')}">
+                วันที่รายงาน
+              </time>
+              <span aria-hidden="true">⌄</span>
+            </button>
+
+            <div id="admin-report-calendar"
+                 class="customer-report-date-popup"
+                 data-calendar-popup
+                 hidden>
+              <div class="calendar-month-navigation">
+                <button class="calendar-icon-button"
+                        type="button"
+                        data-calendar-previous
+                        aria-label="เดือนก่อนหน้า">←</button>
+                <strong data-calendar-month aria-live="polite">เดือนและปี</strong>
+                <button class="calendar-icon-button"
+                        type="button"
+                        data-calendar-next
+                        aria-label="เดือนถัดไป">→</button>
+              </div>
+
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>อา.</span><span>จ.</span><span>อ.</span><span>พ.</span>
+                <span>พฤ.</span><span>ศ.</span><span>ส.</span>
+              </div>
+              <div class="room-calendar-grid customer-report-date-grid"
+                   data-calendar-grid
+                   role="group"
+                   aria-label="วันที่มีรายงาน"></div>
+              <p class="customer-report-date-help">
+                เลือกได้เฉพาะวันที่มีรายงาน
+              </p>
+            </div>
+
+            <div hidden>
+              <a th:each="item : ${reports}"
+                 th:attr="data-report-date=${item.reportDate}"
+                 th:href="@{/admin/reports/pets/{bookingPetId}(
+                     bookingPetId=${pet.bookingPetId},
+                     reportId=${item.id})}"></a>
+            </div>
+          </div>
+
+          <div class="care-report-history" th:if="${selectedReport != null}">
             <article class="care-report-entry"
-                     th:each="report : ${reports}"
+                     th:with="report=${selectedReport}"
                      th:attr="data-open-edit=${openReportId == report.id}">
               <div class="care-report-entry-heading">
                 <h3 th:text="|วันที่ ${#temporals.format(report.reportDate, 'dd/MM/yyyy')}|">วันที่รายงาน</h3>
@@ -419,6 +478,7 @@
   </div>
 
   <script th:src="@{/js/admin-reports.js}" defer></script>
-<script th:src="@{/js/report-date-picker.js}" defer></script>
+  <script th:src="@{/js/report-date-picker.js}" defer></script>
+  <script th:src="@{/js/customer-report-date-picker.js}" defer></script>
 </body>
 </html>

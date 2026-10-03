@@ -33,6 +33,9 @@ import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
 import com.example.petshotel.domain.enums.PetType;
 
+import static org.hamcrest.Matchers.aMapWithSize;
+import java.util.stream.LongStream;
+
 class AdminCareReportPageControllerTest {
 
     private final DailyCareReportService reportService =
@@ -63,7 +66,7 @@ class AdminCareReportPageControllerTest {
 
         ReportableBookingPetResponse option =
                 new ReportableBookingPetResponse(
-                        2L, 3L, "Mochi", "Test Owner",
+                        2L, 3L, "Mochi", "Test Owner","owner@example.com",
                         LocalDate.of(2026, 9, 23),
                         LocalDate.of(2026, 9, 25),
                         PetType.DOG, "Pomeranian", 3, 15.0,
@@ -244,5 +247,64 @@ class AdminCareReportPageControllerTest {
                 .andExpect(status().isUnauthorized());
 
         verifyNoInteractions(currentUserService, reportService);
+    }
+    @Test
+    void showReportsShouldPageAndFilterBookings() throws Exception {
+        User admin = new User();
+        admin.setId(7L);
+        admin.setActive(true);
+
+        List<ReportableBookingPetResponse> options =
+                LongStream.rangeClosed(1, 6)
+                        .mapToObj(id -> new ReportableBookingPetResponse(
+                                id, id, "Pet" + id,
+                                "Test Owner", "owner@example.com",
+                                LocalDate.of(2026, 10, 1),
+                                LocalDate.of(2026, 10, 10),
+                                PetType.DOG, "Mixed", 2, 5.0,
+                                "MALE", null, null, null
+                        ))
+                        .toList();
+
+        DailyCareReportResponse report = new DailyCareReportResponse(
+                99L, 6L, 6L, 6L, "Pet6", 7L,
+                LocalDate.of(2026, 10, 3),
+                null, null, null,
+                null, null, null, null,
+                LocalDateTime.of(2026, 10, 3, 9, 0)
+        );
+
+        when(currentUserService.getByEmail("admin@example.com"))
+                .thenReturn(admin);
+        when(reportService.getAllReportsForStaffAndAdmin(7L))
+                .thenReturn(List.of(report));
+        when(reportService.getReportableBookingPetsForStaffAndAdmin(7L))
+                .thenReturn(options);
+
+        mockMvc.perform(get("/admin/reports")
+                .principal(() -> "admin@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("resultCount", 6))
+                .andExpect(model().attribute("totalPages", 2))
+                .andExpect(model().attribute(
+                        "reportableBookings", aMapWithSize(5)));
+
+        mockMvc.perform(get("/admin/reports")
+                .principal(() -> "admin@example.com")
+                .param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("page", 1))
+                .andExpect(model().attribute(
+                        "reportableBookings", aMapWithSize(1)));
+
+        mockMvc.perform(get("/admin/reports")
+                .principal(() -> "admin@example.com")
+                .param("query", "Pet6")
+                .param("reportDate", "2026-10-03"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("resultCount", 1))
+                .andExpect(model().attribute("totalPages", 1))
+                .andExpect(model().attribute(
+                        "reportableBookings", aMapWithSize(1)));
     }
 }

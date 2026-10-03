@@ -12,33 +12,35 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
 import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportBookingSummary;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.DailyCareReportService;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import com.example.petshotel.dto.response.ReportBookingSummary;
+
 class CustomerCareReportPageControllerTest {
 
     private final DailyCareReportService reportService =
             mock(DailyCareReportService.class);
     private final CurrentUserService currentUserService =
             mock(CurrentUserService.class);
-    
 
     private final MockMvc mockMvc = MockMvcBuilders
-        .standaloneSetup(new CustomerCareReportPageController(
-                reportService, currentUserService))
-        .setViewResolvers(new InternalResourceViewResolver(
-                "/test-views/", ".html"))
-        .build();
+            .standaloneSetup(new CustomerCareReportPageController(
+                    reportService, currentUserService))
+            .setViewResolvers(new InternalResourceViewResolver(
+                    "/test-views/", ".html"))
+            .build();
 
     @Test
     void showReportsShouldLoadReportsForLoggedInOwner()
@@ -86,6 +88,7 @@ class CustomerCareReportPageControllerTest {
         verify(reportService)
                 .getReportsForOwnerBookings(7L, List.of(3L));
     }
+
     @Test
     void showReportsShouldRejectMissingLogin() throws Exception {
         mockMvc.perform(get("/reports"))
@@ -155,9 +158,45 @@ class CustomerCareReportPageControllerTest {
                 .andExpect(view().name("report-detail"))
                 .andExpect(model().attribute("selectedReport", selected))
                 .andExpect(model().attribute("reportCount", 2))
-                .andExpect(model().attribute("totalPages", 1));
+                .andExpect(model().attribute(
+                        "reportDates", List.of(latest, selected)));
 
         verify(reportService).getReportsByBookingPet(2L, 7L);
+    }
+
+    @Test
+    void showPetReportsShouldAllowSelectingBeyondTenReports()
+            throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        List<DailyCareReportResponse> reports =
+                IntStream.range(0, 11)
+                        .mapToObj(i -> new DailyCareReportResponse(
+                                100L - i, 2L, 3L, 4L, "Mochi", 5L,
+                                LocalDate.of(2026, 10, 15).minusDays(i),
+                                null, null, null,
+                                null, null, null, null,
+                                LocalDateTime.of(2026, 10, 15, 10, 0)
+                                        .minusDays(i)
+                        ))
+                        .toList();
+
+        DailyCareReportResponse selected = reports.get(10);
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
+        when(reportService.getReportsByBookingPet(2L, 7L))
+                .thenReturn(reports);
+
+        mockMvc.perform(get("/reports/pets/2")
+                .principal(() -> "owner@example.com")
+                .param("reportId", String.valueOf(selected.id())))
+                .andExpect(status().isOk())
+                .andExpect(view().name("report-detail"))
+                .andExpect(model().attribute("selectedReport", selected))
+                .andExpect(model().attribute("reportDates", reports));
     }
 
     @Test
@@ -175,5 +214,52 @@ class CustomerCareReportPageControllerTest {
         mockMvc.perform(get("/reports/pets/99")
                 .principal(() -> "owner@example.com"))
                 .andExpect(status().isNotFound());
+    }
+    @Test
+    void showReportsShouldFilterBookingsByReportDate() throws Exception {
+        User owner = new User();
+        owner.setId(7L);
+        owner.setActive(true);
+
+        LocalDate reportDate = LocalDate.of(2026, 10, 3);
+        PageRequest firstPage = PageRequest.of(0, 5);
+
+        ReportBookingSummary booking = new ReportBookingSummary(
+                3L,
+                LocalDate.of(2026, 10, 2),
+                LocalDate.of(2026, 10, 5)
+        );
+
+        DailyCareReportResponse report = new DailyCareReportResponse(
+                11L, 2L, 3L, 4L, "Mochi", 5L,
+                reportDate,
+                null, null, null,
+                null, null, null, null,
+                LocalDateTime.of(2026, 10, 3, 10, 0)
+        );
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
+        when(reportService.getReportBookingsForOwnerOnDate(
+                7L, reportDate, firstPage))
+                .thenReturn(new PageImpl<>(
+                        List.of(booking), firstPage, 1));
+        when(reportService.getReportsForOwnerBookings(
+                7L, List.of(3L)))
+                .thenReturn(List.of(report));
+
+        mockMvc.perform(get("/reports")
+                .principal(() -> "owner@example.com")
+                .param("reportDate", "2026-10-03"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("reports"))
+                .andExpect(model().attribute("reportDate", reportDate))
+                .andExpect(model().attribute("totalBookings", 1L))
+                .andExpect(model().attribute("totalPages", 1))
+                .andExpect(model().attribute(
+                        "reports", List.of(report)));
+
+        verify(reportService).getReportBookingsForOwnerOnDate(
+                7L, reportDate, firstPage);
     }
 }

@@ -9,6 +9,7 @@ public record ReportableBookingPetResponse(
         Long bookingId,
         String petName,
         String ownerName,
+        String ownerEmail,
         LocalDate checkInDate,
         LocalDate checkOutDate,
         PetType type,

@@ -4,6 +4,8 @@ import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
 import com.example.petshotel.dto.response.ReportableBookingPetResponse;
+
+import java.time.LocalDate;
 import java.util.Collection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,4 +21,5 @@ public interface DailyCareReportService {
     DailyCareReportResponse updateReport(Long reportId,Long currentUserId,UpdateDailyCareReportRequest request);
     Page<ReportBookingSummary> getReportBookingsForOwner(Long currentUserId, Pageable pageable);
     List<DailyCareReportResponse> getReportsForOwnerBookings(Long currentUserId, Collection<Long> bookingIds);
+    Page<ReportBookingSummary> getReportBookingsForOwnerOnDate(Long currentUserId,LocalDate reportDate,Pageable pageable);
 }
