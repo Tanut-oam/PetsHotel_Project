@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/rooms/available").permitAll()
 
                 // ADMIN เท่านั้น (ห้อง / โปรโมชั่น / บริการเสริม)
-                .requestMatchers("/admin/bookings", "/admin/bookings/**").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers("/admin/bookings", "/admin/bookings/**","/admin/reports", "/admin/reports/**").hasAnyRole("STAFF", "ADMIN")
                 .requestMatchers("/admin/**", "/dashboard/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/rooms/**",
                         "/api/promotions/**", "/api/extra-services/**").hasRole("ADMIN")
