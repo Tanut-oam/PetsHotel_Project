@@ -14,6 +14,8 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -30,11 +32,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // เปิดสาธารณะ
                 .requestMatchers("/", "/login", "/register", "/error",
-                        "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
-                .requestMatchers("/", "/login", "/register",
-                        "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
-                .requestMatchers("/", "/login", "/register",
-                        "/css/**", "/js/**", "/images/**").permitAll()
+                        "/css/**", "/js/**", "/images/**", "/uploads/**",
+                        "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/room/**").permitAll()
                 .requestMatchers("/rooms/available").permitAll()
 
@@ -85,6 +84,10 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout.permitAll())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+            )
             .exceptionHandling(ex -> ex
                 // API ที่ยังไม่ล็อกอินให้ตอบ 401
                 .defaultAuthenticationEntryPointFor(
