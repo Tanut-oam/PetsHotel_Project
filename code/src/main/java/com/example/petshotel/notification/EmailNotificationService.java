@@ -29,7 +29,7 @@ public class EmailNotificationService {
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             helper.setTo(toEmail);
-            helper.setSubject("ยืนยันการจอง #" + booking.getId() + " - PetStay");
+            helper.setSubject("ยืนยันการจอง #" + booking.getId() + " - PetsHotel");
             helper.setText(buildEmailBody(booking, customerName, roomName, fmt), true);
 
             mailSender.send(message);
@@ -52,7 +52,7 @@ public class EmailNotificationService {
                         <li>เช็คเอาท์: %s</li>
                         <li>ยอดรวม: %s บาท</li>
                     </ul>
-                    <p>ขอบคุณที่ใช้บริการ PetStay ครับ</p>
+                    <p>ขอบคุณที่ใช้บริการ PetsHotel ครับ</p>
                 </div>
                 """.formatted(
                 name,

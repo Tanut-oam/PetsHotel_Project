@@ -1,5 +1,5 @@
 @startuml er-diagram
-title PetStay - ER Diagram
+title PetsHotel - ER Diagram
 
 skinparam defaultFontName Tahoma
 skinparam defaultFontSize 12

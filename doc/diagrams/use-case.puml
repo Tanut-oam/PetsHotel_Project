@@ -2,7 +2,7 @@
 left to right direction
 skinparam packageStyle rectangle
 skinparam actorStyle awesome
-title PetStay - Use Case Diagram
+title PetsHotel - Use Case Diagram
 
 actor "Guest" as Guest
 actor "Customer" as Customer
@@ -13,7 +13,7 @@ actor "Email Server" as Mail <<system>>
 Customer --|> Guest
 Admin --|> Staff
 
-rectangle "PetStay System" {
+rectangle "PetsHotel System" {
 
   package "Account" {
     usecase "Register" as UC_Register

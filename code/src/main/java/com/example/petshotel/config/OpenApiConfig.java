@@ -10,10 +10,10 @@ import io.swagger.v3.oas.models.info.Info;
 public class OpenApiConfig {
 
     @Bean
-    public OpenAPI petStayOpenApi() {
+    public OpenAPI petsHotelOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("PetStay API")
+                        .title("PetsHotel API")
                         .version("v1")
                         .description("""
                                 REST API ของระบบโรงแรมสัตว์เลี้ยง PetStay
