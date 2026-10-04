@@ -16,7 +16,7 @@ public record PetResponse(
     @Schema(description = "สายพันธุ์", example = "ชิบะอินุ")
     String breed,
 
-    @Schema(description = "อายุเป็นปี", example = "3")
+    @Schema(description = "อายุเป็นเดือน", example = "3")
     Integer age,
 
     @Schema(description = "น้ำหนักเป็นกิโลกรัม", example = "10.5")
