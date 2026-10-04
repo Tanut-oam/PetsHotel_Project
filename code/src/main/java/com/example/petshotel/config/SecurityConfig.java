@@ -27,7 +27,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http,ObjectProvider<UserDetailsService> userDetailsServiceProvider,@Value("${app.remember-me.key:petstay-dev-remember-me-key}") String rememberMeKey) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,ObjectProvider<UserDetailsService> userDetailsServiceProvider,@Value("${app.remember-me.key:petshotel-dev-remember-me-key}") String rememberMeKey) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 // เปิดสาธารณะ
