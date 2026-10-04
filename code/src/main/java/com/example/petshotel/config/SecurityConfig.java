@@ -31,7 +31,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth
                 // เปิดสาธารณะ
-                .requestMatchers("/", "/login", "/register", "/error",
+                .requestMatchers("/", "/login", "/register", "/error", "/favicon.ico",
                         "/css/**", "/js/**", "/images/**", "/uploads/**",
                         "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/rooms/**").permitAll()
