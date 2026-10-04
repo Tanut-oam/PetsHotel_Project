@@ -47,7 +47,7 @@
 
 ## 3. จบด้วย Activity กระบวนการจอง
 
-เปิด [`activity-booking.puml`](diagrams/activity-booking.puml) ภาพนี้แสดงการจองหนึ่งครั้ง ตั้งแต่เลือกห้องจนได้รายการสถานะ `PENDING` ใช้สองช่องแบ่งหน้าที่ระหว่าง Customer และ PetStay System
+เปิด [`activity-booking.puml`](diagrams/activity-booking.puml) ภาพนี้แสดงการจองหนึ่งครั้ง ตั้งแต่เลือกห้องจนได้รายการสถานะ `PENDING` ใช้สองช่องแบ่งหน้าที่ระหว่าง Customer และ PetsHotel System
 
 - ก่อนส่งฟอร์ม ระบบปิดสัตว์ที่ติดจอง และคำนวณราคา preview
 - หน้าเว็บต้องมีผลราคาสำเร็จที่ตรงกับข้อมูลปัจจุบัน จึงส่งฟอร์มหลังลูกค้ายืนยันใน dialog ได้

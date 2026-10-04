@@ -16,7 +16,7 @@ public class OpenApiConfig {
                         .title("PetsHotel API")
                         .version("v1")
                         .description("""
-                                REST API ของระบบโรงแรมสัตว์เลี้ยง PetStay
+                                REST API ของระบบโรงแรมสัตว์เลี้ยง PetsHotel
 
                                 **วิธีทดสอบ endpoint ที่ต้องล็อกอิน:** เปิดหน้า `/login` \
                                 ในเบราว์เซอร์เดียวกันแล้วเข้าสู่ระบบก่อน จากนั้นกลับมาหน้านี้แล้วกด "Try it out"
