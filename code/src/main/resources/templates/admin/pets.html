@@ -71,7 +71,7 @@
                   <span th:case="*">สัตว์ชนิดอื่น</span>
                 </td>
                 <td th:text="${#strings.isEmpty(pet.breed) ? '—' : pet.breed}">—</td>
-                <td th:text="${pet.age == null ? '—' : pet.age + ' ปี'}">—</td>
+                <td th:text="${pet.age == null ? '—' : pet.age + ' เดือน'}">—</td>
                 <td th:text="${pet.weight == null ? '—' : pet.weight + ' กก.'}">—</td>
                 <td th:text="${#strings.isEmpty(pet.medicalNote) ? 'ไม่มี' : pet.medicalNote}">ไม่มี</td>
               </tr>

@@ -66,7 +66,7 @@
                 <span th:if="${!#strings.isEmpty(pet.breed)}"
                       th:text="| · ${pet.breed}|"></span>
                 <span th:if="${pet.age != null}"
-                      th:text="| · อายุ ${pet.age} ปี|"></span>
+                      th:text="| · อายุ ${pet.age} เดือน|"></span>
                 <span th:if="${pet.weight != null}"
                       th:text="| · ${pet.weight} กก.|"></span>
               </p>
@@ -137,7 +137,7 @@
               </label>
 
               <label class="field">
-                อายุ (ปี)
+                อายุ (เดือน)
                 <input type="number" name="age" min="0"
                        th:value="${pet.age}">
               </label>
@@ -258,7 +258,7 @@
           </label>
 
           <label class="field">
-            อายุ (ปี)
+            อายุ (เดือน)
             <input type="number" name="age" min="0">
           </label>
 
