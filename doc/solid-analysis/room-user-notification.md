@@ -1,6 +1,6 @@
 # SOLID Analysis
 
-## กิตติรัช: Room, User และ Notification
+## กิตติธัช: Room, User และ Notification
 
 | หลักการ | ไฟล์ : บรรทัด | สิ่งที่เห็นในโค้ด | เหตุผล |
 |---|---|---|---|
