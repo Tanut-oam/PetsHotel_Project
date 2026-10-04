@@ -14,7 +14,7 @@
       <p class="auth-subtitle">ยินดีต้อนรับกลับสู่ PetsHotel</p>
 
       <p th:if="${param.registered}" class="auth-notice auth-notice-success">สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ</p>
-      <p th:if="${param.error}" class="auth-notice auth-notice-error">อีเมลหรือรหัสผ่านไม่ถูกต้อง</p>
+      <p th:if="${loginError}" class="auth-notice auth-notice-error" th:text="${loginError}">อีเมลหรือรหัสผ่านไม่ถูกต้อง</p>
       <p th:if="${param.logout}" class="auth-notice auth-notice-info">ออกจากระบบแล้ว</p>
 
       <form class="auth-form" th:action="@{/login}" method="post">
