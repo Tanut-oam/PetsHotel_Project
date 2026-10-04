@@ -1,18 +1,9 @@
 package com.example.petshotel.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,16 +12,26 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.example.petshotel.domain.entity.Room;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 import com.example.petshotel.domain.entity.Booking;
+import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.dto.response.RoomAvailabilityCalendarResponse;
 import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.exception.RoomNotAvailableException;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.impl.AvailabilityServiceImpl;
-import com.example.petshotel.dto.response.RoomAvailabilityCalendarResponse;
 
 class AvailabilityServiceTest {
 
@@ -124,12 +125,32 @@ class AvailabilityServiceTest {
 
     @Test
     void checkRoomAvailableShouldThrowWhenRoomIsBooked() {
-        when(roomRepository.findById(1L)).thenReturn(Optional.of(room(1L, 3, RoomStatus.ACTIVE)));
+        when(roomRepository.findById(1L))
+                .thenReturn(Optional.of(
+                        room(1L, 3, RoomStatus.ACTIVE)
+                ));
+
         booked(1L, true);
 
-        RoomNotAvailableException ex = assertThrows(RoomNotAvailableException.class,
-            () -> availabilityService.checkRoomAvailable(1L, checkIn, checkOut, 1));
-        assertTrue(ex.getMessage().contains("ห้องที่เลือกไม่ว่าง"));
+        RoomNotAvailableException ex = assertThrows(
+                RoomNotAvailableException.class,
+                () -> availabilityService.checkRoomAvailable(
+                        1L,
+                        checkIn,
+                        checkOut,
+                        1
+                )
+        );
+
+        assertTrue(ex.getMessage().contains(
+                "ห้องนี้มีการจองในช่วงวันที่"
+        ));
+        assertTrue(ex.getMessage().contains(
+                "01/10/2026 ถึง 03/10/2026"
+        ));
+        assertTrue(ex.getMessage().contains(
+                "กรุณาเลือกห้องอื่นหรือเปลี่ยนช่วงวันเข้าพัก"
+        ));
     }
 
     @Test
