@@ -1,0 +1,46 @@
+@startuml deployment-diagram
+title PetsHotel - Deployment Diagram
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+left to right direction
+
+frame "Production (Render + Neon, Singapore)" {
+  actor "Web Browser" as ProdBrowser
+
+  node "Render Web Service\npetshotel.onrender.com" as Render {
+    node "Docker container" as ProdContainer {
+      node "Eclipse Temurin JRE 26" as ProdJre {
+        artifact "app.jar\nSpring Boot 4.1.1 / Tomcat :8080\nThymeleaf Web / REST API / Swagger UI" as ProdApp
+      }
+    }
+    artifact "Environment Variables\nDatabase connection settings" as ProdConfig
+  }
+
+  database "Neon PostgreSQL\npethotel" as Neon
+
+  ProdBrowser --> Render : HTTPS
+  ProdConfig ..> ProdApp : configures
+  ProdApp --> Neon : JDBC + SSL\nsslmode=require
+}
+
+frame "Local (Docker Compose)" {
+  actor "Web Browser" as LocalBrowser
+
+  node "Docker Compose" as Compose {
+    node "app container\nSpring Boot / Tomcat :8080" as LocalApp
+    database "db container\nPostgreSQL 17 / pethotel :5432" as LocalDb
+    node "mail container\nMailpit SMTP :1025 / UI :8025" as LocalMail
+    folder "db-data volume" as DbData
+    folder "uploads volume" as Uploads
+  }
+
+  LocalBrowser --> LocalApp : HTTP localhost:8080
+  LocalBrowser --> LocalMail : HTTP localhost:8025
+  LocalApp --> LocalDb : JDBC db:5432
+  LocalApp --> LocalMail : SMTP mail:1025
+  LocalDb -- DbData : stores database files
+  LocalApp -- Uploads : stores uploaded images
+}
+
+@enduml

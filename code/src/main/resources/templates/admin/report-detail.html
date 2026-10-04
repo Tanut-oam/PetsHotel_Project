@@ -41,7 +41,7 @@
             <span th:case="*">สัตว์ชนิดอื่น</span>
           </span>
           <span th:text="${#strings.isEmpty(pet.breed) ? 'ไม่ระบุสายพันธุ์' : pet.breed}">สายพันธุ์</span>
-          <span th:text="${pet.age == null ? 'ไม่ระบุอายุ' : pet.age + ' ปี'}">อายุ</span>
+          <span th:text="${pet.age == null ? 'ไม่ระบุอายุ' : pet.age + ' เดือน'}">อายุ</span>
           <span th:text="${pet.weight == null ? 'ไม่ระบุน้ำหนัก' : pet.weight + ' กก.'}">น้ำหนัก</span>
         </p>
 
@@ -67,7 +67,7 @@
             </div>
             <div>
               <dt>อายุ</dt>
-              <dd th:text="${pet.age == null ? '—' : pet.age + ' ปี'}">—</dd>
+              <dd th:text="${pet.age == null ? '—' : pet.age + ' เดือน'}">—</dd>
             </div>
             <div>
               <dt>น้ำหนัก</dt>
