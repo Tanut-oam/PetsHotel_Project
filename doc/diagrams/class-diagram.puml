@@ -1,6 +1,6 @@
 @startuml petshotel-class-diagram
 
-title PetStay - Core Class Diagram with Design Patterns
+title petshotel - Core Class Diagram with Design Patterns
 
 left to right direction
 

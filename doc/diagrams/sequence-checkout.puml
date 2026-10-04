@@ -1,6 +1,6 @@
 @startuml sequence-checkout
 
-title PetStay - Checkout, Confirm Payment and Issue Receipt
+title petshotel - Checkout, Confirm Payment and Issue Receipt
 
 autonumber
 hide footbox
