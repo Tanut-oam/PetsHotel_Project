@@ -1,6 +1,7 @@
 package com.example.petshotel.service.impl;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +62,7 @@ public class PaymentServiceImpl implements PaymentService{
 
         booking.setPaymentStatus(PaymentStatus.PAID);
         booking.setPaidAmount(booking.getTotalPrice());
-        booking.setPaidAt(LocalDateTime.now());
+        booking.setPaidAt(LocalDateTime.now(ZoneId.of("Asia/Bangkok")));
 
         bookingRepository.save(booking);
 

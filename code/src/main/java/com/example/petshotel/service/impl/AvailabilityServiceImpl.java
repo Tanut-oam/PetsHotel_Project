@@ -97,26 +97,48 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     @Transactional(readOnly = true)
-    @Override
-    public void checkRoomAvailable(
-            Long roomId,
-            LocalDate checkIn,
-            LocalDate checkOut,
-            int petCount) {
+        @Override
+        public void checkRoomAvailable(
+                Long roomId,
+                LocalDate checkIn,
+                LocalDate checkOut,
+                int petCount) {
 
-        if (!isRoomAvailable(
+        validate(checkIn, checkOut, petCount);
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Room", roomId)
+                );
+
+        if (room.getStatus() != RoomStatus.ACTIVE) {
+                throw new RoomNotAvailableException(
+                        roomId,
+                        checkIn,
+                        checkOut
+                );
+        }
+
+        if (petCount > room.getCapacity()) {
+                throw new IllegalArgumentException(
+                        "ห้องนี้รองรับสัตว์เลี้ยงได้สูงสุด "
+                                + room.getCapacity()
+                                + " ตัว กรุณาลดจำนวนสัตว์เลี้ยงหรือเลือกห้องอื่น"
+                );
+        }
+
+        if (bookingRepository.existsOverlappingBooking(
                 roomId,
                 checkIn,
                 checkOut,
-                petCount
-        )) {
-            throw new RoomNotAvailableException(
-                    roomId,
-                    checkIn,
-                    checkOut
-            );
+                ACTIVE_STATUSES)) {
+
+                throw RoomNotAvailableException.alreadyBooked(
+                        checkIn,
+                        checkOut
+                );
         }
-    }
+        }
 
     @Transactional(readOnly = true)
     @Override
