@@ -1,5 +1,5 @@
 @startuml sequence-create-booking
-title PetStay - Create Booking (UC-05, Web Form)
+title PetsHotel - Create Booking (UC-05, Web Form)
 
 skinparam defaultFontName "Tahoma"
 skinparam shadowing false

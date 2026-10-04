@@ -1,5 +1,5 @@
 @startuml state-booking
-title PetStay - Booking State Diagram
+title PetsHotel - Booking State Diagram
 
 skinparam defaultFontName "Tahoma"
 skinparam shadowing false
