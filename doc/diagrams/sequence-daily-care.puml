@@ -1,0 +1,58 @@
+@startuml sequence-daily-care
+title PetStay - Write Care Report
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+autonumber
+
+actor "Staff" as Staff
+boundary "AdminCareReportPageController" as Page
+control "CurrentUserServiceImpl" as CurrentUser
+control "DailyCareReportServiceImpl" as ReportService
+entity "UserRepository" as Users
+entity "BookingPetRepository" as BookingPets
+entity "DailyCareReportRepository" as Reports
+control "DailyCareReportMapper" as Mapper
+
+Staff -> Page : POST /admin/reports\nbookingPetId + CreateDailyCareReportRequest
+activate Page
+Page -> CurrentUser : getByEmail(principal.getName())
+CurrentUser -> Users : findByEmail(email)
+Users --> CurrentUser : User
+CurrentUser --> Page : User
+
+alt bookingPetId missing or form validation fails
+  Page --> Staff : redirect to report page + error message
+else valid form
+  Page -> ReportService : createReport(bookingPetId, user.id, request)
+  activate ReportService
+  ReportService -> Users : findById(currentUserId)
+  Users --> ReportService : User
+  ReportService -> ReportService : requireStaffOrAdmin(user)
+
+  alt user is not STAFF or ADMIN
+    ReportService --> Page : AccessDeniedException
+    Page --> Staff : 403 Forbidden
+  else role permitted
+    ReportService -> BookingPets : findById(bookingPetId)
+    BookingPets --> ReportService : BookingPet
+    ReportService -> ReportService : check booking status\nrequireDateWithinStay(reportDate, booking)
+    ReportService -> Reports : existsByBookingPet_IdAndReportDate(bookingPetId, reportDate)
+    Reports --> ReportService : alreadyExists
+
+    alt report already exists
+      ReportService --> Page : IllegalStateException
+      Page --> Staff : redirect to report page + error message
+    else new report
+      ReportService -> Reports : save(DailyCareReport)
+      Reports --> ReportService : saved report
+      ReportService -> Mapper : toResponse(saved report)
+      Mapper --> ReportService : DailyCareReportResponse
+      ReportService --> Page : DailyCareReportResponse
+      Page --> Staff : redirect to pet reports + success message
+    end
+  end
+  deactivate ReportService
+end
+deactivate Page
+@enduml
