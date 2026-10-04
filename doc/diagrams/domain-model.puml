@@ -4,7 +4,7 @@ skinparam defaultFontName "Tahoma"
 skinparam classAttributeIconSize 0
 hide circle
 
-title PetStay - Domain Model
+title PetsHotel - Domain Model
 
 ' ---------- Users and pets ----------
 

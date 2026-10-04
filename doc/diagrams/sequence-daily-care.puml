@@ -1,5 +1,5 @@
 @startuml sequence-daily-care
-title PetStay - Write Care Report
+title PetsHotel - Write Care Report
 
 skinparam defaultFontName "Tahoma"
 skinparam shadowing false
