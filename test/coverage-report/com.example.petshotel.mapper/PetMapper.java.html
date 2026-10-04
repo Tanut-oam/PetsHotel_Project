@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PetMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.mapper</a> &gt; <span class="el_source">PetMapper.java</span></div><h1>PetMapper.java</h1><pre class="source lang-java linenums">package com.example.petshotel.mapper;
+import org.springframework.stereotype.Component;
+import com.example.petshotel.domain.entity.Pet;
+import com.example.petshotel.dto.response.PetResponse;
+
+@Component
+<span class="fc" id="L7">public class PetMapper {</span>
+    public  PetResponse toResponse(Pet pet){
+<span class="fc" id="L9">        return new PetResponse(</span>
+<span class="fc" id="L10">            pet.getId(),</span>
+<span class="fc" id="L11">            pet.getName(),</span>
+<span class="fc" id="L12">            pet.getType(),</span>
+<span class="fc" id="L13">            pet.getBreed(),</span>
+<span class="fc" id="L14">            pet.getAge(),</span>
+<span class="fc" id="L15">            pet.getWeight(),</span>
+<span class="fc" id="L16">            pet.getGender(),</span>
+<span class="fc" id="L17">            pet.getMedicalNote(),</span>
+<span class="fc" id="L18">            pet.getFeedingInstruction(),</span>
+<span class="fc" id="L19">            pet.getSpecialNote(),</span>
+<span class="fc" id="L20">            pet.getOwner().getId(),</span>
+<span class="fc" id="L21">            pet.getOwner().getFirstName() + &quot; &quot; + pet.getOwner().getLastName(),</span>
+<span class="fc" id="L22">            pet.getActive(),</span>
+<span class="fc" id="L23">            pet.getImageUrl()</span>
+        );
+    }
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

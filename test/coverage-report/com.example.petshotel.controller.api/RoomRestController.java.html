@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoomRestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.api</a> &gt; <span class="el_source">RoomRestController.java</span></div><h1>RoomRestController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.api;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.petshotel.dto.request.CreateRoomRequest;
+import com.example.petshotel.dto.request.UpdateRoomRequest;
+import com.example.petshotel.dto.request.UpdateStatusRequest;
+import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.ErrorResponse;
+import com.example.petshotel.service.RoomService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping(&quot;/api/rooms&quot;)
+@Tag(name = &quot;Rooms&quot;, description = &quot;จัดการห้องพัก: ดูรายการ เพิ่ม แก้ไข และเปลี่ยนสถานะห้อง&quot;)
+public class RoomRestController {
+
+    private final RoomService roomService;
+
+<span class="fc" id="L39">    public RoomRestController(RoomService roomService) {</span>
+<span class="fc" id="L40">        this.roomService = roomService;</span>
+<span class="fc" id="L41">    }</span>
+
+    @GetMapping(&quot;&quot;)
+    @Operation(summary = &quot;ดูห้องทั้งหมด&quot;,
+            description = &quot;คืนห้องทุกสถานะ (ACTIVE / INACTIVE / MAINTENANCE) ไม่ต้องล็อกอิน&quot;)
+    @ApiResponse(responseCode = &quot;200&quot;, description = &quot;สำเร็จ&quot;)
+    public List&lt;RoomResponse&gt; getAllRooms() {
+<span class="fc" id="L48">        return roomService.getAllRooms();</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @Operation(summary = &quot;ดูรายละเอียดห้อง&quot;, description = &quot;ไม่ต้องล็อกอิน&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;สำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบห้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public RoomResponse getRoomById(
+            @Parameter(description = &quot;รหัสห้อง&quot;, example = &quot;1&quot;) @PathVariable Long id) {
+<span class="fc" id="L60">        return roomService.getRoomById(id);</span>
+    }
+
+    @PostMapping(&quot;&quot;)
+    @Operation(summary = &quot;เพิ่มห้องใหม่&quot;,
+            description = &quot;เฉพาะ ADMIN · ห้องใหม่จะมีสถานะ ACTIVE เสมอ&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;สร้างห้องสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ข้อมูลไม่ถูกต้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;เลขห้องซ้ำ&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity&lt;RoomResponse&gt; createRoom(@Valid @RequestBody CreateRoomRequest request) {
+<span class="fc" id="L76">        return ResponseEntity.status(HttpStatus.CREATED).body(roomService.createRoom(request));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @Operation(summary = &quot;แก้ไขข้อมูลห้อง&quot;,
+            description = &quot;เฉพาะ ADMIN · แก้เลขห้อง ชื่อ รายละเอียด ความจุ และราคา (ไม่เปลี่ยนสถานะ)&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;แก้ไขสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ข้อมูลไม่ถูกต้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบห้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;เลขห้องซ้ำกับห้องอื่น&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public RoomResponse updateRoom(
+            @Parameter(description = &quot;รหัสห้อง&quot;, example = &quot;1&quot;) @PathVariable Long id,
+            @Valid @RequestBody UpdateRoomRequest request) {
+<span class="fc" id="L96">        return roomService.updateRoom(id, request);</span>
+    }
+
+    @PatchMapping(&quot;/{id}/status&quot;)
+    @Operation(summary = &quot;เปลี่ยนสถานะห้อง&quot;,
+            description = &quot;เฉพาะ ADMIN · ACTIVE = เปิดให้จอง, MAINTENANCE = ปิดซ่อม, INACTIVE = ปิดใช้งาน&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;เปลี่ยนสถานะสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ไม่ได้ระบุสถานะ หรือสถานะไม่ถูกต้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบห้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public RoomResponse setRoomStatus(
+            @Parameter(description = &quot;รหัสห้อง&quot;, example = &quot;1&quot;) @PathVariable Long id,
+            @Valid @RequestBody UpdateStatusRequest request) {
+<span class="fc" id="L114">        return roomService.setRoomStatus(id, request);</span>
+    }
+
+    @PatchMapping(&quot;/{id}/deactivate&quot;)
+    @Operation(summary = &quot;ปิดใช้งานห้อง&quot;,
+            description = &quot;เฉพาะ ADMIN · เปลี่ยนสถานะเป็น INACTIVE (ไม่ลบข้อมูลห้อง)&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;ปิดใช้งานสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบห้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public RoomResponse deactivateRoom(
+            @Parameter(description = &quot;รหัสห้อง&quot;, example = &quot;1&quot;) @PathVariable Long id) {
+<span class="fc" id="L129">        return roomService.deactivateRoom(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

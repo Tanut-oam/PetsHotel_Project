@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoomController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">RoomController.java</span></div><h1>RoomController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+
+import com.example.petshotel.dto.request.CreateRoomRequest;
+import com.example.petshotel.dto.request.UpdateRoomRequest;
+import com.example.petshotel.dto.request.UpdateStatusRequest;
+import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.RoomService;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.validation.BindingResult;
+import jakarta.validation.Valid;
+
+
+@Controller
+@RequiredArgsConstructor
+public class RoomController {
+    private final RoomService roomService;
+
+    // ===== ลูกค้า =====
+    @GetMapping(&quot;/rooms&quot;)
+    public String publicList(Model model) {
+<span class="fc" id="L36">        model.addAttribute(&quot;rooms&quot;,roomService.getActiveRooms());</span>
+<span class="fc" id="L37">        return &quot;rooms&quot;;</span>
+    }
+
+    @GetMapping(&quot;/rooms/{id}&quot;)
+    public String detail(@PathVariable Long id, Model model) {
+<span class="fc" id="L42">        model.addAttribute(&quot;room&quot;, roomService.getRoomById(id));</span>
+<span class="fc" id="L43">        return &quot;room-detail&quot;;</span>
+    }
+
+    // ===== Admin =====
+    @GetMapping(&quot;/admin/rooms&quot;)
+        public String adminList(Model model) {
+<span class="fc" id="L49">        model.addAttribute(&quot;rooms&quot;, roomService.getAllRooms());</span>
+<span class="fc" id="L50">        return &quot;admin/rooms&quot;;</span>
+    }
+
+
+    @GetMapping(&quot;/admin/rooms/new&quot;)
+    public String newRoomForm() {
+<span class="fc" id="L56">        return &quot;rooms/form&quot;;</span>
+    }
+
+    @PostMapping(&quot;/admin/rooms&quot;)
+    public String createRoom(@Valid @ModelAttribute CreateRoomRequest request,BindingResult bindingResult,@RequestParam(value = &quot;image&quot;, required = false) MultipartFile image,RedirectAttributes redirectAttributes) {
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (bindingResult.hasErrors()) {</span>
+<span class="fc" id="L62">            redirectAttributes.addFlashAttribute(&quot;error&quot;, firstError(bindingResult));</span>
+<span class="fc" id="L63">            return &quot;redirect:/admin/rooms/new&quot;;</span>
+        }
+        RoomResponse created;
+        try {
+<span class="fc" id="L67">            created = roomService.createRoom(request);</span>
+<span class="fc" id="L68">        } catch (ResourceNotFoundException | DuplicateResourceException e) {</span>
+<span class="fc" id="L69">            redirectAttributes.addFlashAttribute(&quot;error&quot;, e.getMessage());</span>
+<span class="fc" id="L70">            return &quot;redirect:/admin/rooms&quot;;</span>
+<span class="fc" id="L71">        }</span>
+<span class="pc bpc" id="L72" title="3 of 4 branches missed.">        if (image != null &amp;&amp; !image.isEmpty()) {</span>
+            try {
+<span class="nc" id="L74">                roomService.updateRoomImage(created.id(), image);</span>
+<span class="nc" id="L75">            } catch (IllegalArgumentException | IllegalStateException e) {</span>
+<span class="nc" id="L76">                redirectAttributes.addFlashAttribute(&quot;error&quot;,</span>
+<span class="nc" id="L77">                        &quot;สร้างห้องแล้ว แต่อัปโหลดรูปไม่สำเร็จ: &quot; + e.getMessage());</span>
+<span class="nc" id="L78">                return &quot;redirect:/admin/rooms/&quot; + created.id() + &quot;/edit&quot;;</span>
+<span class="nc" id="L79">            }</span>
+        }
+<span class="fc" id="L81">        redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;สร้างห้องสำเร็จ&quot;);</span>
+<span class="fc" id="L82">        return &quot;redirect:/admin/rooms&quot;;</span>
+    }
+
+    
+    @GetMapping(&quot;/admin/rooms/{id}/edit&quot;)
+    public String editRoomForm(@PathVariable Long id,Model model) {
+<span class="fc" id="L88">        model.addAttribute(&quot;room&quot;, roomService.getRoomById(id));</span>
+<span class="fc" id="L89">        return &quot;rooms/edit&quot;;</span>
+    }
+    
+    @PostMapping(&quot;/admin/rooms/{id}&quot;)
+    public String updateRoom(@PathVariable Long id, @Valid @ModelAttribute UpdateRoomRequest request,BindingResult bindingResult,@RequestParam(value = &quot;image&quot;, required = false) MultipartFile image,RedirectAttributes redirectAttributes) {
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (bindingResult.hasErrors()) {</span>
+<span class="nc" id="L95">            redirectAttributes.addFlashAttribute(&quot;error&quot;, firstError(bindingResult));</span>
+<span class="nc" id="L96">            return &quot;redirect:/admin/rooms/&quot; + id + &quot;/edit&quot;;</span>
+        }
+        try {
+<span class="fc" id="L99">            roomService.updateRoom(id, request);</span>
+<span class="pc bpc" id="L100" title="1 of 4 branches missed.">            if (image != null &amp;&amp; !image.isEmpty()) {</span>
+<span class="fc" id="L101">                roomService.updateRoomImage(id, image);</span>
+            }
+<span class="fc" id="L103">            redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;แก้ไขห้องสำเร็จ&quot;);</span>
+<span class="fc" id="L104">        } catch (ResourceNotFoundException | DuplicateResourceException e) {</span>
+<span class="fc" id="L105">            redirectAttributes.addFlashAttribute(&quot;error&quot;, e.getMessage());</span>
+<span class="fc" id="L106">        } catch (IllegalArgumentException | IllegalStateException e) {</span>
+<span class="fc" id="L107">            redirectAttributes.addFlashAttribute(&quot;error&quot;,</span>
+<span class="fc" id="L108">                    &quot;บันทึกข้อมูลห้องแล้ว แต่อัปโหลดรูปไม่สำเร็จ: &quot; + e.getMessage());</span>
+<span class="fc" id="L109">            return &quot;redirect:/admin/rooms/&quot; + id + &quot;/edit&quot;;</span>
+<span class="fc" id="L110">        }</span>
+<span class="fc" id="L111">        return &quot;redirect:/admin/rooms&quot;;</span>
+    }
+    
+    @PostMapping(&quot;/admin/rooms/{id}/status&quot;)
+    public String updateStatus(@PathVariable Long id,@Valid @ModelAttribute UpdateStatusRequest request,BindingResult bindingResult,RedirectAttributes redirectAttributes) {
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (bindingResult.hasErrors()) {</span>
+<span class="nc" id="L117">            redirectAttributes.addFlashAttribute(&quot;error&quot;, firstError(bindingResult));</span>
+<span class="nc" id="L118">            return &quot;redirect:/admin/rooms&quot;;</span>
+        }
+        try{
+<span class="fc" id="L121">            roomService.setRoomStatus(id, request);</span>
+<span class="fc" id="L122">            redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;เปลี่ยนสถานะห้องสำเร็จ&quot;);</span>
+<span class="nc" id="L123">        } catch(ResourceNotFoundException e) {</span>
+<span class="nc" id="L124">            redirectAttributes.addFlashAttribute(&quot;error&quot;, e.getMessage());</span>
+<span class="fc" id="L125">        }</span>
+<span class="fc" id="L126">        return &quot;redirect:/admin/rooms&quot;;</span>
+    }
+
+    private String firstError(BindingResult bindingResult) {
+<span class="fc" id="L130">        return bindingResult.getAllErrors().get(0).getDefaultMessage();</span>
+    }
+    
+    @PostMapping(&quot;/admin/rooms/{id}/deactivate&quot;)
+    public String deactivateRoom(@PathVariable Long id,RedirectAttributes redirectAttributes) {
+        try{
+<span class="fc" id="L136">            roomService.deactivateRoom(id);</span>
+<span class="fc" id="L137">            redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;ปิดใช้งานห้องสำเร็จ&quot;);</span>
+<span class="fc" id="L138">        } catch(ResourceNotFoundException e){</span>
+<span class="fc" id="L139">            redirectAttributes.addFlashAttribute(&quot;error&quot;, e.getMessage());</span>
+<span class="fc" id="L140">        }</span>
+        
+<span class="fc" id="L142">        return &quot;redirect:/admin/rooms&quot;;</span>
+    }
+
+    @PostMapping(&quot;/admin/rooms/{id}/image/delete&quot;)
+    public String removeRoomImage(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+<span class="nc" id="L148">            roomService.removeRoomImage(id);</span>
+<span class="nc" id="L149">            redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;ลบรูปห้องแล้ว&quot;);</span>
+<span class="nc" id="L150">        } catch (ResourceNotFoundException e) {</span>
+<span class="nc" id="L151">            redirectAttributes.addFlashAttribute(&quot;error&quot;, e.getMessage());</span>
+<span class="nc" id="L152">            return &quot;redirect:/admin/rooms&quot;;</span>
+<span class="nc" id="L153">        }</span>
+<span class="nc" id="L154">        return &quot;redirect:/admin/rooms/&quot; + id + &quot;/edit&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

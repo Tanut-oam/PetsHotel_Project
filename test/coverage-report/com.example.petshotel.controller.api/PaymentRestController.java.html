@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentRestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.api</a> &gt; <span class="el_source">PaymentRestController.java</span></div><h1>PaymentRestController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.api;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.petshotel.dto.response.PaymentResponse;
+import com.example.petshotel.service.PaymentService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import com.example.petshotel.exception.ErrorResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@RestController
+@RequestMapping (&quot;/api/bookings&quot;)
+@Tag(name = &quot;Payments&quot;, description = &quot;ยืนยันการรับชำระเงินและออกใบเสร็จ&quot;)
+public class PaymentRestController {
+    private final PaymentService paymentService;
+
+<span class="fc" id="L31">    public PaymentRestController(PaymentService paymentService) {</span>
+<span class="fc" id="L32">        this.paymentService = paymentService;</span>
+<span class="fc" id="L33">    }</span>
+
+    @PostMapping(&quot;/{id}/payment/confirm&quot;)
+    @Operation(summary = &quot;ยืนยันรับชำระเงิน&quot;,
+            description = &quot;เฉพาะ STAFF / ADMIN · บันทึกว่าจ่ายเต็มจำนวนและออกใบเสร็จ &quot;
+                    + &quot;· รับได้เมื่อการจองเป็น CONFIRMED, CHECKED_IN หรือ CHECKED_OUT &quot;
+                    + &quot;· ถ้ายืนยันซ้ำจะได้ใบเสร็จเดิม&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;ยืนยันสำเร็จ พร้อมข้อมูลใบเสร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ STAFF หรือ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบการจอง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;สถานะการจองยังรับชำระไม่ได้ (เช่น PENDING หรือ CANCELLED)&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity&lt;PaymentResponse&gt; confirmPayment(@Parameter(description = &quot;รหัสการจอง&quot;, example = &quot;1&quot;) @PathVariable Long id,HttpServletRequest request) {
+
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">        if (request.getUserPrincipal() == null) {</span>
+<span class="nc" id="L52">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (!request.isUserInRole(&quot;STAFF&quot;)</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">                &amp;&amp; !request.isUserInRole(&quot;ADMIN&quot;)) {</span>
+<span class="nc" id="L57">            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();</span>
+        }
+
+<span class="fc" id="L60">        return ResponseEntity.ok(paymentService.confirmPayment(id));</span>
+    }
+
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

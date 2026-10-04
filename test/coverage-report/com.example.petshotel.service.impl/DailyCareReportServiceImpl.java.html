@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DailyCareReportServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">DailyCareReportServiceImpl.java</span></div><h1>DailyCareReportServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
+import com.example.petshotel.domain.entity.Booking;
+import com.example.petshotel.domain.entity.BookingPet;
+import com.example.petshotel.domain.entity.DailyCareReport;
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.domain.enums.BookingStatus;
+import com.example.petshotel.domain.enums.UserRole;
+import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
+import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportBookingSummary;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
+import com.example.petshotel.mapper.DailyCareReportMapper;
+import com.example.petshotel.repository.BookingPetRepository;
+import com.example.petshotel.repository.DailyCareReportRepository;
+import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.service.DailyCareReportService;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import java.util.Collection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+
+@Service
+public class DailyCareReportServiceImpl implements DailyCareReportService {
+    private  final DailyCareReportRepository reportRepository;
+    private  final BookingPetRepository bookingPetRepository;
+    private  final UserRepository userRepository;
+    private  final DailyCareReportMapper mapper;
+    
+    public DailyCareReportServiceImpl(DailyCareReportRepository reportRepository,
+<span class="fc" id="L38">            BookingPetRepository bookingPetRepository, UserRepository userRepository, DailyCareReportMapper mapper) {</span>
+<span class="fc" id="L39">        this.reportRepository = reportRepository;</span>
+<span class="fc" id="L40">        this.bookingPetRepository = bookingPetRepository;</span>
+<span class="fc" id="L41">        this.userRepository = userRepository;</span>
+<span class="fc" id="L42">        this.mapper = mapper;</span>
+<span class="fc" id="L43">    }</span>
+
+    @Override 
+    @Transactional 
+    public DailyCareReportResponse createReport(Long bookingPetId,Long currentUserId,CreateDailyCareReportRequest request){
+<span class="pc bpc" id="L48" title="2 of 4 branches missed.">        if (request == null || request.reportDate() == null){</span>
+<span class="nc" id="L49">            throw new IllegalArgumentException(&quot;Report  date is required&quot;);</span>
+        }
+        
+<span class="fc" id="L52">        User currentUser = findUser(currentUserId);</span>
+<span class="fc" id="L53">        requireStaffOrAdmin(currentUser);</span>
+
+<span class="fc" id="L55">        BookingPet bookingPet = findBookingPet(bookingPetId);</span>
+<span class="fc" id="L56">        Booking booking = bookingPet.getBooking();</span>
+
+<span class="pc bpc" id="L58" title="3 of 4 branches missed.">        if (booking.getStatus() != BookingStatus.CHECKED_IN &amp;&amp; booking.getStatus() != BookingStatus.CHECKED_OUT){</span>
+<span class="nc" id="L59">            throw new IllegalStateException(&quot;A care report requirees a checked-in booking&quot;);</span>
+        }
+        
+<span class="fc" id="L62">        requireDateWithinStay(request.reportDate(), booking);</span>
+
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if(reportRepository.existsByBookingPet_IdAndReportDate(bookingPetId, request.reportDate())){</span>
+<span class="fc" id="L65">            throw new IllegalStateException(&quot;A report already exists for this pet and date&quot;);</span>
+        }
+
+<span class="fc" id="L68">        DailyCareReport report = new DailyCareReport();</span>
+<span class="fc" id="L69">        report.setBookingPet(bookingPet);</span>
+<span class="fc" id="L70">        report.setRecordedBy(currentUser);</span>
+<span class="fc" id="L71">        report.setReportDate(request.reportDate());</span>
+<span class="fc" id="L72">        report.setFeedingMorning(request.feedingMorning());</span>
+<span class="fc" id="L73">        report.setFeedingEvening(request.feedingEvening());</span>
+<span class="fc" id="L74">        report.setWalkingMinutes(request.walkingMinutes());</span>
+<span class="fc" id="L75">        report.setGrooming(request.grooming());</span>
+<span class="fc" id="L76">        report.setMood(request.mood());</span>
+<span class="fc" id="L77">        report.setHealthNote(request.healthNote());</span>
+<span class="fc" id="L78">        report.setGeneralNote(request.generalNote());</span>
+
+<span class="fc" id="L80">        return  mapper.toResponse(reportRepository.save(report));</span>
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public DailyCareReportResponse getReportById(Long reportId,Long currentUserId){
+<span class="fc" id="L86">        User currentUser  = findUser(currentUserId);</span>
+<span class="fc" id="L87">        DailyCareReport report = findReport(reportId);</span>
+<span class="fc" id="L88">        requireReadAccess(currentUser, report.getBookingPet().getBooking());</span>
+<span class="fc" id="L89">        return  mapper.toResponse(report);</span>
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public List&lt;DailyCareReportResponse&gt; getReportsByBookingPet(Long bookingPetId,Long currentUserId){
+<span class="nc" id="L95">        User currentUser = findUser(currentUserId);</span>
+<span class="nc" id="L96">        BookingPet bookingPet = findBookingPet(bookingPetId);</span>
+<span class="nc" id="L97">        requireReadAccess(currentUser, bookingPet.getBooking());</span>
+
+<span class="nc" id="L99">        return reportRepository.findByBookingPet_IdOrderByReportDateDesc(bookingPetId).stream().map(mapper::toResponse).toList();</span>
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;DailyCareReportResponse&gt; getReportsForOwner(Long currentUserId) {
+<span class="nc" id="L105">        User user = findUser(currentUserId);</span>
+
+<span class="nc" id="L107">        return reportRepository.findAllForOwner(user.getId())</span>
+<span class="nc" id="L108">                .stream()</span>
+<span class="nc" id="L109">                .map(mapper::toResponse)</span>
+<span class="nc" id="L110">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public  List&lt;DailyCareReportResponse&gt; getAllReportsForStaffAndAdmin(Long currentUserId){
+<span class="fc" id="L116">        User currentUser = findUser(currentUserId);</span>
+<span class="fc" id="L117">        requireStaffOrAdmin(currentUser);</span>
+
+<span class="fc" id="L119">        return  reportRepository.findAllByOrderByReportDateDescIdDesc().stream().map(mapper::toResponse).toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;ReportableBookingPetResponse&gt; getReportableBookingPetsForStaffAndAdmin(
+            Long currentUserId) {
+<span class="fc" id="L126">        User currentUser = findUser(currentUserId);</span>
+<span class="fc" id="L127">        requireStaffOrAdmin(currentUser);</span>
+
+<span class="fc" id="L129">        return bookingPetRepository.findReportableBookingPets(</span>
+<span class="fc" id="L130">                List.of(BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT))</span>
+<span class="fc" id="L131">                .stream()</span>
+<span class="fc" id="L132">                .map(bookingPet -&gt; {</span>
+<span class="fc" id="L133">                Booking booking = bookingPet.getBooking();</span>
+<span class="fc" id="L134">                User owner = booking.getUser();</span>
+<span class="fc" id="L135">                var pet = bookingPet.getPet();</span>
+
+<span class="fc" id="L137">                return new ReportableBookingPetResponse(</span>
+<span class="fc" id="L138">                        bookingPet.getId(),</span>
+<span class="fc" id="L139">                        booking.getId(),</span>
+<span class="fc" id="L140">                        pet.getName(),</span>
+<span class="fc" id="L141">                        owner.getFirstName() + &quot; &quot; + owner.getLastName(),</span>
+<span class="fc" id="L142">                        owner.getEmail(),</span>
+<span class="fc" id="L143">                        booking.getCheckInDate(),</span>
+<span class="fc" id="L144">                        booking.getCheckOutDate(),</span>
+<span class="fc" id="L145">                        pet.getType(),</span>
+<span class="fc" id="L146">                        pet.getBreed(),</span>
+<span class="fc" id="L147">                        pet.getAge(),</span>
+<span class="fc" id="L148">                        pet.getWeight(),</span>
+<span class="fc" id="L149">                        pet.getGender(),</span>
+<span class="fc" id="L150">                        pet.getMedicalNote(),</span>
+<span class="fc" id="L151">                        pet.getFeedingInstruction(),</span>
+<span class="fc" id="L152">                        pet.getSpecialNote()</span>
+                );
+})
+<span class="fc" id="L155">                .toList();</span>
+    }
+
+    @Override
+    @Transactional 
+    public DailyCareReportResponse updateReport(Long reportId,Long currentUserId,UpdateDailyCareReportRequest request){
+
+<span class="pc bpc" id="L162" title="3 of 6 branches missed.">        if (request == null || request.bookingPetId() == null || request.reportDate()==null){</span>
+<span class="nc" id="L163">            throw new IllegalArgumentException(&quot;Booking pet and report date are required&quot;);</span>
+        }
+<span class="fc" id="L165">        User currentUser = findUser(currentUserId);</span>
+<span class="fc" id="L166">        requireStaffOrAdmin(currentUser);</span>
+
+<span class="fc" id="L168">        DailyCareReport report = findReport(reportId);</span>
+<span class="fc" id="L169">        Booking originalBooking = report.getBookingPet().getBooking();</span>
+<span class="fc" id="L170">        BookingPet selectedBookingPet =</span>
+<span class="fc" id="L171">                findBookingPet(request.bookingPetId());</span>
+        
+<span class="fc" id="L173">                if (!originalBooking.getId()</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">                .equals(selectedBookingPet.getBooking().getId())) {</span>
+<span class="fc" id="L175">            throw new IllegalArgumentException(</span>
+                    &quot;The selected pet must be in the original booking&quot;
+            );
+        }
+
+<span class="fc" id="L180">        requireDateWithinStay(request.reportDate(), originalBooking);</span>
+
+<span class="fc bfc" id="L182" title="All 2 branches covered.">        if (reportRepository.existsByBookingPet_IdAndReportDateAndIdNot(</span>
+<span class="fc" id="L183">                request.bookingPetId(), request.reportDate(), reportId)) {</span>
+<span class="fc" id="L184">            throw new IllegalStateException(&quot;A report already exists for this pet and date&quot;);</span>
+        }
+
+<span class="fc" id="L187">        report.setBookingPet(selectedBookingPet);</span>
+<span class="fc" id="L188">        report.setReportDate(request.reportDate());</span>
+<span class="fc" id="L189">        report.setFeedingMorning(request.feedingMorning());</span>
+<span class="fc" id="L190">        report.setFeedingEvening(request.feedingEvening());</span>
+<span class="fc" id="L191">        report.setWalkingMinutes(request.walkingMinutes());</span>
+<span class="fc" id="L192">        report.setGrooming(request.grooming());</span>
+<span class="fc" id="L193">        report.setMood(request.mood());</span>
+<span class="fc" id="L194">        report.setHealthNote(request.healthNote());</span>
+<span class="fc" id="L195">        report.setGeneralNote(request.generalNote());</span>
+
+<span class="fc" id="L197">        return mapper.toResponse(reportRepository.save(report));</span>
+    }
+    
+    private User findUser(Long userId) {
+<span class="fc" id="L201">        return userRepository.findById(userId)</span>
+<span class="fc" id="L202">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, userId));</span>
+    }
+
+    private BookingPet findBookingPet(Long bookingPetId) {
+<span class="fc" id="L206">        return bookingPetRepository.findById(bookingPetId)</span>
+<span class="fc" id="L207">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Booking pet&quot;, bookingPetId));</span>
+    }
+
+    private DailyCareReport findReport(Long reportId) {
+<span class="fc" id="L211">        return reportRepository.findById(reportId)</span>
+<span class="fc" id="L212">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Report&quot;, reportId));</span>
+    }
+
+    private  void requireStaffOrAdmin(User user){
+<span class="fc bfc" id="L216" title="All 4 branches covered.">        if (user.getRole() != UserRole.STAFF &amp;&amp; user.getRole() != UserRole.ADMIN){</span>
+<span class="fc" id="L217">            throw new AccessDeniedException(&quot;Only staff or admin can change care reports&quot;);</span>
+        }
+<span class="fc" id="L219">    }</span>
+
+    private  void requireReadAccess(User user,Booking booking){
+        
+<span class="pc bpc" id="L223" title="1 of 4 branches missed.">        if(user.getRole() == UserRole.STAFF || user.getRole() == UserRole.ADMIN){</span>
+<span class="fc" id="L224">            return;</span>
+        }
+
+<span class="pc bpc" id="L227" title="1 of 4 branches missed.">        if(user.getRole() != UserRole.CUSTOMER || !booking.getUser().getId().equals(user.getId())){</span>
+<span class="fc" id="L228">            throw new AccessDeniedException(&quot;You cannot view this care report&quot;);</span>
+        }
+<span class="fc" id="L230">    }</span>
+
+    private  void requireDateWithinStay(LocalDate reporDate,Booking booking){
+
+<span class="fc bfc" id="L234" title="All 4 branches covered.">        if(reporDate.isBefore(booking.getCheckInDate()) || reporDate.isAfter(booking.getCheckOutDate())){</span>
+<span class="fc" id="L235">            throw new IllegalArgumentException(&quot;Report date must be within the stay&quot;);</span>
+        }
+<span class="fc" id="L237">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page&lt;ReportBookingSummary&gt; getReportBookingsForOwner(
+            Long currentUserId, Pageable pageable
+    ) {
+<span class="nc" id="L244">        User user = findUser(currentUserId);</span>
+<span class="nc" id="L245">        return reportRepository.findReportBookingsForOwner(user.getId(), pageable);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page&lt;ReportBookingSummary&gt; getReportBookingsForOwnerOnDate(Long currentUserId,
+        LocalDate reportDate,Pageable pageable
+    ) {
+<span class="nc bnc" id="L253" title="All 2 branches missed.">        if (reportDate == null) {</span>
+<span class="nc" id="L254">            throw new IllegalArgumentException(&quot;Report date is required&quot;);</span>
+        }
+
+<span class="nc" id="L257">        User user = findUser(currentUserId);</span>
+
+<span class="nc" id="L259">        return reportRepository.findReportBookingsForOwnerOnDate(</span>
+<span class="nc" id="L260">                user.getId(),</span>
+                reportDate,
+                pageable
+        );
+}
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;DailyCareReportResponse&gt; getReportsForOwnerBookings(
+            Long currentUserId, Collection&lt;Long&gt; bookingIds
+    ) {
+<span class="nc" id="L271">        User user = findUser(currentUserId);</span>
+
+<span class="nc bnc" id="L273" title="All 4 branches missed.">        if (bookingIds == null || bookingIds.isEmpty()) {</span>
+<span class="nc" id="L274">            return List.of();</span>
+        }
+
+<span class="nc" id="L277">        return reportRepository</span>
+<span class="nc" id="L278">                .findAllForOwnerAndBookingIds(user.getId(), bookingIds)</span>
+<span class="nc" id="L279">                .stream()</span>
+<span class="nc" id="L280">                .map(mapper::toResponse)</span>
+<span class="nc" id="L281">                .toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

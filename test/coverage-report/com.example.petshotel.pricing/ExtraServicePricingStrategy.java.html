@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExtraServicePricingStrategy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.pricing</a> &gt; <span class="el_source">ExtraServicePricingStrategy.java</span></div><h1>ExtraServicePricingStrategy.java</h1><pre class="source lang-java linenums">package com.example.petshotel.pricing;
+
+import java.math.BigDecimal;
+import com.example.petshotel.domain.entity.BookingExtraService;
+import org.springframework.stereotype.Component;
+import com.example.petshotel.domain.enums.PricingCategory;
+
+@Component 
+<span class="fc" id="L9">public class ExtraServicePricingStrategy implements PricingStrategy{</span>
+    
+    @Override 
+    public BigDecimal calculate(PricingContext context, BigDecimal subtotal){
+<span class="pc bpc" id="L13" title="1 of 2 branches missed.">        if (context == null) {</span>
+<span class="nc" id="L14">            throw new IllegalArgumentException(</span>
+                &quot;Pricing context is required&quot;
+            );
+        }
+
+<span class="fc bfc" id="L19" title="All 2 branches covered.">        if (context.getExtraServices() == null) {</span>
+<span class="fc" id="L20">            return BigDecimal.ZERO;</span>
+        }
+
+<span class="fc" id="L23">        BigDecimal totalServicePrice = BigDecimal.ZERO;</span>
+
+<span class="fc bfc" id="L25" title="All 2 branches covered.">        for(BookingExtraService item : context.getExtraServices()){</span>
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">            if(item == null</span>
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">                || item.getUnitPrice() == null</span>
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">                || item.getUnitPrice().signum() &lt; 0</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">                || item.getQuantity() == null</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">                || item.getQuantity() &lt;= 0</span>
+            ){
+<span class="nc" id="L32">                throw new IllegalArgumentException(</span>
+                &quot;Each extra service needs a non-negative &quot;
+                                + &quot;unit price and positive quantity&quot;);
+            }
+
+<span class="fc" id="L37">            BigDecimal calculated = item.getUnitPrice()</span>
+<span class="fc" id="L38">                            .multiply(BigDecimal.valueOf(item.getQuantity()));</span>
+
+<span class="fc bfc" id="L40" title="All 2 branches covered.">            if (item.getTotalPrice() != null</span>
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">                &amp;&amp; item.getTotalPrice().compareTo(calculated) != 0){</span>
+<span class="nc" id="L42">                    throw new IllegalArgumentException(</span>
+                        &quot;Extra service total does not match &quot;
+                                + &quot;unit price multiplied by quantity&quot;);
+            }
+<span class="fc" id="L46">            totalServicePrice = totalServicePrice.add(calculated);</span>
+<span class="fc" id="L47">        }</span>
+
+<span class="fc" id="L49">        return totalServicePrice;</span>
+
+    }
+    @Override
+    public PricingCategory category() {
+<span class="fc" id="L54">        return PricingCategory.EXTRA_SERVICE;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

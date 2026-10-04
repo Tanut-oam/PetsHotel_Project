@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AvailabilityController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">AvailabilityController.java</span></div><h1>AvailabilityController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.example.petshotel.domain.entity.Room;
+import com.example.petshotel.dto.request.AvailabilitySearchRequest;
+import com.example.petshotel.mapper.AvailabilityMapper;
+import com.example.petshotel.service.AvailabilityService;
+
+@Controller
+@RequestMapping(&quot;/rooms/available&quot;)
+public class AvailabilityController {
+
+    private final AvailabilityService availabilityService;
+    private final AvailabilityMapper availabilityMapper;
+
+<span class="fc" id="L24">    public AvailabilityController(AvailabilityService availabilityService, AvailabilityMapper availabilityMapper) {</span>
+<span class="fc" id="L25">        this.availabilityService = availabilityService;</span>
+<span class="fc" id="L26">        this.availabilityMapper = availabilityMapper;</span>
+<span class="fc" id="L27">    }</span>
+
+    @GetMapping
+    public String search(@ModelAttribute(&quot;search&quot;) AvailabilitySearchRequest search, BindingResult bindingResult, Model model) {
+        // เข้าหน้าครั้งแรก ยังไม่ได้กรอกฟอร์ม
+<span class="pc bpc" id="L32" title="2 of 6 branches missed.">        if (search.checkIn() == null &amp;&amp; search.checkOut() == null &amp;&amp; search.petCount() == null) {</span>
+<span class="fc" id="L33">            return &quot;availability/search&quot;;</span>
+        }
+<span class="pc bpc" id="L35" title="4 of 8 branches missed.">        if (bindingResult.hasErrors() || search.checkIn() == null || search.checkOut() == null || search.petCount() == null) {</span>
+<span class="nc" id="L36">            model.addAttribute(&quot;error&quot;, &quot;กรุณากรอกวันที่และจำนวนสัตว์เลี้ยงให้ครบถ้วน&quot;);</span>
+<span class="nc" id="L37">            return &quot;availability/search&quot;;</span>
+        }
+        try {
+<span class="fc" id="L40">            List&lt;Room&gt; rooms = availabilityService.findAvailableRooms(search.checkIn(), search.checkOut(), search.petCount());</span>
+<span class="fc" id="L41">            model.addAttribute(&quot;result&quot;, availabilityMapper.toResponse(search, rooms));</span>
+<span class="fc" id="L42">        } catch (IllegalArgumentException ex) {</span>
+<span class="fc" id="L43">            model.addAttribute(&quot;error&quot;, ex.getMessage());</span>
+<span class="fc" id="L44">        }</span>
+<span class="fc" id="L45">        return &quot;availability/search&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
