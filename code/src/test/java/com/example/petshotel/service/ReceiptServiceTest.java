@@ -21,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
+import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
@@ -44,6 +45,11 @@ public class ReceiptServiceTest  {
     private Booking bookingWithPrices(){
         Booking booking = new Booking();
         booking.setId(1L);
+        User customer = new User();
+        customer.setId(10L);
+        customer.setFirstName("กิตติญาดา");
+        customer.setLastName("กองคำ");
+        booking.setUser(customer);
         booking.setRoomAmount(new BigDecimal("5000.00"));
         booking.setServiceAmount(new BigDecimal("200.00"));
         booking.setSurchargeAmount(new BigDecimal("900.00"));
@@ -152,5 +158,32 @@ public class ReceiptServiceTest  {
         verify(receiptRepository, never()).save(any(Receipt.class));
     }
 
+    @Test
+    void customerNameShouldRemainSnapshot() {
+        Booking booking = bookingWithPrices();
+
+        when(bookingRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(booking));
+
+        when(receiptRepository.findByBookingId(1L))
+                .thenReturn(Optional.empty());
+
+        when(receiptRepository.save(any(Receipt.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Receipt receipt = receiptService.createReceipt(1L);
+
+        assertEquals(
+                "กิตติญาดา กองคำ",
+                receipt.getCustomerName()
+        );
+
+        booking.getUser().setFirstName("ชื่อใหม่");
+
+        assertEquals(
+                "กิตติญาดา กองคำ",
+                receipt.getCustomerName()
+        );
+    }
 
 }

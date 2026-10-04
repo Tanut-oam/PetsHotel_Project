@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
 import com.example.petshotel.domain.enums.PaymentStatus;
+import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.ReceiptService;
@@ -66,10 +68,17 @@ public class ReceiptServiceImpl implements ReceiptService{
                     "Booking has no complete price snapshot: " + bookingId);
         }
 
+        User customer = booking.getUser();
+        String customerName =
+                (customer.getFirstName().trim()
+                        + " "
+                        + customer.getLastName().trim()).trim();
+
         Receipt receipt = new Receipt();
         receipt.setBooking(booking);
+        receipt.setCustomerName(customerName);
         receipt.setReceiptNumber("REC-" + UUID.randomUUID());
-        receipt.setIssuedAt(LocalDateTime.now());
+        receipt.setIssuedAt(LocalDateTime.now(ZoneId.of("Asia/Bangkok")));
         receipt.setRoomAmount(booking.getRoomAmount());
         receipt.setServiceAmount(booking.getServiceAmount());
         receipt.setSurchargeAmount(booking.getSurchargeAmount());

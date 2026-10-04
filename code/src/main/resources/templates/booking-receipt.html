@@ -62,12 +62,22 @@
           <dd th:text="${receipt.receiptNumber}"></dd>
 
           <dt>วันที่ออก</dt>
-          <dd th:text="${#temporals.format(
-            receipt.issuedAt, 'dd/MM/yyyy HH:mm'
-          )}"></dd>
+          <dd>
+            <span th:text="${#temporals.format(
+              receipt.issuedAt, 'dd/MM/yyyy HH:mm'
+            )}"></span>
+            <small class="muted">(เวลาไทย)</small>
+          </dd>
 
           <dt>เลขที่การจอง</dt>
           <dd th:text="${booking.id}"></dd>
+
+          <dt>ชื่อลูกค้า</dt>
+          <dd th:text="${receipt.customerName != null
+            and !#strings.isEmpty(receipt.customerName)
+              ? receipt.customerName
+              : 'ไม่มีข้อมูลชื่อในใบเสร็จเดิม'}">
+          </dd>
 
           <dt>รหัสผู้จอง</dt>
           <dd th:text="${booking.userId}"></dd>
