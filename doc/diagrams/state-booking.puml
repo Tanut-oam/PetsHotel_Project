@@ -1,0 +1,55 @@
+@startuml state-booking
+title PetStay - Booking State Diagram
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+hide empty description
+
+' Source: BookingStatus, Booking, BookingServiceImpl, and state/*State.java.
+' Guards include the service/entity checks, not only the State implementations.
+
+state PENDING
+state CONFIRMED
+state CHECKED_IN
+state CHECKED_OUT
+state CANCELLED
+
+[*] --> PENDING : createBooking(request) / save booking\npaymentStatus = UNPAID
+
+PENDING --> CONFIRMED : confirmBooking(id)\n/ PendingState.confirm(booking)
+CONFIRMED --> CHECKED_IN : checkIn(id)\n[booking.canCheckInOn(currentDate)]\n/ ConfirmedState.checkIn(booking)
+CHECKED_IN --> CHECKED_OUT : checkOut(id)\n[booking.canCheckOutOn(currentDate)]\n/ CheckedInState.checkOut(booking)
+
+PENDING --> CANCELLED : cancelBooking(id)\n[paymentStatus != PAID]\n/ PendingState.cancel(booking)
+CONFIRMED --> CANCELLED : cancelBooking(id)\n[paymentStatus != PAID]\n/ ConfirmedState.cancel(booking)
+
+CHECKED_OUT --> [*]
+CANCELLED --> [*]
+
+note right of CONFIRMED
+  canCheckInOn(currentDate):
+  checkInDate <= currentDate < checkOutDate
+
+  Confirmation publishes BookingConfirmedEvent.
+  Email is handled after transaction commit.
+end note
+
+note right of CHECKED_OUT
+  canCheckOutOn(currentDate):
+  currentDate >= checkOutDate
+
+  Check-out does not require paymentStatus = PAID
+  in the current BookingServiceImpl.
+end note
+
+legend bottom
+  currentDate uses Asia/Bangkok.
+  STAFF / ADMIN: confirm, check in, check out.
+  Owner or STAFF / ADMIN: cancel (checked by the controller).
+  Invalid operations throw IllegalStateException; status is unchanged.
+  PaymentStatus (UNPAID / PAID) is separate from BookingStatus.
+  PENDING, CONFIRMED and CHECKED_IN reserve the room and pets.
+  CHECKED_OUT and CANCELLED have no outgoing business transitions.
+endlegend
+
+@enduml
