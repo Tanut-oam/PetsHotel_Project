@@ -1,6 +1,6 @@
 @startuml sequence-checkout
 
-title PetsHotel - Checkout, Confirm Payment and Issue Receipt
+title petshotel - Checkout, Confirm Payment and Issue Receipt
 
 autonumber
 hide footbox
@@ -161,6 +161,17 @@ else ยังไม่มีใบเสร็จ
     ReceiptService -> ReceiptRepo : save(receipt)
     ReceiptRepo --> ReceiptService : savedReceipt
 end
+
+ReceiptService --> PaymentService : Receipt
+deactivate ReceiptService
+
+PaymentService -> PaymentService : new PaymentResponse(...)
+PaymentService --> Controller : PaymentResponse
+deactivate PaymentService
+
+Controller -> Controller : addFlashAttribute("message",\n"บันทึกการชำระเงินและออกใบเสร็จเรียบร้อยแล้ว")
+Controller --> Staff : redirect:/admin/bookings
+deactivate Controller
 
 legend bottom
     แสดงขั้นตอนสำเร็จและกรณียืนยันรับเงินซ้ำ

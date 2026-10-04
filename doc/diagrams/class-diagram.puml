@@ -1,6 +1,6 @@
 @startuml petshotel-class-diagram
 
-title PetsHotel - Core Class Diagram with Design Patterns
+title petshotel - Core Class Diagram with Design Patterns
 
 left to right direction
 
@@ -138,6 +138,21 @@ package "Pricing - Strategy Pattern" as StrategyPattern #F0FDF4 {
             +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
             +category(): PricingCategory
         }
+                class HolidaySurchargeStrategy <<ConcreteStrategy>> {
+            {static} -SURCHARGE_RATE: BigDecimal = 0.30
+            --
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+            -isHoliday(date: LocalDate): boolean
+        }
+
+        class LongStayDiscountStrategy <<ConcreteStrategy>> {
+            {static} -MINIMUM_NIGHTS: int = 5
+            {static} -DISCOUNT_RATE: BigDecimal = 0.10
+            --
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+        }
     }
 
     class PricingContext {
@@ -171,6 +186,8 @@ package "Pricing - Strategy Pattern" as StrategyPattern #F0FDF4 {
     BaseRoomPriceStrategy ..|> PricingStrategy
     ExtraServicePricingStrategy ..|> PricingStrategy
     PromotionDiscountStrategy ..|> PricingStrategy
+    HolidaySurchargeStrategy ..|> PricingStrategy
+    LongStayDiscountStrategy ..|> PricingStrategy
 
     PricingStrategy ..> PricingContext : parameter
     PricingStrategy ..> PricingCategory : returns
@@ -213,7 +230,8 @@ package "Notification - Observer Pattern" as ObserverPattern #FFF7ED {
         }
 
         interface JavaMailSender <<Framework>> {
-            +send(message: SimpleMailMessage): void
+            +createMimeMessage(): MimeMessage
+            +send(message: MimeMessage): void
         }
     }
 
@@ -448,8 +466,8 @@ legend bottom
     Colored frames identify State, Strategy and Observer patterns.
     Important classes and members are selected from the actual code.
     Constructors and Lombok-generated accessors are omitted.
-    Three concrete strategies are shown as examples.
-    Other strategies, DTO and supporting classes are omitted.
+    All five concrete pricing strategies are shown.
+    Other DTO and supporting classes are omitted.
 endlegend
 
 @enduml
