@@ -1,0 +1,109 @@
+@startuml activity-booking
+title PetStay - Booking Process (UC-05)
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+
+' A single booking attempt. On errors, the customer can edit and start again.
+' Lifecycle operations after creation are covered by state-booking.puml.
+
+|Customer|
+start
+:Log in with an active account;
+:Choose a room and stay dates;
+
+|PetStay System|
+:GET /bookings/new\nLoad booking form and available choices;
+
+|Customer|
+:Select pets; optionally select\nservices per pet and a promotion;
+note right
+  roomId, petIds,
+  checkInDate, checkOutDate,
+  servicePetIds, promotionId
+end note
+
+|PetStay System|
+:GET /api/bookings/pet-availability\nDisable pets already reserved for those dates;
+:Check form fields, date order, pet count\nand service recipients;
+if (Form inputs valid?) then (yes)
+  :POST /api/bookings/preview-price\npreviewPrice(request);
+  note right
+    prepareBooking(request, false)
+    validates selections and calculates a quote.
+    No save, locks or final availability checks.
+  end note
+else (no)
+  :Show form validation message;
+  |Customer|
+  :Edit selections before retrying;
+  stop
+endif
+
+|PetStay System|
+if (Successful quote matches current inputs?) then (yes)
+  :Display price breakdown;
+else (no)
+  :Show preview error / wait / retry message;\nprevent submission;
+  |Customer|
+  :Edit selections or retry price calculation;
+  stop
+endif
+
+|Customer|
+:Review booking and press Book;
+:Confirm the booking dialog;
+
+|PetStay System|
+:POST /bookings\nResolve current user from Principal;
+:form.setUserId(user.getId())\nvalidateForm(form, bindingResult);
+if (bindingResult.hasErrors()?) then (yes)
+  :loadChoices(...)\nReturn booking view with validation errors;
+  |Customer|
+  :Edit form before retrying;
+  stop
+else (no)
+endif
+
+|PetStay System|
+:createBooking(form)\nBegin booking transaction;
+:Validate required IDs, unique petIds\nand checkOutDate > checkInDate;
+:Load User; lock Room and require ACTIVE;\nlock selected pets; check existence,\nactive flag, ownership and room capacity;
+:Check pet overlaps, then room availability\nfor checkInDate and checkOutDate;
+note right
+  Checks run in this order and stop at the first error.
+  PENDING, CONFIRMED and CHECKED_IN reserve space.
+  An overlapping room booking blocks the whole room.
+end note
+
+if (Any request / resource / availability error?) then (yes)
+  :Abort transaction; catch exception;\nreturn booking form with error details;
+  |Customer|
+  :Change pets, room or dates and retry;
+  stop
+else (no)
+endif
+
+|PetStay System|
+:Build Booking with status = PENDING;\nadd BookingPet for each selected pet;
+:Validate services and recipients;\nadd BookingExtraService per recipient\nwith quantity = 1 and price snapshot;
+:If promotionId is supplied, load promotion\nand validate active flag and date range\nagainst today in Asia/Bangkok;
+
+if (Any service / promotion error?) then (yes)
+  :Abort transaction; catch exception;\nreturn booking form with error details;
+  |Customer|
+  :Change service / promotion selections and retry;
+  stop
+else (no)
+endif
+
+|PetStay System|
+:Recalculate price with PricingContext;\nsnapshot all amounts and promotionName;
+:bookingRepository.save(prepared.booking())\nCascade BookingPet and BookingExtraService;\npaymentStatus = UNPAID; set createdAt;
+:Map to BookingResponse; commit transaction;\nredirect:/bookings/{created.id};
+
+|Customer|
+:View booking details\nstatus = PENDING, paymentStatus = UNPAID;
+stop
+
+@enduml

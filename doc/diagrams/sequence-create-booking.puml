@@ -1,0 +1,152 @@
+@startuml sequence-create-booking
+title PetStay - Create Booking (UC-05, Web Form)
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+skinparam maxMessageSize 320
+hide footbox
+autonumber
+
+' Scope: submitting the web form. Authentication and loading the form precede it.
+' Lookup repositories share a lifeline to keep the diagram readable.
+' Each lookup message retains the real repository field and method name.
+
+actor "Customer" as Customer
+boundary "BookingController" as Page
+control "CurrentUserServiceImpl" as CurrentUser
+control "BookingServiceImpl" as Service
+entity "Lookup\nRepositories" as Lookups
+control "AvailabilityServiceImpl" as Availability
+control "PricingServiceImpl" as Pricing
+entity "BookingRepository" as Bookings
+control "BookingMapper" as Mapper
+
+note over Customer, Page
+  Precondition: authenticated, active account.
+  Form fields: roomId, petIds, checkInDate, checkOutDate,
+  servicePetIds, promotionId.
+end note
+
+Customer -> Page : POST /bookings\nCreateBookingRequest form
+activate Page
+Page -> CurrentUser : getByEmail(principal.getName())
+CurrentUser -> Lookups : userRepository.findByEmail(email)
+Lookups --> CurrentUser : User user
+CurrentUser --> Page : User user
+Page -> Page : form.setUserId(user.getId())\nvalidateForm(form, bindingResult)
+
+alt bindingResult.hasErrors()
+  Page -> Page : loadChoices(model, user, form)
+  Page --> Customer : booking view + validation errors
+else valid form
+  Page -> Service : createBooking(form)
+  activate Service
+  group Transaction: prepareBooking(request, true), save and map
+    Service -> Service : prepareBooking(request, true)\nvalidateCreateRequest(request)
+    break invalid dates, missing IDs or duplicate petIds
+      Service --> Page : IllegalArgumentException
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + error
+    end
+
+    Service -> Lookups : userRepository.findById(request.getUserId())
+    Lookups --> Service : User user
+    Service -> Lookups : roomRepository.findByIdForUpdate(request.getRoomId())
+    Lookups --> Service : Room room (locked)
+    Service -> Service : require room.status == RoomStatus.ACTIVE
+    break user / room missing, or room inactive
+      Service --> Page : ResourceNotFoundException / RoomNotAvailableException
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + error
+    end
+
+    Service -> Lookups : petRepository.findAllByIdForUpdate(request.getPetIds())
+    Lookups --> Service : List<Pet> pets (locked)
+    Service -> Service : verify all petIds exist\nvalidatePets(user, pets)\nrequire pets.size() <= room.getCapacity()
+    break missing / inactive / unowned pets, or too many pets
+      Service --> Page : ResourceNotFoundException / IllegalArgumentException\n/ IllegalStateException
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + error
+    end
+
+    Service -> Lookups : bookingPetRepository.findOverlappingPetIds(\npetIds, checkInDate, checkOutDate, PET_RESERVING_STATUSES)
+    Lookups --> Service : overlappingPetIds
+    break overlappingPetIds is not empty
+      Service --> Page : PetNotAvailableException\n(extends IllegalStateException)
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + overlapping pet names and dates
+    end
+
+    Service -> Availability : checkRoomAvailable(room.getId(),\ncheckInDate, checkOutDate, pets.size())
+    Availability -> Availability : isRoomAvailable(...)\nvalidate(...) / hasSpace(...)
+    Availability -> Lookups : roomRepository.findById(roomId)
+    Lookups --> Availability : Room room
+    Availability -> Bookings : existsOverlappingBooking(\nroomId, checkIn, checkOut, ACTIVE_STATUSES)
+    Bookings --> Availability : overlap exists?
+    break room unavailable
+      Availability --> Service : RoomNotAvailableException
+      Service --> Page : RoomNotAvailableException
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + room unavailable error
+    end
+    Availability --> Service : available (void)
+
+    Service -> Service : Booking.builder()...status(PENDING).build()\npets.forEach(booking::addPet)\nbuild bookingPetsByPetId
+
+    group addSelectedServices(booking, servicePetIds, bookingPetsByPetId)
+      loop each service entry with non-empty recipients
+        Service -> Service : validate recipients belong to booking\nand contain no duplicate pet IDs
+        Service -> Lookups : extraServiceRepository.findById(serviceId)
+        Lookups --> Service : ExtraService extra
+        Service -> Service : require active service and non-negative price\nadd BookingExtraService for each recipient\nquantity = 1; snapshot unitPrice and totalPrice
+      end
+    end
+
+    break invalid / missing extra service or recipients
+      Service --> Page : ResourceNotFoundException / IllegalArgumentException\n/ IllegalStateException
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + error
+    end
+
+    opt request.getPromotionId() != null
+      Service -> Lookups : promotionRepository.findById(promotionId)
+      Lookups --> Service : Promotion promotion
+      Service -> Service : validatePromotion(promotion, bookingDate)\nbookingDate = today in Asia/Bangkok
+    end
+
+    break invalid / missing promotion
+      Service --> Page : ResourceNotFoundException / IllegalArgumentException
+      Page -> Page : bindingResult.reject(...)\nloadChoices(model, user, form)
+      Page --> Customer : booking view + error
+    end
+
+    Service -> Service : nights = DAYS.between(checkInDate, checkOutDate)
+    Service -> Pricing : calculate(new PricingContext(room, pets.size(),\nnights, checkInDate, checkOutDate, extraServices, promotion))
+    Pricing --> Service : BookingPriceResponse price
+    Service -> Service : snapshot roomAmount, serviceAmount,\nsurchargeAmount, discountAmount, totalPrice,\npromotion and promotionName
+    Service -> Bookings : save(prepared.booking())
+    note right of Bookings
+      Cascade saves BookingPet and BookingExtraService.
+      Booking.prePersist() supplies createdAt.
+      paymentStatus defaults to UNPAID.
+    end note
+    Bookings --> Service : saved Booking
+    Service -> Mapper : toResponse(saved Booking)
+    Mapper --> Service : BookingResponse created
+  end
+  Service --> Page : BookingResponse created (transaction committed)
+  deactivate Service
+  Page --> Customer : redirect:/bookings/{created.id}
+end
+deactivate Page
+
+legend bottom
+  Lookup Repositories groups UserRepository, RoomRepository, PetRepository,
+  BookingPetRepository, ExtraServiceRepository and PromotionRepository.
+  PET_RESERVING_STATUSES / ACTIVE_STATUSES = PENDING, CONFIRMED, CHECKED_IN.
+  Exceptions abort the remaining transaction; no booking is saved.
+  This diagram shows the web POST /bookings path.
+  Price preview uses POST /api/bookings/preview-price and does not save or reserve.
+endlegend
+
+@enduml
