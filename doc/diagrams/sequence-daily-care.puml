@@ -37,19 +37,25 @@ else valid form
     ReportService -> BookingPets : findById(bookingPetId)
     BookingPets --> ReportService : BookingPet
     ReportService -> ReportService : check booking status\nrequireDateWithinStay(reportDate, booking)
-    ReportService -> Reports : existsByBookingPet_IdAndReportDate(bookingPetId, reportDate)
-    Reports --> ReportService : alreadyExists
 
-    alt report already exists
-      ReportService --> Page : IllegalStateException
+    alt booking status or report date invalid
+      ReportService --> Page : IllegalStateException / IllegalArgumentException
       Page --> Staff : redirect to report page + error message
-    else new report
-      ReportService -> Reports : save(DailyCareReport)
-      Reports --> ReportService : saved report
-      ReportService -> Mapper : toResponse(saved report)
-      Mapper --> ReportService : DailyCareReportResponse
-      ReportService --> Page : DailyCareReportResponse
-      Page --> Staff : redirect to pet reports + success message
+    else valid booking status and report date
+      ReportService -> Reports : existsByBookingPet_IdAndReportDate(bookingPetId, reportDate)
+      Reports --> ReportService : alreadyExists
+
+      alt report already exists
+        ReportService --> Page : IllegalStateException
+        Page --> Staff : redirect to report page + error message
+      else new report
+        ReportService -> Reports : save(DailyCareReport)
+        Reports --> ReportService : saved report
+        ReportService -> Mapper : toResponse(saved report)
+        Mapper --> ReportService : DailyCareReportResponse
+        ReportService --> Page : DailyCareReportResponse
+        Page --> Staff : redirect to pet reports + success message
+      end
     end
   end
   deactivate ReportService
