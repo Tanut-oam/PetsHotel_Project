@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoomServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">RoomServiceImpl.java</span></div><h1>RoomServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.example.petshotel.domain.entity.Room;
+import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.dto.request.CreateRoomRequest;
+import com.example.petshotel.dto.request.UpdateRoomRequest;
+import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.mapper.RoomMapper;
+import com.example.petshotel.dto.request.UpdateStatusRequest;
+import com.example.petshotel.repository.RoomRepository;
+import com.example.petshotel.service.FileStorageService;
+import com.example.petshotel.service.RoomService;
+
+
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+@Service
+public class RoomServiceImpl implements RoomService {
+    
+    private final RoomRepository roomRepository;
+    private final RoomMapper roomMapper;
+    private final FileStorageService fileStorageService;
+
+<span class="fc" id="L32">    public RoomServiceImpl(RoomRepository roomRepository, RoomMapper roomMapper,FileStorageService fileStorageService) {</span>
+<span class="fc" id="L33">        this.roomRepository = roomRepository;</span>
+<span class="fc" id="L34">        this.roomMapper = roomMapper;</span>
+<span class="fc" id="L35">        this.fileStorageService = fileStorageService;</span>
+<span class="fc" id="L36">    }</span>
+
+    @Override
+    @Transactional
+    public RoomResponse createRoom(CreateRoomRequest request){
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        if(roomRepository.existsByRoomNumber(request.roomNumber())){</span>
+<span class="fc" id="L42">            throw new DuplicateResourceException(&quot;Room number already exists: &quot; + request.roomNumber());</span>
+        }
+
+<span class="fc" id="L45">        Room room = new Room();</span>
+<span class="fc" id="L46">        room.setRoomNumber(request.roomNumber());</span>
+<span class="fc" id="L47">        room.setName(request.name());</span>
+<span class="fc" id="L48">        room.setDescription(request.description());</span>
+<span class="fc" id="L49">        room.setCapacity(request.capacity());</span>
+<span class="fc" id="L50">        room.setPricePerPetPerNight(request.pricePerPetPerNight());</span>
+<span class="fc" id="L51">        room.setStatus(RoomStatus.ACTIVE);</span>
+
+<span class="fc" id="L53">        Room saved = roomRepository.save(room);</span>
+
+<span class="fc" id="L55">        return roomMapper.toResponse(saved);</span>
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public  RoomResponse getRoomById(Long id){
+<span class="fc" id="L62">        Room room = roomRepository.findById(id).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, id));</span>
+<span class="fc" id="L63">        return roomMapper.toResponse(room);</span>
+    }
+
+    @Override
+    @Transactional(readOnly  = true)
+    public List&lt;RoomResponse&gt; getActiveRooms() {
+<span class="nc" id="L69">        List&lt;RoomResponse&gt; ActiveRooms = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        for(Room room:roomRepository.findByStatus(RoomStatus.ACTIVE)){</span>
+<span class="nc" id="L71">            RoomResponse response = roomMapper.toResponse(room);</span>
+<span class="nc" id="L72">            ActiveRooms.add(response);</span>
+<span class="nc" id="L73">        }</span>
+<span class="nc" id="L74">        return ActiveRooms;</span>
+    }
+
+    @Override
+    @Transactional(readOnly  = true)
+    public List&lt;RoomResponse&gt; getAllRooms(){
+<span class="fc" id="L80">        List&lt;RoomResponse&gt; AllRoom = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        for(Room room:roomRepository.findAll()){</span>
+            
+<span class="fc" id="L83">            RoomResponse response = roomMapper.toResponse(room);</span>
+<span class="fc" id="L84">            AllRoom.add(response);</span>
+<span class="fc" id="L85">        }</span>
+        
+<span class="fc" id="L87">        return AllRoom;</span>
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse deactivateRoom(Long id){
+<span class="fc" id="L93">        Room room = roomRepository.findById(id).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, id));</span>
+<span class="fc" id="L94">        room.setStatus(RoomStatus.INACTIVE);</span>
+<span class="fc" id="L95">        roomRepository.save(room);</span>
+
+<span class="fc" id="L97">        return roomMapper.toResponse(room);</span>
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse setRoomStatus(Long id,UpdateStatusRequest request){
+<span class="fc" id="L103">        Room room = roomRepository.findById(id).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, id));</span>
+<span class="fc" id="L104">        room.setStatus(request.status());</span>
+<span class="fc" id="L105">        roomRepository.save(room);</span>
+
+
+<span class="fc" id="L108">        return roomMapper.toResponse(room);</span>
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse updateRoom(Long id,UpdateRoomRequest request){
+<span class="fc" id="L114">        Room room = roomRepository.findById(id).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, id));</span>
+
+        //ถ้าroomใหม่ไม่เท่ากับ roomเก่า และ roomไม่ซ้ำใคร
+<span class="pc bpc" id="L117" title="1 of 4 branches missed.">        if (!room.getRoomNumber().equals(request.roomNumber()) &amp;&amp; roomRepository.existsByRoomNumber(request.roomNumber())) {</span>
+<span class="fc" id="L118">            throw new DuplicateResourceException(&quot;Room number already exists: &quot; + request.roomNumber());</span>
+        }
+
+<span class="fc" id="L121">        room.setRoomNumber(request.roomNumber());</span>
+<span class="fc" id="L122">        room.setName(request.name());</span>
+<span class="fc" id="L123">        room.setDescription(request.description());</span>
+<span class="fc" id="L124">        room.setCapacity(request.capacity());</span>
+<span class="fc" id="L125">        room.setPricePerPetPerNight(request.pricePerPetPerNight());</span>
+<span class="fc" id="L126">        roomRepository.save(room);</span>
+<span class="fc" id="L127">        return roomMapper.toResponse(room);</span>
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse updateRoomImage(Long id, MultipartFile image) {
+<span class="fc" id="L133">        Room room = roomRepository.findById(id)</span>
+<span class="pc" id="L134">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, id));</span>
+
+<span class="fc" id="L136">        String oldImageUrl = room.getImageUrl();</span>
+<span class="fc" id="L137">        room.setImageUrl(fileStorageService.storeRoomImage(image));</span>
+<span class="fc" id="L138">        roomRepository.save(room);</span>
+<span class="fc" id="L139">        fileStorageService.deleteRoomImage(oldImageUrl);</span>
+
+<span class="fc" id="L141">        return roomMapper.toResponse(room);</span>
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse removeRoomImage(Long id) {
+<span class="fc" id="L147">        Room room = roomRepository.findById(id)</span>
+<span class="pc" id="L148">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, id));</span>
+
+<span class="fc" id="L150">        String oldImageUrl = room.getImageUrl();</span>
+<span class="fc" id="L151">        room.setImageUrl(null);</span>
+<span class="fc" id="L152">        roomRepository.save(room);</span>
+<span class="fc" id="L153">        fileStorageService.deleteRoomImage(oldImageUrl);</span>
+
+<span class="fc" id="L155">        return roomMapper.toResponse(room);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

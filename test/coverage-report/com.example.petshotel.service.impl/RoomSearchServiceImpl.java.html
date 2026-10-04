@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RoomSearchServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">RoomSearchServiceImpl.java</span></div><h1>RoomSearchServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.math.BigDecimal;
+import java.util.Set;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.dto.request.RoomSearchRequest;
+import com.example.petshotel.dto.response.PageResponse;
+import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.mapper.RoomMapper;
+import com.example.petshotel.repository.RoomRepository;
+import com.example.petshotel.service.RoomSearchService;
+
+@Service
+public class RoomSearchServiceImpl implements RoomSearchService {
+
+    static final int MAX_PAGE_SIZE = 50;
+
+    // field ที่อนุญาตให้เรียง ป้องกันผู้ใช้ส่งชื่อ field มั่ว ๆ แล้วเกิด error 500
+<span class="fc" id="L25">    static final Set&lt;String&gt; SORTABLE_FIELDS =</span>
+<span class="fc" id="L26">            Set.of(&quot;roomNumber&quot;, &quot;name&quot;, &quot;capacity&quot;, &quot;pricePerPetPerNight&quot;);</span>
+
+    // ค่าสูงสุดของคอลัมน์ราคา precision 10 scale 2
+<span class="fc" id="L29">    private static final BigDecimal NO_PRICE_LIMIT = new BigDecimal(&quot;99999999.99&quot;);</span>
+
+    private final RoomRepository roomRepository;
+    private final RoomMapper roomMapper;
+
+<span class="fc" id="L34">    public RoomSearchServiceImpl(RoomRepository roomRepository, RoomMapper roomMapper) {</span>
+<span class="fc" id="L35">        this.roomRepository = roomRepository;</span>
+<span class="fc" id="L36">        this.roomMapper = roomMapper;</span>
+<span class="fc" id="L37">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse&lt;RoomResponse&gt; searchRooms(RoomSearchRequest request, Pageable pageable) {
+<span class="fc" id="L42">        validatePageable(pageable);</span>
+
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        String keyword = request.keyword() == null ? &quot;&quot; : request.keyword().trim().toLowerCase();</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">        int minCapacity = request.minCapacity() == null ? 1 : request.minCapacity();</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        BigDecimal maxPrice = request.maxPrice() == null ? NO_PRICE_LIMIT : request.maxPrice();</span>
+
+<span class="fc" id="L48">        return PageResponse.from(</span>
+<span class="fc" id="L49">                roomRepository.searchRooms(</span>
+                                RoomStatus.ACTIVE,
+                                &quot;%&quot; + keyword + &quot;%&quot;,
+                                minCapacity,
+                                maxPrice,
+                                pageable)
+<span class="fc" id="L55">                        .map(roomMapper::toResponse));</span>
+    }
+
+    private void validatePageable(Pageable pageable) {
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (pageable.getPageSize() &gt; MAX_PAGE_SIZE) {</span>
+<span class="fc" id="L60">            throw new IllegalArgumentException(&quot;แสดงได้สูงสุดหน้าละ &quot; + MAX_PAGE_SIZE + &quot; รายการ&quot;);</span>
+        }
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        for (Sort.Order order : pageable.getSort()) {</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            if (!SORTABLE_FIELDS.contains(order.getProperty())) {</span>
+<span class="fc" id="L64">                throw new IllegalArgumentException(</span>
+<span class="fc" id="L65">                        &quot;ไม่สามารถเรียงตาม &quot; + order.getProperty()</span>
+<span class="fc" id="L66">                                + &quot; ได้ (เรียงได้ตาม &quot; + String.join(&quot;, &quot;, SORTABLE_FIELDS) + &quot;)&quot;);</span>
+            }
+<span class="fc" id="L68">        }</span>
+<span class="fc" id="L69">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

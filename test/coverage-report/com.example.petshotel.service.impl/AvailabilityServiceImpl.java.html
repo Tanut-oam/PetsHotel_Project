@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AvailabilityServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">AvailabilityServiceImpl.java</span></div><h1>AvailabilityServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.petshotel.domain.entity.Room;
+import com.example.petshotel.domain.enums.BookingStatus;
+import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.dto.response.RoomAvailabilityCalendarResponse;
+import com.example.petshotel.dto.response.UnavailableDateRangeResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.exception.RoomNotAvailableException;
+import com.example.petshotel.repository.BookingRepository;
+import com.example.petshotel.repository.RoomRepository;
+import com.example.petshotel.service.AvailabilityService;
+
+@Service
+public class AvailabilityServiceImpl implements AvailabilityService {
+
+    // สถานะที่ยังครองห้องอยู่
+    // CANCELLED และ CHECKED_OUT ไม่นับว่าครองห้อง
+<span class="fc" id="L27">    private static final List&lt;BookingStatus&gt; ACTIVE_STATUSES = List.of(</span>
+            BookingStatus.PENDING,
+            BookingStatus.CONFIRMED,
+            BookingStatus.CHECKED_IN
+    );
+
+    private static final long MAX_CALENDAR_DAYS = 366;
+
+    private final RoomRepository roomRepository;
+    private final BookingRepository bookingRepository;
+
+    public AvailabilityServiceImpl(
+            RoomRepository roomRepository,
+<span class="fc" id="L40">            BookingRepository bookingRepository) {</span>
+
+<span class="fc" id="L42">        this.roomRepository = roomRepository;</span>
+<span class="fc" id="L43">        this.bookingRepository = bookingRepository;</span>
+<span class="fc" id="L44">    }</span>
+
+    @Transactional(readOnly = true)
+    @Override
+    public boolean isRoomAvailable(
+            Long roomId,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            int petCount) {
+
+<span class="fc" id="L54">        validate(checkIn, checkOut, petCount);</span>
+
+<span class="fc" id="L56">        Room room = roomRepository.findById(roomId)</span>
+<span class="fc" id="L57">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L58">                        new ResourceNotFoundException(</span>
+                                &quot;Room&quot;,
+                                roomId
+                        )
+                );
+
+<span class="fc" id="L64">        return hasSpace(</span>
+                room,
+                checkIn,
+                checkOut,
+                petCount
+        );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List&lt;Room&gt; findAvailableRooms(
+            LocalDate checkIn,
+            LocalDate checkOut,
+            int petCount) {
+
+<span class="fc" id="L79">        validate(checkIn, checkOut, petCount);</span>
+
+<span class="fc" id="L81">        List&lt;Room&gt; availableRooms = new ArrayList&lt;&gt;();</span>
+
+        for (Room room :
+<span class="fc bfc" id="L84" title="All 2 branches covered.">                roomRepository.findByStatus(RoomStatus.ACTIVE)) {</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            if (hasSpace(</span>
+                    room,
+                    checkIn,
+                    checkOut,
+                    petCount
+            )) {
+<span class="fc" id="L92">                availableRooms.add(room);</span>
+            }
+<span class="fc" id="L94">        }</span>
+
+<span class="fc" id="L96">        return availableRooms;</span>
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public void checkRoomAvailable(
+            Long roomId,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            int petCount) {
+
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (!isRoomAvailable(</span>
+                roomId,
+                checkIn,
+                checkOut,
+                petCount
+        )) {
+<span class="fc" id="L113">            throw new RoomNotAvailableException(</span>
+                    roomId,
+                    checkIn,
+                    checkOut
+            );
+        }
+<span class="nc" id="L119">    }</span>
+
+    @Transactional(readOnly = true)
+    @Override
+    public RoomAvailabilityCalendarResponse
+            getRoomAvailabilityCalendar(
+                    Long roomId,
+                    LocalDate fromDate,
+                    LocalDate toDate) {
+
+<span class="fc" id="L129">        validateCalendarRange(</span>
+                roomId,
+                fromDate,
+                toDate
+        );
+
+<span class="fc" id="L135">        roomRepository.findById(roomId)</span>
+<span class="fc" id="L136">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L137">                        new ResourceNotFoundException(</span>
+                                &quot;Room&quot;,
+                                roomId
+                        )
+                );
+
+<span class="fc" id="L143">        List&lt;UnavailableDateRangeResponse&gt; unavailableRanges =</span>
+                bookingRepository
+<span class="fc" id="L145">                        .findOverlappingBookingsByRoom(</span>
+                                roomId,
+                                fromDate,
+                                toDate,
+                                ACTIVE_STATUSES
+                        )
+<span class="fc" id="L151">                        .stream()</span>
+<span class="fc" id="L152">                        .map(booking -&gt;</span>
+<span class="fc" id="L153">                                new UnavailableDateRangeResponse(</span>
+<span class="fc" id="L154">                                        booking.getCheckInDate(),</span>
+<span class="fc" id="L155">                                        booking.getCheckOutDate()</span>
+                                )
+                        )
+<span class="fc" id="L158">                        .toList();</span>
+
+<span class="fc" id="L160">        return new RoomAvailabilityCalendarResponse(</span>
+                roomId,
+                fromDate,
+                toDate,
+                unavailableRanges
+        );
+    }
+
+    /*
+     * กฎหนึ่งห้องต่อหนึ่งการจอง:
+     * ห้องต้องเปิดใช้งาน รองรับจำนวนสัตว์ได้
+     * และไม่มีการจองอื่นทับช่วงวัน
+     */
+    private boolean hasSpace(
+            Room room,
+            LocalDate checkIn,
+            LocalDate checkOut,
+            int petCount) {
+
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        if (room.getStatus() != RoomStatus.ACTIVE) {</span>
+<span class="fc" id="L180">            return false;</span>
+        }
+
+<span class="fc bfc" id="L183" title="All 2 branches covered.">        if (petCount &gt; room.getCapacity()) {</span>
+<span class="fc" id="L184">            return false;</span>
+        }
+
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        return !bookingRepository.existsOverlappingBooking(</span>
+<span class="fc" id="L188">                room.getId(),</span>
+                checkIn,
+                checkOut,
+                ACTIVE_STATUSES
+        );
+    }
+
+    private void validate(
+            LocalDate checkIn,
+            LocalDate checkOut,
+            int petCount) {
+
+<span class="pc bpc" id="L200" title="1 of 4 branches missed.">        if (checkIn == null || checkOut == null) {</span>
+<span class="fc" id="L201">            throw new IllegalArgumentException(</span>
+                    &quot;วันที่ Check-in และ Check-out ต้องระบุ&quot;
+            );
+        }
+
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        if (!checkIn.isBefore(checkOut)) {</span>
+<span class="fc" id="L207">            throw new IllegalArgumentException(</span>
+                    &quot;วันที่ Check-out ต้องอยู่หลังวันที่ Check-in&quot;
+            );
+        }
+
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (petCount &lt; 1) {</span>
+<span class="fc" id="L213">            throw new IllegalArgumentException(</span>
+                    &quot;จำนวนสัตว์เลี้ยงต้องอย่างน้อย 1 ตัว&quot;
+            );
+        }
+<span class="fc" id="L217">    }</span>
+
+    private void validateCalendarRange(
+            Long roomId,
+            LocalDate fromDate,
+            LocalDate toDate) {
+
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (roomId == null) {</span>
+<span class="nc" id="L225">            throw new IllegalArgumentException(</span>
+                    &quot;ต้องระบุห้องพัก&quot;
+            );
+        }
+
+<span class="pc bpc" id="L230" title="2 of 4 branches missed.">        if (fromDate == null || toDate == null) {</span>
+<span class="nc" id="L231">            throw new IllegalArgumentException(</span>
+                    &quot;ต้องระบุช่วงวันที่ของปฏิทิน&quot;
+            );
+        }
+
+<span class="pc bpc" id="L236" title="1 of 2 branches missed.">        if (!fromDate.isBefore(toDate)) {</span>
+<span class="nc" id="L237">            throw new IllegalArgumentException(</span>
+                    &quot;วันสิ้นสุดปฏิทินต้องอยู่หลังวันเริ่มต้น&quot;
+            );
+        }
+
+<span class="fc" id="L242">        long requestedDays =</span>
+<span class="fc" id="L243">                ChronoUnit.DAYS.between(</span>
+                        fromDate,
+                        toDate
+                );
+
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        if (requestedDays &gt; MAX_CALENDAR_DAYS) {</span>
+<span class="fc" id="L249">            throw new IllegalArgumentException(</span>
+                    &quot;สามารถดูปฏิทินล่วงหน้าได้ไม่เกิน 1 ปี&quot;
+            );
+        }
+<span class="fc" id="L253">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

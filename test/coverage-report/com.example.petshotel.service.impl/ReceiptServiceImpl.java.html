@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReceiptServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">ReceiptServiceImpl.java</span></div><h1>ReceiptServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.petshotel.domain.entity.Booking;
+import com.example.petshotel.domain.entity.Receipt;
+import com.example.petshotel.domain.enums.PaymentStatus;
+import com.example.petshotel.repository.BookingRepository;
+import com.example.petshotel.repository.ReceiptRepository;
+import com.example.petshotel.service.ReceiptService;
+import com.example.petshotel.exception.ResourceNotFoundException;
+
+@Service 
+public class ReceiptServiceImpl implements ReceiptService{
+    
+    private final ReceiptRepository receiptRepository;
+    private final BookingRepository bookingRepository;
+
+    public ReceiptServiceImpl(
+            ReceiptRepository receiptRepository,
+<span class="fc" id="L27">            BookingRepository bookingRepository) {</span>
+<span class="fc" id="L28">        this.receiptRepository = receiptRepository;</span>
+<span class="fc" id="L29">        this.bookingRepository = bookingRepository;</span>
+<span class="fc" id="L30">    }</span>
+
+    @Override
+    @Transactional
+    public Receipt createReceipt(Long bookingId) {
+<span class="fc" id="L35">        Booking booking = bookingRepository.findByIdForUpdate(bookingId)</span>
+<span class="fc" id="L36">                .orElseThrow(() -&gt;</span>
+<span class="fc" id="L37">                        new ResourceNotFoundException(&quot;Booking&quot;, bookingId));</span>
+
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (booking.getPaymentStatus() != PaymentStatus.PAID) {</span>
+<span class="fc" id="L40">            throw new IllegalStateException(</span>
+                    &quot;Payment must be confirmed before issuing a receipt&quot;);
+        }
+
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">        if (booking.getPaidAt() == null</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                || booking.getPaidAmount() == null</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">                || booking.getTotalPrice() == null</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                || booking.getPaidAmount().signum() &lt; 0</span>
+<span class="fc" id="L48">                || booking.getPaidAmount()</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">                        .compareTo(booking.getTotalPrice()) != 0) {</span>
+<span class="nc" id="L50">            throw new IllegalStateException(</span>
+                    &quot;Booking has incomplete or inconsistent payment data&quot;);
+        }
+
+<span class="fc" id="L54">        Optional&lt;Receipt&gt; existingReceipt =</span>
+<span class="fc" id="L55">                receiptRepository.findByBookingId(bookingId);</span>
+
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (existingReceipt.isPresent()) {</span>
+<span class="fc" id="L58">            return existingReceipt.get();</span>
+        }
+
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">        if (booking.getRoomAmount() == null</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                || booking.getServiceAmount() == null</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">                || booking.getSurchargeAmount() == null</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">                || booking.getDiscountAmount() == null) {</span>
+<span class="fc" id="L65">            throw new IllegalStateException(</span>
+                    &quot;Booking has no complete price snapshot: &quot; + bookingId);
+        }
+
+<span class="fc" id="L69">        Receipt receipt = new Receipt();</span>
+<span class="fc" id="L70">        receipt.setBooking(booking);</span>
+<span class="fc" id="L71">        receipt.setReceiptNumber(&quot;REC-&quot; + UUID.randomUUID());</span>
+<span class="fc" id="L72">        receipt.setIssuedAt(LocalDateTime.now());</span>
+<span class="fc" id="L73">        receipt.setRoomAmount(booking.getRoomAmount());</span>
+<span class="fc" id="L74">        receipt.setServiceAmount(booking.getServiceAmount());</span>
+<span class="fc" id="L75">        receipt.setSurchargeAmount(booking.getSurchargeAmount());</span>
+<span class="fc" id="L76">        receipt.setDiscountAmount(booking.getDiscountAmount());</span>
+<span class="fc" id="L77">        receipt.setTotalAmount(booking.getPaidAmount());</span>
+
+<span class="fc" id="L79">        return receiptRepository.save(receipt);</span>
+    }
+
+
+    @Override 
+    @Transactional(readOnly = true)
+    public Optional&lt;Receipt&gt; getReceiptById(Long id){
+<span class="nc" id="L86">        return receiptRepository.findById(id);</span>
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public Optional&lt;Receipt&gt; getReceiptByBookingId(Long bookingId){
+<span class="nc" id="L92">        return receiptRepository.findByBookingId(bookingId);</span>
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public List&lt;Receipt&gt; getAllReceipts(){
+<span class="nc" id="L98">        return receiptRepository.findAll();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

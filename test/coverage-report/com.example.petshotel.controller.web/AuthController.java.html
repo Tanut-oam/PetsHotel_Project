@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.web.WebAttributes;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.petshotel.dto.request.RegisterRequest;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.service.AuthService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+
+@Controller
+public class AuthController {
+
+    private final AuthService authService;
+
+<span class="fc" id="L26">    public AuthController(AuthService authService) {</span>
+<span class="fc" id="L27">        this.authService = authService;</span>
+<span class="fc" id="L28">    }</span>
+
+    static final String ACCOUNT_DISABLED_MESSAGE = &quot;บัญชีนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ&quot;;
+    static final String BAD_CREDENTIALS_MESSAGE = &quot;อีเมลหรือรหัสผ่านไม่ถูกต้อง&quot;;
+
+    @GetMapping(&quot;/login&quot;)
+    public String loginPage(@RequestParam(required = false) String error,
+                            HttpServletRequest request,
+                            Model model) {
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if (error != null) {</span>
+<span class="fc" id="L38">            model.addAttribute(&quot;loginError&quot;, loginErrorMessage(request));</span>
+        }
+<span class="fc" id="L40">        return &quot;auth/login&quot;;</span>
+    }
+
+    // Spring Security เก็บสาเหตุที่ล็อกอินไม่ผ่านไว้ใน session หลัง redirect มาที่ /login?error
+    private String loginErrorMessage(HttpServletRequest request) {
+<span class="fc" id="L45">        HttpSession session = request.getSession(false);</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">        if (session == null) {</span>
+<span class="nc" id="L47">            return BAD_CREDENTIALS_MESSAGE;</span>
+        }
+<span class="fc" id="L49">        Object exception = session.getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);</span>
+<span class="fc" id="L50">        session.removeAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);</span>
+
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        return exception instanceof DisabledException ? ACCOUNT_DISABLED_MESSAGE : BAD_CREDENTIALS_MESSAGE;</span>
+    }
+
+    @GetMapping(&quot;/register&quot;)
+    public String registerPage(Model model) {
+<span class="fc" id="L57">        model.addAttribute(&quot;registerRequest&quot;, new RegisterRequest());</span>
+<span class="fc" id="L58">        return &quot;auth/register&quot;;</span>
+    }
+
+    @PostMapping(&quot;/register&quot;)
+    public String register(@Valid @ModelAttribute(&quot;registerRequest&quot;) RegisterRequest request,
+                           BindingResult bindingResult) {
+<span class="pc bpc" id="L64" title="1 of 4 branches missed.">        if (request.getPassword() != null &amp;&amp; !request.getPassword().equals(request.getConfirmPassword())) {</span>
+<span class="fc" id="L65">            bindingResult.rejectValue(&quot;confirmPassword&quot;, &quot;mismatch&quot;, &quot;รหัสผ่านไม่ตรงกัน&quot;);</span>
+        }
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (bindingResult.hasErrors()) {</span>
+<span class="fc" id="L68">            return &quot;auth/register&quot;;</span>
+        }
+
+        try {
+<span class="fc" id="L72">            authService.register(request);</span>
+<span class="fc" id="L73">        } catch (DuplicateResourceException ex) {</span>
+<span class="fc" id="L74">            bindingResult.rejectValue(&quot;email&quot;, &quot;duplicate&quot;, ex.getMessage());</span>
+<span class="fc" id="L75">            return &quot;auth/register&quot;;</span>
+<span class="fc" id="L76">        }</span>
+<span class="fc" id="L77">        return &quot;redirect:/login?registered&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

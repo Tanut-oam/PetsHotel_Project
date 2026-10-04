@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionDiscountStrategy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.pricing</a> &gt; <span class="el_source">PromotionDiscountStrategy.java</span></div><h1>PromotionDiscountStrategy.java</h1><pre class="source lang-java linenums">package com.example.petshotel.pricing;
+
+import com.example.petshotel.domain.entity.Promotion;
+import com.example.petshotel.domain.enums.PricingCategory;
+
+import java.math.BigDecimal;
+import org.springframework.stereotype.Component;
+
+@Component
+<span class="fc" id="L10">public class PromotionDiscountStrategy implements PricingStrategy {</span>
+    
+<span class="fc" id="L12">    private static final BigDecimal ONE_HUNDRED = new BigDecimal(&quot;100&quot;);</span>
+
+    @Override
+    public BigDecimal calculate(PricingContext context, BigDecimal subtotal) {
+
+<span class="pc bpc" id="L17" title="3 of 6 branches missed.">        if (context == null || subtotal == null || subtotal.signum() &lt; 0) {</span>
+<span class="nc" id="L18">            throw new IllegalArgumentException(&quot;Invalid data for promotion discount&quot;);</span>
+        }
+
+<span class="fc" id="L21">        Promotion promotion = context.getPromotion();</span>
+
+<span class="fc bfc" id="L23" title="All 2 branches covered.">        if (promotion == null ||</span>
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">                !Boolean.TRUE.equals(promotion.getActive())) {</span>
+<span class="fc" id="L25">            return BigDecimal.ZERO;</span>
+        }
+
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if (promotion.getMinimumNights() != null</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">                &amp;&amp; context.getNights() &lt; promotion.getMinimumNights()) {</span>
+<span class="nc" id="L30">            return BigDecimal.ZERO;</span>
+        }
+
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">        if (promotion.getType() == null</span>
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">                || promotion.getValue() == null</span>
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">                || promotion.getValue().signum() &lt; 0) {</span>
+<span class="nc" id="L36">            throw new IllegalArgumentException(&quot;Invalid promotion&quot;);</span>
+        }
+
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        return switch(promotion.getType()){</span>
+<span class="fc" id="L40">            case PERCENTAGE -&gt; subtotal.multiply(promotion.getValue())</span>
+<span class="fc" id="L41">                    .divide(ONE_HUNDRED);</span>
+<span class="fc" id="L42">            case FIXED_AMOUNT -&gt; promotion.getValue().min(subtotal);</span>
+        };
+    }
+
+    @Override
+    public PricingCategory category() {
+<span class="fc" id="L48">        return PricingCategory.DISCOUNT;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

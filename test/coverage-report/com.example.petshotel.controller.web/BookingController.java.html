@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">BookingController.java</span></div><h1>BookingController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+import java.security.Principal;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.time.LocalDate;
+
+import jakarta.validation.Validator;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.dto.request.CreateBookingRequest;
+import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.exception.RoomNotAvailableException;
+import com.example.petshotel.service.BookingService;
+import com.example.petshotel.service.CurrentUserService;
+import com.example.petshotel.service.ExtraServiceService;
+import com.example.petshotel.service.PetService;
+import com.example.petshotel.service.PromotionService;
+import com.example.petshotel.service.RoomService;
+
+@Controller
+@RequestMapping(&quot;/bookings&quot;)
+@RequiredArgsConstructor
+public class BookingController {
+
+    private final BookingService bookingService;
+    private final CurrentUserService currentUserService;
+    private final RoomService roomService;
+    private final PetService petService;
+    private final ExtraServiceService extraServiceService;
+    private final PromotionService promotionService;
+    private final Validator validator;
+
+    @InitBinder(&quot;bookingForm&quot;)
+    public void configureBinding(WebDataBinder binder) {
+        // userId ต้องมาจากบัญชีที่ล็อกอิน ไม่รับจาก form
+<span class="fc" id="L56">        binder.setAllowedFields(</span>
+                &quot;roomId&quot;,
+                &quot;petIds&quot;,
+                &quot;checkInDate&quot;,
+                &quot;checkOutDate&quot;,
+                &quot;promotionId&quot;,
+                &quot;servicePetIds[*]&quot;
+        );
+<span class="fc" id="L64">    }</span>
+
+    @GetMapping(&quot;/new&quot;)
+    public String showForm(
+            @RequestParam(required = false) Long roomId,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate checkIn,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate checkOut,
+            Principal principal,
+            Model model) {
+
+<span class="fc" id="L78">        User user = currentUser(principal);</span>
+
+<span class="fc" id="L80">        CreateBookingRequest form = new CreateBookingRequest();</span>
+<span class="fc" id="L81">        form.setRoomId(roomId);</span>
+<span class="fc" id="L82">        form.setCheckInDate(checkIn);</span>
+<span class="fc" id="L83">        form.setCheckOutDate(checkOut);</span>
+
+<span class="fc" id="L85">        loadChoices(model, user, form);</span>
+<span class="fc" id="L86">        model.addAttribute(&quot;bookingForm&quot;, form);</span>
+
+<span class="fc" id="L88">        return &quot;booking&quot;;</span>
+    }
+
+    @PostMapping
+    public String createBooking(
+            @ModelAttribute(&quot;bookingForm&quot;)
+            CreateBookingRequest form,
+            BindingResult bindingResult,
+            Principal principal,
+            Model model) {
+
+<span class="fc" id="L99">        User user = currentUser(principal);</span>
+
+        // ป้องกันการจองในชื่อผู้ใช้อื่น
+<span class="fc" id="L102">        form.setUserId(user.getId());</span>
+
+
+<span class="fc" id="L105">        validateForm(form, bindingResult);</span>
+
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (bindingResult.hasErrors()) {</span>
+<span class="fc" id="L108">            loadChoices(model, user, form);</span>
+<span class="fc" id="L109">            return &quot;booking&quot;;</span>
+        }
+
+        try {
+<span class="fc" id="L113">            BookingResponse created =</span>
+<span class="fc" id="L114">                    bookingService.createBooking(form);</span>
+
+<span class="fc" id="L116">            return &quot;redirect:/bookings/&quot;</span>
+<span class="fc" id="L117">                    + created.getId();</span>
+
+<span class="fc" id="L119">        } catch (ResourceNotFoundException</span>
+                 | RoomNotAvailableException
+                 | IllegalArgumentException
+                 | IllegalStateException ex) {
+
+<span class="fc" id="L124">            bindingResult.reject(</span>
+                    &quot;booking.failed&quot;,
+<span class="fc" id="L126">                    ex.getMessage()</span>
+            );
+
+<span class="fc" id="L129">            loadChoices(model, user, form);</span>
+<span class="fc" id="L130">            return &quot;booking&quot;;</span>
+        }
+    }
+
+    @GetMapping
+    public String showMyBookings(
+            Principal principal,
+            Model model) {
+
+<span class="fc" id="L139">        User user = currentUser(principal);</span>
+
+<span class="fc" id="L141">        model.addAttribute(</span>
+                &quot;bookings&quot;,
+<span class="fc" id="L143">                bookingService.getBookingsByUserId(</span>
+<span class="fc" id="L144">                        user.getId()</span>
+                )
+        );
+
+<span class="fc" id="L148">        return &quot;my-bookings&quot;;</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    public String showBooking(
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal,
+            Model model) {
+
+<span class="fc" id="L157">        User user = currentUser(principal);</span>
+<span class="fc" id="L158">        BookingResponse booking = findBooking(id);</span>
+
+<span class="fc" id="L160">        requireOwner(user, booking);</span>
+
+<span class="fc" id="L162">        model.addAttribute(&quot;booking&quot;, booking);</span>
+
+<span class="fc" id="L164">        return &quot;booking-detail&quot;;</span>
+    }
+
+    @PostMapping(&quot;/{id}/cancel&quot;)
+    public String cancelBooking(
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+<span class="fc" id="L173">        User user = currentUser(principal);</span>
+<span class="fc" id="L174">        BookingResponse booking = findBooking(id);</span>
+
+<span class="fc" id="L176">        requireOwner(user, booking);</span>
+
+        try {
+<span class="fc" id="L179">            bookingService.cancelBooking(id);</span>
+
+<span class="fc" id="L181">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;message&quot;,
+                    &quot;ยกเลิกการจองเรียบร้อยแล้ว&quot;
+            );
+
+<span class="nc" id="L186">        } catch (ResourceNotFoundException ex) {</span>
+<span class="nc" id="L187">            throw new ResponseStatusException(</span>
+                    HttpStatus.NOT_FOUND
+            );
+
+<span class="fc" id="L191">        } catch (IllegalArgumentException</span>
+                 | IllegalStateException ex) {
+
+<span class="fc" id="L194">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;,
+<span class="fc" id="L196">                    ex.getMessage()</span>
+            );
+<span class="fc" id="L198">        }</span>
+
+<span class="fc" id="L200">        return &quot;redirect:/bookings/&quot; + id;</span>
+    }
+
+    private User currentUser(Principal principal) {
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">        if (principal == null) {</span>
+<span class="nc" id="L205">            throw new ResponseStatusException(</span>
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+
+        User user;
+
+        try {
+<span class="fc" id="L213">            user = currentUserService.getByEmail(</span>
+<span class="fc" id="L214">                    principal.getName()</span>
+            );
+<span class="nc" id="L216">        } catch (ResourceNotFoundException ex) {</span>
+<span class="nc" id="L217">            throw new ResponseStatusException(</span>
+                    HttpStatus.UNAUTHORIZED
+            );
+<span class="fc" id="L220">        }</span>
+
+<span class="fc bfc" id="L222" title="All 2 branches covered.">        if (!Boolean.TRUE.equals(user.getActive())) {</span>
+<span class="fc" id="L223">            throw new ResponseStatusException(</span>
+                    HttpStatus.FORBIDDEN
+            );
+        }
+
+<span class="fc" id="L228">        return user;</span>
+    }
+
+    private BookingResponse findBooking(Long id) {
+        try {
+<span class="fc" id="L233">            return bookingService.getBookingById(id);</span>
+<span class="nc" id="L234">        } catch (ResourceNotFoundException ex) {</span>
+<span class="nc" id="L235">            throw new ResponseStatusException(</span>
+                    HttpStatus.NOT_FOUND
+            );
+        }
+    }
+
+    private void requireOwner(
+            User user,
+            BookingResponse booking) {
+
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        if (!Objects.equals(</span>
+<span class="fc" id="L246">                user.getId(),</span>
+<span class="fc" id="L247">                booking.getUserId())) {</span>
+
+            // ใช้ 404 เพื่อไม่เปิดเผยรายการของผู้ใช้อื่น
+<span class="fc" id="L250">            throw new ResponseStatusException(</span>
+                    HttpStatus.NOT_FOUND
+            );
+        }
+<span class="fc" id="L254">    }</span>
+
+    private void validateForm(
+            CreateBookingRequest form,
+            BindingResult bindingResult) {
+
+        // Conversion error เช่นรูปแบบวันที่ผิด
+        // จะอยู่ใน BindingResult อยู่แล้ว
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">        if (bindingResult.hasErrors()) {</span>
+<span class="nc" id="L263">            return;</span>
+        }
+
+<span class="fc" id="L266">        validator.validate(form).forEach(violation -&gt;</span>
+<span class="fc" id="L267">                bindingResult.rejectValue(</span>
+<span class="fc" id="L268">                        violation.getPropertyPath()</span>
+<span class="fc" id="L269">                                .toString(),</span>
+                        &quot;invalid&quot;,
+<span class="fc" id="L271">                        violation.getMessage()</span>
+                )
+        );
+<span class="fc" id="L274">    }</span>
+
+    private void loadChoices(
+            Model model,
+            User user,
+            CreateBookingRequest form) {
+
+<span class="fc" id="L281">        var services =</span>
+                extraServiceService
+<span class="fc" id="L283">                        .getActiveExtraServices();</span>
+
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        if (form.getServicePetIds() == null) {</span>
+<span class="fc" id="L286">            form.setServicePetIds(</span>
+                    new HashMap&lt;&gt;()
+            );
+        }
+
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">        for (var service : services) {</span>
+<span class="nc" id="L292">            form.getServicePetIds()</span>
+<span class="nc" id="L293">                    .putIfAbsent(</span>
+<span class="nc" id="L294">                            service.getId(),</span>
+                            new ArrayList&lt;&gt;()
+                    );
+<span class="nc" id="L297">        }</span>
+
+<span class="fc" id="L299">        model.addAttribute(&quot;customer&quot;, user);</span>
+
+<span class="fc" id="L301">        model.addAttribute(</span>
+                &quot;rooms&quot;,
+<span class="fc" id="L303">                roomService.getActiveRooms()</span>
+        );
+
+<span class="fc" id="L306">        model.addAttribute(</span>
+                &quot;pets&quot;,
+<span class="fc" id="L308">                petService.getPetsByOwner(</span>
+<span class="fc" id="L309">                        user.getId()</span>
+                )
+        );
+
+<span class="fc" id="L313">        model.addAttribute(</span>
+                &quot;extraServices&quot;,
+                services
+        );
+
+<span class="fc" id="L318">        model.addAttribute(</span>
+                &quot;promotions&quot;,
+                promotionService
+<span class="fc" id="L321">                        .getActivePromotions()</span>
+        );
+<span class="fc" id="L323">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

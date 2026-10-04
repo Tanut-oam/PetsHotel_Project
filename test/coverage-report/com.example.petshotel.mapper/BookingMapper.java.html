@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.mapper</a> &gt; <span class="el_source">BookingMapper.java</span></div><h1>BookingMapper.java</h1><pre class="source lang-java linenums">package com.example.petshotel.mapper;
+
+import com.example.petshotel.domain.entity.Booking;
+import com.example.petshotel.dto.response.BookingResponse;
+
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+
+@Component
+<span class="fc" id="L13">public class BookingMapper {</span>
+
+    public BookingResponse toResponse(Booking booking) {
+
+<span class="fc" id="L17">        LocalDate currentDate = LocalDate.now(</span>
+<span class="fc" id="L18">                ZoneId.of(&quot;Asia/Bangkok&quot;)</span>
+        );
+
+<span class="fc" id="L21">        List&lt;Long&gt; petIds = booking.getBookingPets()</span>
+<span class="fc" id="L22">                .stream()</span>
+<span class="fc" id="L23">                .map(bookingPet -&gt; bookingPet.getPet().getId())</span>
+<span class="fc" id="L24">                .toList();</span>
+
+<span class="fc" id="L26">        return BookingResponse.builder()</span>
+<span class="fc" id="L27">                .id(booking.getId())</span>
+<span class="fc" id="L28">                .userId(booking.getUser().getId())</span>
+<span class="fc" id="L29">                .roomId(booking.getRoom().getId())</span>
+<span class="fc" id="L30">                .petIds(petIds)</span>
+<span class="fc" id="L31">                .checkInDate(booking.getCheckInDate())</span>
+<span class="fc" id="L32">                .checkOutDate(booking.getCheckOutDate())</span>
+<span class="fc" id="L33">                .status(booking.getStatus())</span>
+<span class="fc" id="L34">                .totalPrice(booking.getTotalPrice())</span>
+<span class="fc" id="L35">                .paymentStatus(booking.getPaymentStatus())</span>
+<span class="fc" id="L36">                .checkInAllowed(</span>
+<span class="fc" id="L37">                        booking.canCheckInOn(currentDate)</span>
+                )
+<span class="fc" id="L39">                .checkOutAllowed(</span>
+<span class="fc" id="L40">                        booking.canCheckOutOn(currentDate)</span>
+                )
+<span class="fc" id="L42">                .roomName(booking.getRoom().getName())</span>
+<span class="fc" id="L43">                .petNames(</span>
+<span class="fc" id="L44">                        booking.getBookingPets().stream()</span>
+<span class="fc" id="L45">                                .map(item -&gt; item.getPet().getName())</span>
+<span class="fc" id="L46">                                .toList()</span>
+                )
+<span class="fc" id="L48">                .promotionName(booking.getPromotionName())</span>
+<span class="fc" id="L49">                .roomAmount(booking.getRoomAmount())</span>
+<span class="fc" id="L50">                .serviceAmount(booking.getServiceAmount())</span>
+<span class="fc" id="L51">                .surchargeAmount(booking.getSurchargeAmount())</span>
+<span class="fc" id="L52">                .discountAmount(booking.getDiscountAmount())</span>
+<span class="fc" id="L53">                .extraServices(</span>
+<span class="fc" id="L54">                        booking.getExtraServices().stream()</span>
+<span class="fc" id="L55">                                .map(item -&gt; new BookingResponse.ExtraServiceLine(</span>
+<span class="fc" id="L56">                                        item.getExtraService().getName(),</span>
+<span class="fc" id="L57">                                        item.getQuantity(),</span>
+<span class="fc" id="L58">                                        item.getUnitPrice(),</span>
+<span class="fc" id="L59">                                        item.getTotalPrice(),</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">                                        item.getBookingPet() != null</span>
+<span class="fc" id="L61">                                                ? item.getBookingPet().getPet().getId() : null,</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">                                        item.getBookingPet() != null</span>
+<span class="fc" id="L63">                                                ? item.getBookingPet().getPet().getName() : null</span>
+                                ))
+<span class="fc" id="L65">                                .toList()</span>
+                )
+<span class="fc" id="L67">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

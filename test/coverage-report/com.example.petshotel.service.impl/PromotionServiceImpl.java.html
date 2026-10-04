@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">PromotionServiceImpl.java</span></div><h1>PromotionServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.petshotel.domain.entity.Promotion;
+import com.example.petshotel.dto.request.CreatePromotionRequest;
+import com.example.petshotel.repository.PromotionRepository;
+import com.example.petshotel.service.PromotionService;
+import java.math.BigDecimal;
+import com.example.petshotel.domain.enums.PromotionType;
+import com.example.petshotel.exception.ResourceNotFoundException;
+
+@Service
+public class PromotionServiceImpl implements PromotionService {
+
+    private final PromotionRepository promotionRepository;
+
+<span class="fc" id="L23">    public PromotionServiceImpl(PromotionRepository promotionRepository) {</span>
+<span class="fc" id="L24">        this.promotionRepository = promotionRepository;</span>
+<span class="fc" id="L25">    }</span>
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Promotion&gt; getAllPromotions() {
+<span class="nc" id="L31">        return promotionRepository.findAll();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Promotion getPromotionById(Long id) {
+<span class="nc" id="L37">        return promotionRepository.findById(id)</span>
+<span class="nc" id="L38">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Promotion&quot;, id));</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;Promotion&gt; getActivePromotions() {
+<span class="nc" id="L44">        LocalDate today = LocalDate.now(</span>
+<span class="nc" id="L45">                ZoneId.of(&quot;Asia/Bangkok&quot;)</span>
+        );
+
+<span class="nc" id="L48">        return promotionRepository.findAll().stream()</span>
+<span class="nc" id="L49">                .filter(promotion -&gt; promotion.isAvailableOn(today))</span>
+<span class="nc" id="L50">                .toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public Promotion createPromotion(CreatePromotionRequest request) {
+<span class="fc" id="L56">        validateDiscount(request);</span>
+<span class="fc" id="L57">        Promotion promotion = new Promotion();</span>
+<span class="fc" id="L58">        promotion.setName(request.name().trim());</span>
+<span class="fc" id="L59">        promotion.setType(request.type());</span>
+<span class="fc" id="L60">        promotion.setValue(request.discountValue());</span>
+<span class="fc" id="L61">        promotion.setStartDate(request.startDate());</span>
+<span class="fc" id="L62">        promotion.setEndDate(request.endDate());</span>
+<span class="fc" id="L63">        promotion.setActive(request.active());</span>
+
+<span class="fc" id="L65">        return promotionRepository.save(promotion);</span>
+    }
+
+    @Override
+    @Transactional
+    public Promotion updatePromotion(Long id, CreatePromotionRequest request) {
+<span class="fc" id="L71">        validateDiscount(request);</span>
+<span class="fc" id="L72">        Promotion promotion = promotionRepository.findById(id)</span>
+<span class="fc" id="L73">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Promotion&quot;, id));</span>
+
+<span class="fc" id="L75">        promotion.setName(request.name().trim());</span>
+<span class="fc" id="L76">        promotion.setType(request.type());</span>
+<span class="fc" id="L77">        promotion.setValue(request.discountValue());</span>
+<span class="fc" id="L78">        promotion.setStartDate(request.startDate());</span>
+<span class="fc" id="L79">        promotion.setEndDate(request.endDate());</span>
+<span class="fc" id="L80">        promotion.setActive(request.active());</span>
+
+<span class="fc" id="L82">        return promotionRepository.save(promotion);</span>
+    }
+
+    @Override
+    @Transactional
+    public void deactivatePromotion(Long id) {
+<span class="fc" id="L88">        Promotion promotion = promotionRepository.findById(id)</span>
+<span class="pc" id="L89">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Promotion&quot;, id));</span>
+
+<span class="fc" id="L91">        promotion.setActive(false);</span>
+<span class="fc" id="L92">        promotionRepository.save(promotion);</span>
+<span class="fc" id="L93">    }</span>
+
+    @Override 
+    public void validateDiscount(CreatePromotionRequest request) {
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if(request == null</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            || request.type() == null</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            || request.discountValue() == null</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            || request.discountValue().signum() &lt;= 0){</span>
+<span class="fc" id="L101">                throw new IllegalArgumentException(&quot;Invalid promotion discount&quot;);</span>
+            }
+
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (request.type() == PromotionType.PERCENTAGE &amp;&amp; </span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">                 request.discountValue().compareTo(BigDecimal.valueOf(100)) &gt; 0) {</span>
+<span class="fc" id="L106">            throw new IllegalArgumentException(</span>
+                &quot;Percentage discount must not exceed 100&quot;
+            );
+        } 
+        
+<span class="pc bpc" id="L111" title="2 of 4 branches missed.">        if (request.startDate() == null || request.endDate() == null) {</span>
+<span class="nc" id="L112">            throw new IllegalArgumentException(</span>
+                &quot;Promotion start date and end date are required&quot;
+            );
+        }
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (request.endDate().isBefore(request.startDate())) {</span>
+<span class="fc" id="L118">            throw new IllegalArgumentException(</span>
+                &quot;Promotion end date must not be before start date&quot;
+            );
+        }
+
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">        if (request.name() == null || request.name().isBlank()) {</span>
+<span class="nc" id="L124">            throw new IllegalArgumentException(&quot;Promotion name is required&quot;);</span>
+        }
+        
+<span class="fc" id="L127">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

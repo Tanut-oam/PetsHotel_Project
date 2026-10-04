@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DailyCareReportRestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.api</a> &gt; <span class="el_source">DailyCareReportRestController.java</span></div><h1>DailyCareReportRestController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.api;
+
+import java.security.Principal;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
+import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.CurrentUserService;
+import com.example.petshotel.service.DailyCareReportService;
+
+import jakarta.validation.Valid;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = &quot;Care Reports&quot;, description = &quot;บันทึกและดูรายงานการดูแลสัตว์เลี้ยงรายวัน&quot;)
+@RestController 
+@RequestMapping(&quot;/api/care-reports&quot;)
+public class DailyCareReportRestController {
+    private  final DailyCareReportService reportService;
+    private final CurrentUserService currentUserService;
+
+<span class="fc" id="L39">    public DailyCareReportRestController(DailyCareReportService reportService,CurrentUserService currentUserService) {</span>
+<span class="fc" id="L40">        this.reportService = reportService;</span>
+<span class="fc" id="L41">        this.currentUserService = currentUserService;</span>
+<span class="fc" id="L42">    }</span>
+
+    @Operation(summary = &quot;เขียนรายงานการดูแล&quot;,
+        description = &quot;เฉพาะ STAFF / ADMIN · เขียนรายงานให้สัตว์เลี้ยงในการจอง &quot;
+                + &quot;· การจองต้องอยู่สถานะ CHECKED_IN หรือ CHECKED_OUT &quot;
+                + &quot;· วันที่รายงานต้องอยู่ในช่วงเข้าพัก &quot;
+                + &quot;· สัตว์เลี้ยงหนึ่งตัวมีรายงานได้ไม่เกินหนึ่งฉบับต่อวัน&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;201&quot;, description = &quot;สร้างรายงานสำเร็จ&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ข้อมูลหรือวันที่รายงานไม่ถูกต้อง&quot;),
+        @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ STAFF / ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบสัตว์เลี้ยงในการจอง&quot;),
+        @ApiResponse(responseCode = &quot;409&quot;, description = &quot;สถานะการจองไม่รองรับ หรือมีรายงานของสัตว์เลี้ยงในวันนี้แล้ว&quot;)
+    })
+    @PostMapping(&quot;/booking-pets/{bookingPetId}&quot;)
+    public ResponseEntity&lt;DailyCareReportResponse&gt; createReport(@PathVariable  Long bookingPetId,Principal principal,
+            @Valid @RequestBody  CreateDailyCareReportRequest request){
+
+<span class="fc" id="L61">                DailyCareReportResponse response = reportService.createReport(bookingPetId, currentUserId(principal), request);</span>
+
+<span class="fc" id="L63">                return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+            }
+
+
+    @Operation(summary = &quot;ดูรายงานการดูแลหนึ่งฉบับ&quot;,
+        description = &quot;STAFF / ADMIN ดูรายงานได้ &quot;
+                + &quot;· ลูกค้าดูได้เฉพาะรายงานของการจองที่ตนเป็นเจ้าของ&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;ดึงรายงานสำเร็จ&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;รหัสรายงานไม่ถูกต้อง&quot;),
+        @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;บัญชีถูกปิดใช้งานหรือไม่มีสิทธิ์อ่านรายงาน&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบรายงาน&quot;)
+    })
+    @GetMapping(&quot;/{reportId}&quot;)
+    public DailyCareReportResponse getReportById(@PathVariable Long reportId,Principal principal){
+<span class="fc" id="L79">        return reportService.getReportById(reportId, currentUserId(principal));</span>
+    }
+
+
+    @Operation(summary = &quot;ดูรายงานทั้งหมดของสัตว์เลี้ยงในการจอง&quot;,
+        description = &quot;แสดงรายงานเรียงจากวันที่ใหม่ไปเก่า &quot;
+                + &quot;· STAFF / ADMIN ดูได้ &quot;
+                + &quot;· ลูกค้าดูได้เฉพาะรายงานของการจองที่ตนเป็นเจ้าของ&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;ดึงรายการรายงานสำเร็จ&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;รหัสสัตว์เลี้ยงในการจองไม่ถูกต้อง&quot;),
+        @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;บัญชีถูกปิดใช้งานหรือไม่มีสิทธิ์อ่านรายงาน&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบสัตว์เลี้ยงในการจอง&quot;)
+    })
+    @GetMapping(&quot;/booking-pets/{bookingPetId}&quot;)
+    public List&lt;DailyCareReportResponse&gt; getReportsByBookingPet(@PathVariable  Long bookingPetId,Principal principal){
+<span class="fc" id="L96">        return  reportService.getReportsByBookingPet(bookingPetId, currentUserId(principal));</span>
+    }
+
+
+    @Operation(summary = &quot;แก้ไขรายงานการดูแล&quot;,
+        description = &quot;เฉพาะ STAFF / ADMIN · แก้ไขรายงานที่มีอยู่ &quot;
+                + &quot;· สัตว์เลี้ยงที่เลือกต้องอยู่ในการจองเดิม &quot;
+                + &quot;· วันที่รายงานต้องอยู่ในช่วงเข้าพัก &quot;
+                + &quot;· ห้ามซ้ำกับรายงานของสัตว์เลี้ยงตัวเดียวกันในวันเดียวกัน&quot;)
+    @ApiResponses({
+        @ApiResponse(responseCode = &quot;200&quot;, description = &quot;แก้ไขรายงานสำเร็จ&quot;),
+        @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ข้อมูลไม่ถูกต้องหรือวันที่อยู่นอกช่วงเข้าพัก&quot;),
+        @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;),
+        @ApiResponse(responseCode = &quot;403&quot;, description = &quot;บัญชีถูกปิดใช้งาน ไม่มีสิทธิ์แก้ไข หรือ CSRF token ไม่ถูกต้อง&quot;),
+        @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบรายงานหรือสัตว์เลี้ยงในการจอง&quot;),
+        @ApiResponse(responseCode = &quot;409&quot;, description = &quot;มีรายงานของสัตว์เลี้ยงในวันที่เลือกแล้ว&quot;)
+    })
+    @PutMapping(&quot;/{reportId}&quot;)
+    public  DailyCareReportResponse updateReport(@PathVariable  Long reportId,Principal principal,
+            @Valid  @RequestBody UpdateDailyCareReportRequest request){
+<span class="fc" id="L116">                return reportService.updateReport(reportId, currentUserId(principal), request);</span>
+            }
+
+     private Long currentUserId(Principal principal) {
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (principal == null) {</span>
+<span class="fc" id="L121">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+        }
+
+        User user;
+        try {
+<span class="fc" id="L126">            user = currentUserService.getByEmail(principal.getName());</span>
+<span class="fc" id="L127">        } catch (ResourceNotFoundException exception) {</span>
+<span class="fc" id="L128">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="fc" id="L129">        }</span>
+
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (!Boolean.TRUE.equals(user.getActive())) {</span>
+<span class="fc" id="L132">            throw new ResponseStatusException(HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L135">        return user.getId();</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

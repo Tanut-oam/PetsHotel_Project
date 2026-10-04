@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">BookingServiceImpl.java</span></div><h1>BookingServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import com.example.petshotel.domain.entity.Booking;
+import com.example.petshotel.domain.entity.BookingPet;
+import com.example.petshotel.domain.entity.BookingExtraService;
+import com.example.petshotel.domain.entity.ExtraService;
+import com.example.petshotel.domain.entity.Pet;
+import com.example.petshotel.domain.entity.Promotion;
+import com.example.petshotel.domain.entity.Room;
+import com.example.petshotel.domain.entity.User;
+
+import com.example.petshotel.domain.enums.BookingStatus;
+import com.example.petshotel.domain.enums.RoomStatus;
+import com.example.petshotel.domain.enums.PaymentStatus;
+
+import com.example.petshotel.dto.request.CreateBookingRequest;
+import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.BookingPriceResponse;
+import com.example.petshotel.dto.response.PetAvailabilityResponse;
+
+import com.example.petshotel.pricing.PricingContext;
+
+import com.example.petshotel.repository.BookingRepository;
+import com.example.petshotel.repository.ExtraServiceRepository;
+import com.example.petshotel.repository.PetRepository;
+import com.example.petshotel.repository.PromotionRepository;
+import com.example.petshotel.repository.RoomRepository;
+import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.repository.BookingPetRepository;
+
+import com.example.petshotel.service.BookingService;
+import com.example.petshotel.service.PricingService;
+import com.example.petshotel.service.AvailabilityService;
+
+import com.example.petshotel.state.BookingState;
+import com.example.petshotel.state.CancelledState;
+import com.example.petshotel.state.CheckedInState;
+import com.example.petshotel.state.CheckedOutState;
+import com.example.petshotel.state.ConfirmedState;
+import com.example.petshotel.state.PendingState;
+
+import com.example.petshotel.notification.BookingConfirmedEvent;
+
+import com.example.petshotel.mapper.BookingMapper;
+
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.exception.RoomNotAvailableException;
+import com.example.petshotel.exception.PetNotAvailableException;
+
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.Objects;
+import java.time.LocalDate;
+import java.time.ZoneId;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class BookingServiceImpl implements BookingService {
+
+<span class="fc" id="L71">        private static final List&lt;BookingStatus&gt; PET_RESERVING_STATUSES = List.of(</span>
+                        BookingStatus.PENDING,
+                        BookingStatus.CONFIRMED,
+                        BookingStatus.CHECKED_IN);
+
+        private final BookingRepository bookingRepository;
+        private final BookingPetRepository bookingPetRepository;
+        private final UserRepository userRepository;
+        private final RoomRepository roomRepository;
+        private final PetRepository petRepository;
+        private final PricingService pricingService;
+        private final ExtraServiceRepository extraServiceRepository;
+        private final PromotionRepository promotionRepository;
+        private final AvailabilityService availabilityService;
+        private final ApplicationEventPublisher eventPublisher;
+        private final BookingMapper bookingMapper;
+
+        // =========================================================
+        // CREATE BOOKING
+        // =========================================================
+        @Override
+        @Transactional(readOnly = true)
+        public PetAvailabilityResponse getPetAvailability(
+                        Long userId,
+                        LocalDate checkInDate,
+                        LocalDate checkOutDate) {
+
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">                if (userId == null) {</span>
+<span class="nc" id="L99">                        throw new IllegalArgumentException(</span>
+                                        &quot;User ID is required&quot;);
+                }
+
+<span class="fc" id="L103">                validateStayDates(</span>
+                                checkInDate,
+                                checkOutDate);
+
+<span class="fc" id="L107">                List&lt;Long&gt; activePetIds = petRepository</span>
+<span class="fc" id="L108">                                .findByOwner_IdAndActiveTrue(userId)</span>
+<span class="fc" id="L109">                                .stream()</span>
+<span class="fc" id="L110">                                .map(pet -&gt; pet.getId())</span>
+<span class="fc" id="L111">                                .toList();</span>
+
+<span class="fc bfc" id="L113" title="All 2 branches covered.">                List&lt;Long&gt; unavailablePetIds = activePetIds.isEmpty()</span>
+<span class="fc" id="L114">                                ? List.of()</span>
+                                : bookingPetRepository
+<span class="fc" id="L116">                                                .findOverlappingPetIds(</span>
+                                                                activePetIds,
+                                                                checkInDate,
+                                                                checkOutDate,
+                                                                PET_RESERVING_STATUSES);
+
+<span class="fc" id="L122">                return new PetAvailabilityResponse(</span>
+                                checkInDate,
+                                checkOutDate,
+                                unavailablePetIds);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public BookingPriceResponse previewPrice(CreateBookingRequest request) {
+<span class="fc" id="L131">                return prepareBooking(request, false).price();</span>
+        }
+
+        @Override
+        public BookingResponse createBooking(CreateBookingRequest request) {
+<span class="fc" id="L136">                PreparedBooking prepared = prepareBooking(request, true);</span>
+<span class="fc" id="L137">                return bookingMapper.toResponse(</span>
+<span class="fc" id="L138">                                bookingRepository.save(prepared.booking()));</span>
+        }
+
+        private PreparedBooking prepareBooking(CreateBookingRequest request, boolean creating) {
+<span class="fc" id="L142">                validateCreateRequest(request);</span>
+<span class="fc" id="L143">                User user = userRepository.findById(request.getUserId()).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, request.getUserId()));</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">                Room room = (creating ? roomRepository.findByIdForUpdate(request.getRoomId()): roomRepository.findById(request.getRoomId())).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Room&quot;, request.getRoomId()));</span>
+
+<span class="fc bfc" id="L146" title="All 2 branches covered.">                if (room.getStatus() != RoomStatus.ACTIVE) {</span>
+<span class="fc" id="L147">                        throw new RoomNotAvailableException(room.getId(), request.getCheckInDate(),request.getCheckOutDate());</span>
+                }
+
+<span class="fc bfc" id="L150" title="All 2 branches covered.">                List&lt;Pet&gt; pets = creating</span>
+<span class="fc" id="L151">                                ? petRepository.findAllByIdForUpdate(</span>
+<span class="fc" id="L152">                                                request.getPetIds())</span>
+<span class="fc" id="L153">                                : petRepository.findAllById(</span>
+<span class="fc" id="L154">                                                request.getPetIds());</span>
+
+<span class="fc" id="L156">                Set&lt;Long&gt; foundPetIds = pets.stream()</span>
+<span class="fc" id="L157">                                .map(pet -&gt; pet.getId()).collect(Collectors.toSet());</span>
+
+<span class="fc bfc" id="L159" title="All 2 branches covered.">                for (Long petId : request.getPetIds()) {</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">                        if (!foundPetIds.contains(petId)) {</span>
+<span class="fc" id="L161">                                throw new ResourceNotFoundException(&quot;Pet&quot;, petId);</span>
+                        }
+<span class="fc" id="L163">                }</span>
+
+<span class="fc" id="L165">                validatePets(user, pets);</span>
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">                if (pets.size() &gt; room.getCapacity()) {</span>
+<span class="fc" id="L168">                        throw new IllegalArgumentException(</span>
+                                        &quot;Number of pets exceeds room capacity&quot;);
+                }
+
+                // Preview is only a quote, not a reservation.
+<span class="fc bfc" id="L173" title="All 2 branches covered.">                if (creating) {</span>
+<span class="fc" id="L174">                        List&lt;Long&gt; overlappingPetIds = bookingPetRepository.findOverlappingPetIds(</span>
+<span class="fc" id="L175">                                        request.getPetIds(),</span>
+<span class="fc" id="L176">                                        request.getCheckInDate(),</span>
+<span class="fc" id="L177">                                        request.getCheckOutDate(),</span>
+                                        PET_RESERVING_STATUSES);
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">                        if (!overlappingPetIds.isEmpty()) {</span>
+<span class="fc" id="L181">                                Set&lt;Long&gt; overlappingPetIdSet = new HashSet&lt;&gt;(overlappingPetIds);</span>
+
+<span class="fc" id="L183">                                List&lt;String&gt; overlappingPetNames = pets.stream()</span>
+<span class="fc" id="L184">                                                .filter(pet -&gt; overlappingPetIdSet.contains(</span>
+<span class="fc" id="L185">                                                                pet.getId()))</span>
+<span class="fc" id="L186">                                                .map((Pet pet) -&gt; pet.getName())</span>
+<span class="fc" id="L187">                                                .toList();</span>
+
+<span class="fc" id="L189">                                throw new PetNotAvailableException(</span>
+                                                overlappingPetNames,
+<span class="fc" id="L191">                                                request.getCheckInDate(),</span>
+<span class="fc" id="L192">                                                request.getCheckOutDate());</span>
+                        }
+
+<span class="fc" id="L195">                        availabilityService.checkRoomAvailable(</span>
+<span class="fc" id="L196">                                        room.getId(),</span>
+<span class="fc" id="L197">                                        request.getCheckInDate(),</span>
+<span class="fc" id="L198">                                        request.getCheckOutDate(),</span>
+<span class="fc" id="L199">                                        pets.size());</span>
+                }
+
+                // Transient graph only: preview does not save any of these objects.
+<span class="fc" id="L203">                Booking booking = Booking.builder()</span>
+<span class="fc" id="L204">                                .user(user)</span>
+<span class="fc" id="L205">                                .room(room)</span>
+<span class="fc" id="L206">                                .checkInDate(request.getCheckInDate())</span>
+<span class="fc" id="L207">                                .checkOutDate(request.getCheckOutDate())</span>
+<span class="fc" id="L208">                                .status(BookingStatus.PENDING)</span>
+<span class="fc" id="L209">                                .build();</span>
+
+<span class="fc" id="L211">                pets.forEach(booking::addPet);</span>
+
+<span class="fc" id="L213">                Map&lt;Long, BookingPet&gt; bookingPetsByPetId = booking.getBookingPets().stream().collect(Collectors.toMap(</span>
+<span class="fc" id="L214">                                item -&gt; item.getPet().getId(), item -&gt; item));</span>
+
+<span class="fc" id="L216">                addSelectedServices(booking, request.getServicePetIds(), bookingPetsByPetId);</span>
+
+<span class="fc" id="L218">                Promotion promotion = null;</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">                if (request.getPromotionId() != null) {</span>
+<span class="fc" id="L220">                        promotion = promotionRepository.findById(request.getPromotionId())</span>
+<span class="fc" id="L221">                                        .orElseThrow(() -&gt; new ResourceNotFoundException(</span>
+<span class="fc" id="L222">                                                        &quot;Promotion&quot;, request.getPromotionId()));</span>
+<span class="fc" id="L223">                        validatePromotion(promotion, LocalDate.now(ZoneId.of(&quot;Asia/Bangkok&quot;)));</span>
+                }
+
+<span class="fc" id="L226">                int nights = Math.toIntExact(ChronoUnit.DAYS.between(</span>
+<span class="fc" id="L227">                                request.getCheckInDate(), request.getCheckOutDate()));</span>
+
+<span class="fc" id="L229">                BookingPriceResponse price = pricingService.calculate(new PricingContext(</span>
+<span class="fc" id="L230">                                room, pets.size(), nights,</span>
+<span class="fc" id="L231">                                request.getCheckInDate(), request.getCheckOutDate(),</span>
+<span class="fc" id="L232">                                booking.getExtraServices(), promotion));</span>
+
+<span class="fc" id="L234">                booking.setRoomAmount(price.basePrice());</span>
+<span class="fc" id="L235">                booking.setServiceAmount(price.extraServicesPrice());</span>
+<span class="fc" id="L236">                booking.setSurchargeAmount(price.holidaySurcharge());</span>
+<span class="fc" id="L237">                booking.setDiscountAmount(price.discountAmount());</span>
+<span class="fc" id="L238">                booking.setTotalPrice(price.totalPrice());</span>
+<span class="fc" id="L239">                booking.setPromotion(promotion);</span>
+<span class="fc bfc" id="L240" title="All 2 branches covered.">                booking.setPromotionName(promotion != null ? promotion.getName() : null);</span>
+
+<span class="fc" id="L242">                return new PreparedBooking(booking, price);</span>
+        }
+
+
+
+        private void validatePromotion(Promotion promotion, LocalDate bookingDate) {
+
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                String promotionName = promotion.getName() == null</span>
+<span class="nc" id="L250">                                ? &quot;ที่เลือก&quot;</span>
+<span class="fc" id="L251">                                : &quot;“&quot; + promotion.getName() + &quot;”&quot;;</span>
+
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">                if (!Boolean.TRUE.equals(promotion.getActive())) {</span>
+<span class="nc" id="L254">                        throw new IllegalArgumentException(</span>
+                                        &quot;โปรโมชัน &quot; + promotionName + &quot; ปิดใช้งานแล้ว&quot;);
+                }
+
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">                if (promotion.getStartDate() == null</span>
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">                                || promotion.getEndDate() == null) {</span>
+<span class="nc" id="L260">                        throw new IllegalArgumentException(</span>
+                                        &quot;ข้อมูลช่วงเวลาของโปรโมชัน &quot;
+                                                        + promotionName + &quot; ไม่สมบูรณ์&quot;);
+                }
+
+<span class="fc bfc" id="L265" title="All 2 branches covered.">                if (bookingDate.isBefore(promotion.getStartDate())) {</span>
+<span class="fc" id="L266">                        throw new IllegalArgumentException(</span>
+                                        &quot;โปรโมชัน &quot; + promotionName
+                                                        + &quot; ยังไม่เริ่มใช้งาน&quot;);
+                }
+
+<span class="fc bfc" id="L271" title="All 2 branches covered.">                if (bookingDate.isAfter(promotion.getEndDate())) {</span>
+<span class="fc" id="L272">                        throw new IllegalArgumentException(</span>
+                                        &quot;โปรโมชัน &quot; + promotionName
+                                                        + &quot; หมดอายุการใช้งานแล้ว&quot;);
+                }
+<span class="fc" id="L276">        }</span>
+
+        private void addSelectedServices(
+                        Booking booking,
+                        Map&lt;Long, List&lt;Long&gt;&gt; servicePetIds,
+                        Map&lt;Long, BookingPet&gt; bookingPetsByPetId) {
+
+<span class="fc bfc" id="L283" title="All 2 branches covered.">                if (servicePetIds == null)</span>
+<span class="fc" id="L284">                        return;</span>
+
+<span class="fc bfc" id="L286" title="All 2 branches covered.">                for (Map.Entry&lt;Long, List&lt;Long&gt;&gt; entry : servicePetIds.entrySet()) {</span>
+<span class="fc" id="L287">                        Long serviceId = entry.getKey();</span>
+<span class="fc" id="L288">                        List&lt;Long&gt; recipients = entry.getValue();</span>
+
+<span class="pc bpc" id="L290" title="1 of 2 branches missed.">                        if (serviceId == null) {</span>
+<span class="nc" id="L291">                                throw new IllegalArgumentException(</span>
+                                                &quot;ไม่พบรหัสบริการเสริม&quot;);
+                        }
+
+                        /*
+                         * Checkbox ที่ไม่ได้เลือกอาจถูก Spring แปลงเป็นค่า null
+                         * ให้ถือว่าไม่ได้เลือกบริการรายการนั้น
+                         */
+<span class="pc bpc" id="L299" title="1 of 4 branches missed.">                        if (recipients == null || recipients.isEmpty()) {</span>
+<span class="nc" id="L300">                                continue;</span>
+                        }
+
+<span class="fc" id="L303">                        Set&lt;Long&gt; uniqueRecipients = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">                        for (Long petId : recipients) {</span>
+<span class="pc bpc" id="L305" title="1 of 4 branches missed.">                                if (petId == null || !bookingPetsByPetId.containsKey(petId)) {</span>
+<span class="fc" id="L306">                                        throw new IllegalArgumentException(</span>
+                                                        &quot;Service recipient must be a pet in this booking&quot;);
+                                }
+<span class="fc bfc" id="L309" title="All 2 branches covered.">                                if (!uniqueRecipients.add(petId)) {</span>
+<span class="fc" id="L310">                                        throw new IllegalArgumentException(</span>
+                                                        &quot;Duplicate service recipient is not allowed&quot;);
+                                }
+<span class="fc" id="L313">                        }</span>
+
+<span class="fc" id="L315">                        ExtraService extra = extraServiceRepository.findById(serviceId)</span>
+<span class="fc" id="L316">                                        .orElseThrow(() -&gt; new ResourceNotFoundException(</span>
+                                                        &quot;Extra service&quot;, serviceId));
+
+<span class="pc bpc" id="L319" title="1 of 2 branches missed.">                        if (!Boolean.TRUE.equals(extra.getActive())</span>
+<span class="pc bpc" id="L320" title="1 of 2 branches missed.">                                        || extra.getPrice() == null</span>
+<span class="pc bpc" id="L321" title="1 of 2 branches missed.">                                        || extra.getPrice().signum() &lt; 0) {</span>
+<span class="nc" id="L322">                                throw new IllegalArgumentException(</span>
+                                                &quot;Extra service is unavailable: &quot; + serviceId);
+                        }
+
+<span class="fc bfc" id="L326" title="All 2 branches covered.">                        for (Long petId : recipients) {</span>
+<span class="fc" id="L327">                                BookingPet bookingPet = bookingPetsByPetId.get(petId);</span>
+
+<span class="pc bpc" id="L329" title="1 of 2 branches missed.">                                if (bookingPet.getBooking() != booking</span>
+<span class="pc bpc" id="L330" title="1 of 2 branches missed.">                                                || !booking.getBookingPets().contains(bookingPet)) {</span>
+<span class="nc" id="L331">                                        throw new IllegalStateException(</span>
+                                                        &quot;Service recipient belongs to another booking&quot;);
+                                }
+
+<span class="fc" id="L335">                                BookingExtraService selected = new BookingExtraService();</span>
+<span class="fc" id="L336">                                selected.setBookingPet(bookingPet);</span>
+<span class="fc" id="L337">                                selected.setExtraService(extra);</span>
+<span class="fc" id="L338">                                selected.setQuantity(1);</span>
+<span class="fc" id="L339">                                selected.setUnitPrice(extra.getPrice());</span>
+<span class="fc" id="L340">                                selected.setTotalPrice(extra.getPrice());</span>
+
+<span class="fc" id="L342">                                booking.addExtraService(selected);</span>
+<span class="fc" id="L343">                        }</span>
+<span class="fc" id="L344">                }</span>
+<span class="fc" id="L345">        }</span>
+
+<span class="fc" id="L347">        private record PreparedBooking(</span>
+                        Booking booking, BookingPriceResponse price) {
+        }
+
+        // =========================================================
+        // GET BOOKING
+        // =========================================================
+
+        @Override
+        @Transactional(readOnly = true)
+        public BookingResponse getBookingById(Long id) {
+
+<span class="fc" id="L359">                Booking booking = findBooking(id);</span>
+
+<span class="fc" id="L361">                return bookingMapper.toResponse(booking);</span>
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List&lt;BookingResponse&gt; getAllBookings() {
+
+<span class="nc" id="L368">                return bookingRepository.findAll()</span>
+<span class="nc" id="L369">                                .stream()</span>
+<span class="nc" id="L370">                                .map(bookingMapper::toResponse)</span>
+<span class="nc" id="L371">                                .toList();</span>
+        }
+
+        // =========================================================
+        // STATE CHANGES
+        // =========================================================
+
+        @Override
+        public BookingResponse confirmBooking(Long id) {
+
+<span class="fc" id="L381">                Booking booking = findBookingForUpdate(id);</span>
+
+<span class="fc" id="L383">                BookingState state = getState(booking.getStatus());</span>
+
+<span class="fc" id="L385">                state.confirm(booking);</span>
+
+<span class="fc" id="L387">                Booking savedBooking = bookingRepository.save(booking);</span>
+
+<span class="fc" id="L389">                eventPublisher.publishEvent(</span>
+                                new BookingConfirmedEvent(this, savedBooking));
+
+<span class="fc" id="L392">                return bookingMapper.toResponse(savedBooking);</span>
+        }
+
+        @Override
+        public BookingResponse checkIn(Long id) {
+<span class="fc" id="L397">                Booking booking = findBookingForUpdate(id);</span>
+
+<span class="fc" id="L399">                BookingState state = getState(booking.getStatus());</span>
+
+<span class="fc" id="L401">                LocalDate currentDate = LocalDate.now(</span>
+<span class="fc" id="L402">                                ZoneId.of(&quot;Asia/Bangkok&quot;));</span>
+
+<span class="fc bfc" id="L404" title="All 2 branches covered.">                if (booking.getStatus() == BookingStatus.CONFIRMED</span>
+<span class="fc bfc" id="L405" title="All 2 branches covered.">                                &amp;&amp; !booking.canCheckInOn(currentDate)) {</span>
+<span class="fc" id="L406">                        throw new IllegalStateException(</span>
+                                        &quot;ยังไม่สามารถเช็กอินการจองนี้ในวันที่ปัจจุบันได้&quot;);
+                }
+
+<span class="fc" id="L410">                state.checkIn(booking);</span>
+
+<span class="fc" id="L412">                Booking savedBooking = bookingRepository.save(booking);</span>
+
+<span class="fc" id="L414">                return bookingMapper.toResponse(savedBooking);</span>
+        }
+
+        @Override
+        public BookingResponse checkOut(Long id) {
+<span class="fc" id="L419">                Booking booking = findBookingForUpdate(id);</span>
+
+<span class="fc" id="L421">                BookingState state = getState(booking.getStatus());</span>
+
+<span class="fc" id="L423">                LocalDate currentDate = LocalDate.now(</span>
+<span class="fc" id="L424">                                ZoneId.of(&quot;Asia/Bangkok&quot;));</span>
+
+<span class="fc bfc" id="L426" title="All 2 branches covered.">                if (booking.getStatus() == BookingStatus.CHECKED_IN</span>
+<span class="fc bfc" id="L427" title="All 2 branches covered.">                                &amp;&amp; !booking.canCheckOutOn(currentDate)) {</span>
+<span class="fc" id="L428">                        throw new IllegalStateException(</span>
+                                        &quot;ยังไม่ถึงวันเช็กเอาต์ของการจองนี้&quot;);
+                }
+
+<span class="fc" id="L432">                state.checkOut(booking);</span>
+
+<span class="fc" id="L434">                Booking savedBooking = bookingRepository.save(booking);</span>
+
+<span class="fc" id="L436">                return bookingMapper.toResponse(savedBooking);</span>
+        }
+
+        @Override
+        public BookingResponse cancelBooking(Long id) {
+
+<span class="fc" id="L442">                Booking booking = findBookingForUpdate(id);</span>
+
+<span class="fc bfc" id="L444" title="All 2 branches covered.">                if (booking.getPaymentStatus() == PaymentStatus.PAID) {</span>
+<span class="fc" id="L445">                        throw new IllegalStateException(</span>
+                                        &quot;Paid bookings cannot be cancelled through this operation&quot;);
+                }
+
+<span class="fc" id="L449">                BookingState state = getState(booking.getStatus());</span>
+<span class="fc" id="L450">                state.cancel(booking);</span>
+
+<span class="fc" id="L452">                Booking savedBooking = bookingRepository.save(booking);</span>
+
+<span class="fc" id="L454">                return bookingMapper.toResponse(savedBooking);</span>
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List&lt;BookingResponse&gt; getBookingsByUserId(Long userId) {
+<span class="nc" id="L460">                return bookingRepository.findByUserId(userId)</span>
+<span class="nc" id="L461">                                .stream()</span>
+<span class="nc" id="L462">                                .map(bookingMapper::toResponse)</span>
+<span class="nc" id="L463">                                .toList();</span>
+        }
+
+        // =========================================================
+        // PRIVATE HELPER METHODS
+        // =========================================================
+
+        private Booking findBooking(Long id) {
+
+<span class="fc" id="L472">                return bookingRepository.findById(id)</span>
+<span class="pc" id="L473">                                .orElseThrow(() -&gt; new ResourceNotFoundException(</span>
+                                                &quot;Booking&quot;, id));
+        }
+
+        private Booking findBookingForUpdate(Long id) {
+<span class="fc" id="L478">                return bookingRepository.findByIdForUpdate(id)</span>
+<span class="fc" id="L479">                                .orElseThrow(() -&gt; new ResourceNotFoundException(</span>
+                                                &quot;Booking&quot;, id));
+        }
+
+        private void validateStayDates(
+                        LocalDate checkInDate,
+                        LocalDate checkOutDate) {
+
+<span class="pc bpc" id="L487" title="2 of 4 branches missed.">                if (checkInDate == null || checkOutDate == null) {</span>
+<span class="nc" id="L488">                        throw new IllegalArgumentException(</span>
+                                        &quot;Check-in and check-out dates are required&quot;);
+                }
+
+<span class="fc bfc" id="L492" title="All 2 branches covered.">                if (!checkOutDate.isAfter(checkInDate)) {</span>
+<span class="fc" id="L493">                        throw new IllegalArgumentException(</span>
+                                        &quot;Check-out date must be after check-in date&quot;);
+                }
+<span class="fc" id="L496">        }</span>
+
+        private void validateCreateRequest(CreateBookingRequest request) {
+
+<span class="fc bfc" id="L500" title="All 2 branches covered.">                if (request == null) {</span>
+<span class="fc" id="L501">                        throw new IllegalArgumentException(</span>
+                                        &quot;Booking request must not be null&quot;);
+                }
+
+<span class="pc bpc" id="L505" title="1 of 2 branches missed.">                if (request.getUserId() == null) {</span>
+<span class="nc" id="L506">                        throw new IllegalArgumentException(</span>
+                                        &quot;User ID is required&quot;);
+                }
+
+<span class="pc bpc" id="L510" title="1 of 2 branches missed.">                if (request.getRoomId() == null) {</span>
+<span class="nc" id="L511">                        throw new IllegalArgumentException(</span>
+                                        &quot;Room ID is required&quot;);
+                }
+
+<span class="fc" id="L515">                validateStayDates(</span>
+<span class="fc" id="L516">                                request.getCheckInDate(),</span>
+<span class="fc" id="L517">                                request.getCheckOutDate());</span>
+
+<span class="pc bpc" id="L519" title="1 of 2 branches missed.">                if (request.getPetIds() == null</span>
+<span class="fc bfc" id="L520" title="All 2 branches covered.">                                || request.getPetIds().isEmpty()) {</span>
+
+<span class="fc" id="L522">                        throw new IllegalArgumentException(</span>
+                                        &quot;At least one pet is required&quot;);
+                }
+
+<span class="fc bfc" id="L526" title="All 2 branches covered.">                if (request.getPetIds().stream().anyMatch(Objects::isNull)) {</span>
+<span class="fc" id="L527">                        throw new IllegalArgumentException(</span>
+                                        &quot;Pet ID must not be null&quot;);
+                }
+
+<span class="fc" id="L531">                Set&lt;Long&gt; uniquePetIds = new HashSet&lt;&gt;(request.getPetIds());</span>
+
+<span class="fc bfc" id="L533" title="All 2 branches covered.">                if (uniquePetIds.size() != request.getPetIds().size()) {</span>
+<span class="fc" id="L534">                        throw new IllegalArgumentException(</span>
+                                        &quot;Duplicate pet IDs are not allowed&quot;);
+                }
+
+<span class="fc" id="L538">        }</span>
+
+        private void validatePets(User user, List&lt;Pet&gt; pets) {
+
+<span class="fc bfc" id="L542" title="All 2 branches covered.">                for (Pet pet : pets) {</span>
+
+<span class="fc bfc" id="L544" title="All 2 branches covered.">                        if (!Boolean.TRUE.equals(pet.getActive())) {</span>
+<span class="fc" id="L545">                                throw new IllegalStateException(</span>
+<span class="fc" id="L546">                                                &quot;Pet is inactive: &quot; + pet.getId());</span>
+                        }
+
+                        // สัตว์ที่นำมาจองต้องเป็นของ user คนนี้
+<span class="pc bpc" id="L550" title="1 of 2 branches missed.">                        if (pet.getOwner() == null</span>
+<span class="fc bfc" id="L551" title="All 2 branches covered.">                                        || !Objects.equals(pet.getOwner().getId(), user.getId())) {</span>
+
+<span class="fc" id="L553">                                throw new IllegalArgumentException(</span>
+<span class="fc" id="L554">                                                &quot;Pet &quot; + pet.getId()</span>
+                                                                + &quot; does not belong to user &quot;
+<span class="fc" id="L556">                                                                + user.getId());</span>
+                        }
+<span class="fc" id="L558">                }</span>
+<span class="fc" id="L559">        }</span>
+
+        private BookingState getState(BookingStatus status) {
+
+<span class="pc bpc" id="L563" title="1 of 5 branches missed.">                return switch (status) {</span>
+
+                        case PENDING -&gt;
+<span class="fc" id="L566">                                new PendingState();</span>
+
+                        case CONFIRMED -&gt;
+<span class="fc" id="L569">                                new ConfirmedState();</span>
+
+                        case CHECKED_IN -&gt;
+<span class="fc" id="L572">                                new CheckedInState();</span>
+
+                        case CHECKED_OUT -&gt;
+<span class="nc" id="L575">                                new CheckedOutState();</span>
+
+                        case CANCELLED -&gt;
+<span class="fc" id="L578">                                new CancelledState();</span>
+                };
+        }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminPromotionPageController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">AdminPromotionPageController.java</span></div><h1>AdminPromotionPageController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.example.petshotel.dto.request.CreatePromotionRequest;
+import com.example.petshotel.dto.response.PromotionResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.mapper.PromotionMapper;
+import com.example.petshotel.service.PromotionService;
+
+import jakarta.validation.Valid;
+
+import com.example.petshotel.domain.entity.Promotion;
+import com.example.petshotel.domain.enums.PromotionType;
+
+@Controller 
+@RequestMapping(&quot;/admin/promotions&quot;)
+public class AdminPromotionPageController {
+    private final PromotionService promotionService;
+    private final PromotionMapper promotionMapper;
+
+<span class="fc" id="L35">    public AdminPromotionPageController(PromotionService promotionService, PromotionMapper promotionMapper){</span>
+<span class="fc" id="L36">        this.promotionService = promotionService;</span>
+<span class="fc" id="L37">        this.promotionMapper = promotionMapper;</span>
+<span class="fc" id="L38">    }</span>
+
+    @GetMapping
+    public String showPromotions(@RequestParam(name = &quot;editId&quot;, required = false) Long editId, Model model){
+<span class="fc" id="L42">        List&lt;PromotionResponse&gt; responses = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for(Promotion promotion: promotionService.getAllPromotions()){</span>
+<span class="fc" id="L45">            PromotionResponse response = promotionMapper.toResponse(promotion);</span>
+<span class="fc" id="L46">            responses.add(response);</span>
+<span class="fc" id="L47">        }</span>
+
+<span class="fc" id="L49">        model.addAttribute(&quot;promotions&quot;, responses);</span>
+<span class="fc" id="L50">        model.addAttribute(&quot;editingId&quot;, editId);</span>
+
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (!model.containsAttribute(&quot;promotionForm&quot;)) {</span>
+            CreatePromotionRequest form;
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            if (editId == null) {</span>
+<span class="fc" id="L56">                form = new CreatePromotionRequest(</span>
+                    &quot;&quot;,
+                    PromotionType.PERCENTAGE,
+                    null,
+                    null,
+                    null,
+                    true);
+            }else{
+<span class="fc" id="L64">                Promotion promotion = promotionService.getPromotionById(editId);</span>
+
+<span class="fc" id="L66">                form = new CreatePromotionRequest(</span>
+<span class="fc" id="L67">                        promotion.getName(),</span>
+<span class="fc" id="L68">                        promotion.getType(),</span>
+<span class="fc" id="L69">                        promotion.getValue(),</span>
+<span class="fc" id="L70">                        promotion.getStartDate(),</span>
+<span class="fc" id="L71">                        promotion.getEndDate(),</span>
+<span class="fc" id="L72">                        Boolean.TRUE.equals(promotion.getActive()));</span>
+            }
+<span class="fc" id="L74">            model.addAttribute(&quot;promotionForm&quot;, form);</span>
+        }
+<span class="fc" id="L76">        return &quot;admin/promotions&quot;;</span>
+    }
+
+    @PostMapping 
+    public String savePromotion(@RequestParam(name = &quot;id&quot;, required = false) Long id, @Valid @ModelAttribute(&quot;promotionForm&quot;) CreatePromotionRequest request,
+        BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes){
+
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (bindingResult.hasErrors()) {</span>
+<span class="fc" id="L84">            return showPromotions(id, model);</span>
+        }
+
+        try{
+<span class="fc bfc" id="L88" title="All 2 branches covered.">            if (id == null) {</span>
+<span class="fc" id="L89">                promotionService.createPromotion(request);</span>
+            }else{
+<span class="fc" id="L91">                promotionService.updatePromotion(id, request);</span>
+            }
+<span class="fc" id="L93">        }catch(IllegalArgumentException exception){</span>
+<span class="fc" id="L94">            bindingResult.reject(</span>
+                &quot;promotion.invalid&quot;,
+<span class="fc" id="L96">                exception.getMessage()</span>
+            );
+<span class="fc" id="L98">            return showPromotions(id, model);</span>
+<span class="fc" id="L99">        }</span>
+
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        redirectAttributes.addFlashAttribute(&quot;message&quot;, id == null ? &quot;เพิ่มโปรโมชันสำเร็จ&quot; : &quot;แก้ไขโปรโมชันสำเร็จ&quot;);</span>
+<span class="fc" id="L102">        return &quot;redirect:/admin/promotions&quot;;</span>
+    }
+
+    @PostMapping(&quot;/{id}/deactivate&quot;)
+    public String deactivatePromotion(@PathVariable Long id, RedirectAttributes redirectAttributes){
+<span class="fc" id="L107">        promotionService.deactivatePromotion(id);</span>
+<span class="fc" id="L108">        redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;ปิดใช้โปรโมชันสำเร็จ&quot;);</span>
+<span class="fc" id="L109">        return &quot;redirect:/admin/promotions&quot;;</span>
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public String handleNotFound(ResourceNotFoundException exception, RedirectAttributes redirectAttributes){
+<span class="fc" id="L114">        redirectAttributes.addFlashAttribute(&quot;error&quot;, exception.getMessage());</span>
+<span class="fc" id="L115">        return &quot;redirect:/admin/promotions&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

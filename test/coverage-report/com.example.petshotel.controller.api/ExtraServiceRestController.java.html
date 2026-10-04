@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExtraServiceRestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.api</a> &gt; <span class="el_source">ExtraServiceRestController.java</span></div><h1>ExtraServiceRestController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.api;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.petshotel.dto.request.ExtraServiceRequest;
+import com.example.petshotel.dto.response.ExtraServiceResponse;
+import com.example.petshotel.mapper.ExtraServiceMapper;
+import com.example.petshotel.service.ExtraServiceService;
+
+import jakarta.validation.Valid;
+
+import com.example.petshotel.exception.ErrorResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@RestController
+@RequestMapping(&quot;/api/extra-services&quot;)
+@Tag(
+    name = &quot;Extra Services&quot;,
+    description = &quot;API สำหรับจัดการบริการเสริม ต้องเข้าสู่ระบบก่อนใช้งาน &quot;
+        + &quot;การเพิ่ม แก้ไข และปิดใช้บริการต้องใช้สิทธิ์ ADMIN&quot;
+)
+public class ExtraServiceRestController {
+    private final ExtraServiceService extraServiceService;
+    private final ExtraServiceMapper extraServiceMapper;
+
+    public ExtraServiceRestController(
+        ExtraServiceService extraServiceService,
+<span class="fc" id="L45">        ExtraServiceMapper extraServiceMapper){</span>
+<span class="fc" id="L46">            this.extraServiceService = extraServiceService;</span>
+<span class="fc" id="L47">            this.extraServiceMapper = extraServiceMapper;</span>
+<span class="fc" id="L48">    }</span>
+
+    @Operation(
+        summary = &quot;ดูบริการเสริมทั้งหมด&quot;,
+        description = &quot;แสดงบริการเสริมทั้งหมด รวมรายการที่ปิดใช้แล้ว&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;แสดงรายการบริการเสริมสำเร็จ &quot;
+                + &quot;ถ้าไม่มีข้อมูลจะคืนรายการว่าง&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        )
+    })
+    @GetMapping
+    public List&lt;ExtraServiceResponse&gt; getAllExtraServices(){
+<span class="fc" id="L69">        return extraServiceService.getAllExtraServices().stream()</span>
+<span class="fc" id="L70">                .map(extraServiceMapper::toResponse).toList();</span>
+    }
+
+    @Operation(
+        summary = &quot;ดูบริการเสริมตามรหัส&quot;,
+        description = &quot;ค้นหาบริการเสริมหนึ่งรายการด้วย id &quot;
+            + &quot;สามารถดูรายการที่ปิดใช้แล้วได้&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;พบบริการเสริม&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;รหัสบริการเสริมมีรูปแบบไม่ถูกต้อง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;ไม่พบบริการเสริมตามรหัสที่ระบุ&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @GetMapping(&quot;/{id}&quot;)
+    public ExtraServiceResponse getExtraServiceById(@PathVariable Long id){
+<span class="fc" id="L108">        return extraServiceMapper.toResponse(extraServiceService.getExtraServiceById(id));</span>
+    }
+
+    @Operation(
+        summary = &quot;เพิ่มบริการเสริม&quot;,
+        description = &quot;สำหรับ ADMIN สร้างบริการเสริมใหม่ &quot;
+            + &quot;ราคาต้องไม่ติดลบ และรองรับทศนิยมไม่เกิน 2 ตำแหน่ง &quot;
+            + &quot;หากไม่ส่ง active หรือส่งเป็น null จะเปิดใช้งานโดยอัตโนมัติ&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;201&quot;,
+            description = &quot;สร้างบริการเสริมสำเร็จ&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;ข้อมูลไม่ถูกต้อง เช่น ไม่ระบุชื่อ &quot;
+                + &quot;ไม่ระบุราคา ราคาติดลบ หรือทศนิยมเกิน 2 ตำแหน่ง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;403&quot;,
+            description = &quot;ไม่มีสิทธิ์ ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;,
+            content = @Content
+        )
+    })
+    @PostMapping
+    public ResponseEntity&lt;ExtraServiceResponse&gt; createExtraService(
+            @Valid @RequestBody ExtraServiceRequest request){
+<span class="fc" id="L146">                ExtraServiceResponse response = extraServiceMapper.toResponse(</span>
+<span class="fc" id="L147">                    extraServiceService.createExtraService(</span>
+<span class="fc" id="L148">                        extraServiceMapper.toEntity(request)));</span>
+<span class="fc" id="L149">        return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+    }
+
+    @Operation(
+        summary = &quot;แก้ไขบริการเสริม&quot;,
+        description = &quot;สำหรับ ADMIN แก้ไขบริการเสริมตาม id &quot;
+            + &quot;ต้องส่งชื่อและราคา &quot;
+            + &quot;หากไม่ระบุ active หรือส่งเป็น null &quot;
+            + &quot;ระบบจะคงสถานะเปิดใช้งานเดิม&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;แก้ไขบริการเสริมสำเร็จ&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;รหัสหรือข้อมูลบริการเสริมไม่ถูกต้อง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;403&quot;,
+            description = &quot;ไม่มีสิทธิ์ ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;ไม่พบบริการเสริมที่ต้องการแก้ไข&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @PutMapping(&quot;/{id}&quot;)
+    public ExtraServiceResponse updateExtraService(
+        @PathVariable Long id,
+        @Valid @RequestBody ExtraServiceRequest request){
+<span class="fc" id="L196">            return extraServiceMapper.toResponse(</span>
+<span class="fc" id="L197">                extraServiceService.updateExtraService(id, extraServiceMapper.toEntity(request)));</span>
+    }
+
+    @Operation(
+        summary = &quot;ปิดใช้บริการเสริม&quot;,
+        description = &quot;สำหรับ ADMIN เปลี่ยนสถานะ active เป็น false &quot;
+            + &quot;โดยยังเก็บข้อมูลบริการเสริมไว้ในฐานข้อมูล &quot;
+            + &quot;เมื่อสำเร็จจะไม่มีข้อมูลใน response body&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;204&quot;,
+            description = &quot;ปิดใช้บริการเสริมสำเร็จ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;รหัสบริการเสริมมีรูปแบบไม่ถูกต้อง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;403&quot;,
+            description = &quot;ไม่มีสิทธิ์ ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;ไม่พบบริการเสริมที่ต้องการปิดใช้&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; deleteExtraService(@PathVariable Long id){
+<span class="fc" id="L241">        extraServiceService.deleteExtraService(id);</span>
+<span class="fc" id="L242">        return ResponseEntity.noContent().build();</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

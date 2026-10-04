@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminCareReportPageController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">AdminCareReportPageController.java</span></div><h1>AdminCareReportPageController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+import java.security.Principal;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
+import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.CurrentUserService;
+import com.example.petshotel.service.DailyCareReportService;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import org.springframework.format.annotation.DateTimeFormat;
+import jakarta.validation.Valid;
+import java.util.Objects;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Controller
+@RequestMapping(&quot;/admin/reports&quot;)
+public class AdminCareReportPageController {
+
+    private final DailyCareReportService reportService;
+    private final CurrentUserService currentUserService;
+
+    public AdminCareReportPageController(
+            DailyCareReportService reportService,
+<span class="fc" id="L45">            CurrentUserService currentUserService) {</span>
+<span class="fc" id="L46">        this.reportService = reportService;</span>
+<span class="fc" id="L47">        this.currentUserService = currentUserService;</span>
+<span class="fc" id="L48">    }</span>
+
+    @GetMapping
+    public String showReports(
+            @RequestParam(name = &quot;page&quot;, defaultValue = &quot;0&quot;) int page,
+            @RequestParam(name = &quot;query&quot;, required = false) String query,
+            @RequestParam(name = &quot;reportDate&quot;, required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate reportDate,
+            Principal principal,
+            Model model
+    ) {
+<span class="fc" id="L60">        User user = requireActiveUser(principal);</span>
+
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if (page &lt; 0) {</span>
+<span class="nc" id="L63">            throw new ResponseStatusException(HttpStatus.NOT_FOUND);</span>
+        }
+
+<span class="fc" id="L66">        List&lt;DailyCareReportResponse&gt; reports =</span>
+<span class="fc" id="L67">                reportService.getAllReportsForStaffAndAdmin(user.getId());</span>
+
+<span class="fc" id="L69">        Map&lt;Long, List&lt;DailyCareReportResponse&gt;&gt; reportsByBookingPet =</span>
+<span class="fc" id="L70">                reports.stream().collect(</span>
+<span class="fc" id="L71">                        Collectors.groupingBy(</span>
+<span class="fc" id="L72">                                report -&gt; Objects.requireNonNull(report).bookingPetId()</span>
+                        )
+                );
+
+<span class="fc" id="L76">        List&lt;ReportableBookingPetResponse&gt; bookingPetOptions =</span>
+<span class="fc" id="L77">                reportService.getReportableBookingPetsForStaffAndAdmin(</span>
+<span class="fc" id="L78">                        user.getId()</span>
+                );
+
+<span class="fc" id="L81">        Map&lt;Long, List&lt;ReportableBookingPetResponse&gt;&gt; allBookings =</span>
+<span class="fc" id="L82">                bookingPetOptions.stream().collect(</span>
+<span class="fc" id="L83">                        Collectors.groupingBy(</span>
+<span class="fc" id="L84">                                pet -&gt; Objects.requireNonNull(pet).bookingId(),</span>
+                                LinkedHashMap::new,
+<span class="fc" id="L86">                                Collectors.toList()</span>
+                        )
+                );
+
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        String searchText = query == null ? &quot;&quot; : query.trim();</span>
+<span class="fc" id="L91">        String normalizedQuery = searchText.toLowerCase(Locale.ROOT);</span>
+
+<span class="fc" id="L93">        List&lt;Map.Entry&lt;Long, List&lt;ReportableBookingPetResponse&gt;&gt;&gt; matches =</span>
+<span class="fc" id="L94">                allBookings.entrySet().stream()</span>
+<span class="fc" id="L95">                        .filter(entry -&gt; {</span>
+<span class="fc" id="L96">                            List&lt;ReportableBookingPetResponse&gt; pets =</span>
+<span class="fc" id="L97">                                    entry.getValue();</span>
+<span class="fc" id="L98">                            ReportableBookingPetResponse first = pets.get(0);</span>
+
+<span class="fc" id="L100">                            String petNames = pets.stream()</span>
+<span class="fc" id="L101">                                    .map(pet -&gt; Objects.requireNonNull(pet).petName())</span>
+<span class="fc" id="L102">                                    .collect(Collectors.joining(&quot; &quot;));</span>
+
+<span class="fc" id="L104">                            String searchable = (</span>
+<span class="fc" id="L105">                                    &quot;การจอง #&quot; + entry.getKey()</span>
+<span class="fc" id="L106">                                            + &quot; &quot; + first.ownerName()</span>
+<span class="fc" id="L107">                                            + &quot; &quot; + first.ownerEmail()</span>
+                                            + &quot; &quot; + petNames
+<span class="fc" id="L109">                            ).toLowerCase(Locale.ROOT);</span>
+
+<span class="fc" id="L111">                            boolean matchesText =</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">                                    normalizedQuery.isEmpty()</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">                                            || searchable.contains(</span>
+                                                    normalizedQuery
+                                            );
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">                            boolean matchesDate = reportDate == null</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                                    || pets.stream().anyMatch(pet -&gt;</span>
+<span class="fc" id="L119">                                            reportsByBookingPet.getOrDefault(</span>
+<span class="fc" id="L120">                                                    pet.bookingPetId(),</span>
+<span class="fc" id="L121">                                                    List.of()</span>
+<span class="fc" id="L122">                                            ).stream().anyMatch(report -&gt;</span>
+<span class="fc" id="L123">                                                    reportDate.equals(</span>
+<span class="fc" id="L124">                                                            report.reportDate()</span>
+                                                    )
+                                            )
+                                    );
+
+<span class="pc bpc" id="L129" title="1 of 4 branches missed.">                            return matchesText &amp;&amp; matchesDate;</span>
+                        })
+<span class="fc" id="L131">                        .toList();</span>
+
+<span class="fc" id="L133">        int totalPages = (matches.size() + 4) / 5;</span>
+
+<span class="pc bpc" id="L135" title="1 of 4 branches missed.">        if (page &gt; 0 &amp;&amp; page &gt;= totalPages) {</span>
+<span class="nc" id="L136">            throw new ResponseStatusException(HttpStatus.NOT_FOUND);</span>
+        }
+
+<span class="fc" id="L139">        Map&lt;Long, List&lt;ReportableBookingPetResponse&gt;&gt; pageBookings =</span>
+                new LinkedHashMap&lt;&gt;();
+
+<span class="fc" id="L142">        matches.stream()</span>
+<span class="fc" id="L143">                .skip((long) page * 5)</span>
+<span class="fc" id="L144">                .limit(5)</span>
+<span class="fc" id="L145">                .forEach(entry -&gt; pageBookings.put(</span>
+<span class="fc" id="L146">                        entry.getKey(),</span>
+<span class="fc" id="L147">                        entry.getValue()</span>
+                ));
+
+<span class="fc" id="L150">        Map&lt;Long, Long&gt; reportCountsByBooking = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L152">        pageBookings.forEach((bookingId, pets) -&gt; {</span>
+<span class="fc" id="L153">            long count = pets.stream()</span>
+<span class="fc" id="L154">                    .mapToLong(pet -&gt;</span>
+<span class="fc" id="L155">                            reportsByBookingPet.getOrDefault(</span>
+<span class="fc" id="L156">                                    pet.bookingPetId(),</span>
+<span class="fc" id="L157">                                    List.of()</span>
+<span class="fc" id="L158">                            ).size()</span>
+                    )
+<span class="fc" id="L160">                    .sum();</span>
+
+<span class="fc" id="L162">            reportCountsByBooking.put(bookingId, count);</span>
+<span class="fc" id="L163">        });</span>
+
+<span class="fc" id="L165">        model.addAttribute(&quot;reports&quot;, reports);</span>
+<span class="fc" id="L166">        model.addAttribute(&quot;reportsByBookingPet&quot;, reportsByBookingPet);</span>
+<span class="fc" id="L167">        model.addAttribute(&quot;bookingPetOptions&quot;, bookingPetOptions);</span>
+<span class="fc" id="L168">        model.addAttribute(&quot;reportableBookings&quot;, pageBookings);</span>
+<span class="fc" id="L169">        model.addAttribute(&quot;reportCountsByBooking&quot;, reportCountsByBooking);</span>
+<span class="fc" id="L170">        model.addAttribute(&quot;resultCount&quot;, matches.size());</span>
+<span class="fc" id="L171">        model.addAttribute(&quot;page&quot;, page);</span>
+<span class="fc" id="L172">        model.addAttribute(&quot;totalPages&quot;, totalPages);</span>
+<span class="fc" id="L173">        model.addAttribute(&quot;query&quot;, searchText);</span>
+<span class="fc" id="L174">        model.addAttribute(&quot;reportDate&quot;, reportDate);</span>
+<span class="fc" id="L175">        model.addAttribute(</span>
+                &quot;hasFilters&quot;,
+<span class="pc bpc" id="L177" title="1 of 4 branches missed.">                !searchText.isEmpty() || reportDate != null</span>
+        );
+
+<span class="fc" id="L180">        return &quot;admin/reports&quot;;</span>
+    }
+
+    @GetMapping(&quot;/pets/{bookingPetId}&quot;)
+    public String showPetReports(
+            @PathVariable Long bookingPetId,
+            @RequestParam(name = &quot;reportId&quot;, required = false) Long reportId,
+            Principal principal,
+            Model model) {
+<span class="nc" id="L189">        User user = requireActiveUser(principal);</span>
+
+<span class="nc" id="L191">        ReportableBookingPetResponse pet = reportService</span>
+<span class="nc" id="L192">                .getReportableBookingPetsForStaffAndAdmin(user.getId())</span>
+<span class="nc" id="L193">                .stream()</span>
+<span class="nc" id="L194">                .filter(option -&gt; option.bookingPetId().equals(bookingPetId))</span>
+<span class="nc" id="L195">                .findFirst()</span>
+<span class="nc" id="L196">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L197">                        new ResponseStatusException(HttpStatus.NOT_FOUND));</span>
+
+<span class="nc" id="L199">        List&lt;DailyCareReportResponse&gt; reports =</span>
+<span class="nc" id="L200">                reportService.getReportsByBookingPet(</span>
+<span class="nc" id="L201">                        bookingPetId, user.getId());</span>
+
+<span class="nc" id="L203">        Long openReportId = (Long) model.asMap().get(&quot;openReportId&quot;);</span>
+        Long selectedId =
+<span class="nc bnc" id="L205" title="All 2 branches missed.">                reportId != null ? reportId : openReportId;</span>
+
+<span class="nc" id="L207">        DailyCareReportResponse selectedReport = null;</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (selectedId != null) {</span>
+<span class="nc" id="L209">            selectedReport = reports.stream()</span>
+<span class="nc" id="L210">                    .filter(report -&gt; selectedId.equals(report.id()))</span>
+<span class="nc" id="L211">                    .findFirst()</span>
+<span class="nc" id="L212">                    .orElseThrow(() -&gt;</span>
+<span class="nc" id="L213">                            new ResponseStatusException(HttpStatus.NOT_FOUND));</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        } else if (!reports.isEmpty()) {</span>
+<span class="nc" id="L215">            selectedReport = reports.get(0);</span>
+        }
+
+<span class="nc" id="L218">        model.addAttribute(&quot;pet&quot;, pet);</span>
+<span class="nc" id="L219">        model.addAttribute(&quot;reports&quot;, reports);</span>
+<span class="nc" id="L220">        model.addAttribute(&quot;selectedReport&quot;, selectedReport);</span>
+
+<span class="nc" id="L222">        return &quot;admin/report-detail&quot;;</span>
+    }
+
+    @PostMapping
+    public String createReport(
+            Principal principal,
+            @RequestParam(name = &quot;bookingPetId&quot;, required = false) Long bookingPetId,
+            @Valid @ModelAttribute CreateDailyCareReportRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
+
+<span class="fc" id="L233">        User user = requireActiveUser(principal);</span>
+<span class="fc" id="L234">        String target = petDetailUrl(bookingPetId);</span>
+
+<span class="fc bfc" id="L236" title="All 4 branches covered.">        if (bookingPetId == null || bindingResult.hasErrors()) {</span>
+<span class="fc" id="L237">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;, &quot;กรุณาตรวจสอบสัตว์ในการจองและข้อมูลรายงาน&quot;);
+<span class="fc" id="L239">            redirectAttributes.addFlashAttribute(&quot;openWrite&quot;, true);</span>
+<span class="fc" id="L240">            return &quot;redirect:&quot; + target;</span>
+        }
+
+        try {
+<span class="fc" id="L244">            reportService.createReport(bookingPetId, user.getId(), request);</span>
+<span class="nc" id="L245">        } catch (ResourceNotFoundException exception) {</span>
+<span class="nc" id="L246">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;, &quot;ไม่พบสัตว์ในการจองที่เลือก&quot;);
+<span class="nc" id="L248">            redirectAttributes.addFlashAttribute(&quot;openWrite&quot;, true);</span>
+<span class="nc" id="L249">            return &quot;redirect:&quot; + target;</span>
+<span class="fc" id="L250">        } catch (IllegalArgumentException | IllegalStateException exception) {</span>
+<span class="fc" id="L251">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;,
+                    &quot;ไม่สามารถบันทึกรายงานได้ กรุณาตรวจสอบวันที่ การจอง และรายงานที่มีอยู่แล้ว&quot;);
+<span class="fc" id="L254">            redirectAttributes.addFlashAttribute(&quot;openWrite&quot;, true);</span>
+<span class="fc" id="L255">            return &quot;redirect:&quot; + target;</span>
+<span class="fc" id="L256">        }</span>
+
+<span class="fc" id="L258">        redirectAttributes.addFlashAttribute(</span>
+                &quot;message&quot;, &quot;บันทึกรายงานการดูแลสำเร็จ&quot;);
+<span class="fc" id="L260">        return &quot;redirect:&quot; + target;</span>
+    }
+
+    @PostMapping(&quot;/{reportId}/edit&quot;)
+    public String updateReport(
+            @PathVariable Long reportId,
+            Principal principal,
+            @Valid @ModelAttribute UpdateDailyCareReportRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes) {
+
+<span class="nc" id="L271">        User user = requireActiveUser(principal);</span>
+<span class="nc" id="L272">        String target = petDetailUrl(request.bookingPetId());</span>
+
+<span class="nc bnc" id="L274" title="All 2 branches missed.">        if (bindingResult.hasErrors()) {</span>
+<span class="nc" id="L275">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;, &quot;กรุณาตรวจสอบข้อมูลรายงาน&quot;);
+<span class="nc" id="L277">            redirectAttributes.addFlashAttribute(&quot;openReportId&quot;, reportId);</span>
+<span class="nc" id="L278">            return &quot;redirect:&quot; + target;</span>
+        }
+
+        try {
+<span class="nc" id="L282">            reportService.updateReport(reportId, user.getId(), request);</span>
+<span class="nc" id="L283">        } catch (ResourceNotFoundException exception) {</span>
+<span class="nc" id="L284">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;, &quot;ไม่พบรายงานที่ต้องการแก้ไข&quot;);
+<span class="nc" id="L286">            redirectAttributes.addFlashAttribute(&quot;openReportId&quot;, reportId);</span>
+<span class="nc" id="L287">            return &quot;redirect:&quot; + target;</span>
+<span class="nc" id="L288">        } catch (IllegalArgumentException | IllegalStateException exception) {</span>
+<span class="nc" id="L289">            redirectAttributes.addFlashAttribute(</span>
+                    &quot;error&quot;, &quot;แก้ไขรายงานไม่สำเร็จ กรุณาตรวจสอบข้อมูล&quot;);
+<span class="nc" id="L291">            redirectAttributes.addFlashAttribute(&quot;openReportId&quot;, reportId);</span>
+<span class="nc" id="L292">            return &quot;redirect:&quot; + target;</span>
+<span class="nc" id="L293">        }</span>
+
+<span class="nc" id="L295">        redirectAttributes.addFlashAttribute(</span>
+                &quot;message&quot;, &quot;แก้ไขรายงานสำเร็จ&quot;);
+<span class="nc" id="L297">        return &quot;redirect:&quot; + target + &quot;?reportId=&quot; + reportId;</span>
+    }
+
+    private String petDetailUrl(Long bookingPetId) {
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        return bookingPetId == null</span>
+<span class="fc" id="L302">                ? &quot;/admin/reports&quot;</span>
+<span class="fc" id="L303">                : &quot;/admin/reports/pets/&quot; + bookingPetId;</span>
+    }
+
+    private User requireActiveUser(Principal principal) {
+<span class="fc bfc" id="L307" title="All 2 branches covered.">        if (principal == null) {</span>
+<span class="fc" id="L308">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+        }
+
+        User user;
+        try {
+<span class="fc" id="L313">            user = currentUserService.getByEmail(principal.getName());</span>
+<span class="fc" id="L314">        } catch (ResourceNotFoundException exception) {</span>
+<span class="fc" id="L315">            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);</span>
+<span class="fc" id="L316">        }</span>
+
+<span class="fc bfc" id="L318" title="All 2 branches covered.">        if (!Boolean.TRUE.equals(user.getActive())) {</span>
+<span class="fc" id="L319">            throw new ResponseStatusException(HttpStatus.FORBIDDEN);</span>
+        }
+
+<span class="fc" id="L322">        return user;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
