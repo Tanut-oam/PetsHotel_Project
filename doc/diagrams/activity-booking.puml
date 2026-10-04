@@ -1,5 +1,5 @@
 @startuml activity-booking
-title PetStay - Booking Process (UC-05)
+title PetsHotel - Booking Process (UC-05)
 
 skinparam defaultFontName "Tahoma"
 skinparam shadowing false
@@ -12,7 +12,7 @@ start
 :Log in with an active account;
 :Choose a room and stay dates;
 
-|PetStay System|
+|PetsHotel System|
 :GET /bookings/new\nLoad booking form and available choices;
 
 |Customer|
@@ -23,7 +23,7 @@ note right
   servicePetIds, promotionId
 end note
 
-|PetStay System|
+|PetsHotel System|
 :GET /api/bookings/pet-availability\nDisable pets already reserved for those dates;
 :Check form fields, date order, pet count\nand service recipients;
 if (Form inputs valid?) then (yes)
@@ -40,7 +40,7 @@ else (no)
   stop
 endif
 
-|PetStay System|
+|PetsHotel System|
 if (Successful quote matches current inputs?) then (yes)
   :Display price breakdown;
 else (no)
@@ -54,7 +54,7 @@ endif
 :Review booking and press Book;
 :Confirm the booking dialog;
 
-|PetStay System|
+|PetsHotel System|
 :POST /bookings\nResolve current user from Principal;
 :form.setUserId(user.getId())\nvalidateForm(form, bindingResult);
 if (bindingResult.hasErrors()?) then (yes)
@@ -65,7 +65,7 @@ if (bindingResult.hasErrors()?) then (yes)
 else (no)
 endif
 
-|PetStay System|
+|PetsHotel System|
 :createBooking(form)\nBegin booking transaction;
 :Validate required IDs, unique petIds\nand checkOutDate > checkInDate;
 :Load User; lock Room and require ACTIVE;\nlock selected pets; check existence,\nactive flag, ownership and room capacity;
@@ -84,7 +84,7 @@ if (Any request / resource / availability error?) then (yes)
 else (no)
 endif
 
-|PetStay System|
+|PetsHotel System|
 :Build Booking with status = PENDING;\nadd BookingPet for each selected pet;
 :Validate services and recipients;\nadd BookingExtraService per recipient\nwith quantity = 1 and price snapshot;
 :If promotionId is supplied, load promotion\nand validate active flag and date range\nagainst today in Asia/Bangkok;
@@ -97,7 +97,7 @@ if (Any service / promotion error?) then (yes)
 else (no)
 endif
 
-|PetStay System|
+|PetsHotel System|
 :Recalculate price with PricingContext;\nsnapshot all amounts and promotionName;
 :bookingRepository.save(prepared.booking())\nCascade BookingPet and BookingExtraService;\npaymentStatus = UNPAID; set createdAt;
 :Map to BookingResponse; commit transaction;\nredirect:/bookings/{created.id};
