@@ -1,123 +1,94 @@
-# คู่มือ Diagram ส่วนการจอง — กิติญาดา
+# Diagram ส่วนการจอง — กิติญาดา
 
-ทำต่อได้โดยไม่ต้องรอเพื่อน: ใช้ชื่อ Entity จาก Domain Model ที่มีอยู่ และตรวจชื่อคลาส เมธอด ตัวแปร กับโค้ดปัจจุบันโดยตรง ส่วน Sequence ไม่จำเป็นต้องรอไฟล์ Class Diagram เมื่อคลาสในโค้ดมีแล้ว
+เอกสารอธิบาย State Diagram, Sequence Diagram และ Activity Diagram ของระบบ PetsHotel โดยอ้างอิงชื่อคลาส เมธอด และตัวแปรจากโค้ดส่วนการจอง
 
-## 1. เริ่มจาก State Diagram
+## 1. State Diagram: สถานะการจอง
 
-เปิด [`state-booking.puml`](diagrams/state-booking.puml) แล้วอ่านสถานะตามเส้นทางนี้:
+ต้นฉบับ: [state-booking.puml](diagrams/state-booking.puml)
+
+เส้นทางหลักของการจอง:
 
 `PENDING → CONFIRMED → CHECKED_IN → CHECKED_OUT`
 
-มีทางแยกจาก `PENDING` และ `CONFIRMED` ไป `CANCELLED` เมื่อ `paymentStatus != PAID`
+การจองสถานะ `PENDING` หรือ `CONFIRMED` สามารถเปลี่ยนเป็น `CANCELLED` ได้เมื่อยังไม่ได้ชำระเงิน
 
-- ใช้ชื่อสถานะจาก `BookingStatus.java` ครบทั้ง 5 ค่า
-- ลูกศรระบุเมธอดของ `BookingServiceImpl` และคลาส State ที่เปลี่ยนสถานะจริง
-- เช็กอิน: `checkInDate <= currentDate < checkOutDate`
-- เช็กเอาต์: `currentDate >= checkOutDate`
+| การทำงาน | สถานะก่อน | สถานะหลัง | เงื่อนไข |
+|---|---|---|---|
+| สร้างการจอง | — | `PENDING` | ข้อมูลและความพร้อมของห้องและสัตว์เลี้ยงผ่านการตรวจสอบ |
+| ยืนยันการจอง | `PENDING` | `CONFIRMED` | ดำเนินการโดยพนักงานหรือผู้ดูแลระบบ |
+| เช็กอิน | `CONFIRMED` | `CHECKED_IN` | `checkInDate <= currentDate < checkOutDate` |
+| เช็กเอาต์ | `CHECKED_IN` | `CHECKED_OUT` | `currentDate >= checkOutDate` |
+| ยกเลิกการจอง | `PENDING`, `CONFIRMED` | `CANCELLED` | เจ้าของการจองหรือพนักงาน/ผู้ดูแลระบบ และ `paymentStatus != PAID` |
+
 - `currentDate` ใช้เขตเวลา `Asia/Bangkok`
-- การยกเลิกต้องผ่านการตรวจเจ้าของหรือสิทธิ์พนักงาน/ผู้ดูแล และห้ามยกเลิกเมื่อชำระเงินแล้ว
-- `PaymentStatus` เป็นข้อมูลคนละตัวกับ `BookingStatus` โค้ดปัจจุบันไม่ได้บังคับว่าต้องชำระเงินก่อนเช็กเอาต์
-- `CHECKED_OUT` และ `CANCELLED` จบวงจรสถานะ แต่ข้อมูลการจองยังคงอยู่ในฐานข้อมูล
-
-รูปที่สร้างแล้ว:
+- `BookingStatus` และ `PaymentStatus` เป็นสถานะแยกกัน โค้ดปัจจุบันไม่ได้บังคับให้ชำระเงินก่อนเช็กเอาต์
+- `PENDING`, `CONFIRMED` และ `CHECKED_IN` เป็นสถานะที่นับว่าครองห้องและสัตว์เลี้ยง
+- `CHECKED_OUT` และ `CANCELLED` เป็นสถานะสิ้นสุด โดยยังเก็บข้อมูลการจองไว้ในฐานข้อมูล
 
 ![Booking State Diagram](../img/diagrams/state-booking.png)
 
-## 2. ต่อด้วย Sequence สร้างการจอง
+## 2. Sequence Diagram: สร้างการจอง
 
-เปิด [`sequence-create-booking.puml`](diagrams/sequence-create-booking.puml) อ่านจากบนลงล่าง ภาพนี้แสดงเส้นทางเว็บ `POST /bookings` หลังลูกค้ากรอกฟอร์มแล้ว
+ต้นฉบับ: [sequence-create-booking.puml](diagrams/sequence-create-booking.puml)
 
-1. `BookingController` เรียก `CurrentUserServiceImpl.getByEmail(principal.getName())`
-2. กำหนด `form.setUserId(user.getId())` จากบัญชีที่ล็อกอิน แล้วตรวจฟอร์ม
-3. เรียก `BookingServiceImpl.createBooking(form)` และ `prepareBooking(request, true)`
-4. ตรวจข้อมูล โหลด User ล็อก Room และ Pet ตรวจสถานะห้อง เจ้าของสัตว์ ความพร้อมใช้ และความจุ
-5. ตรวจสัตว์ที่จองซ้อนก่อน แล้วเรียก `AvailabilityServiceImpl.checkRoomAvailable(...)`
-6. สร้าง Booking และ BookingPet ตรวจบริการเสริม แล้วตรวจโปรโมชันถ้ามี
-7. เรียก `PricingServiceImpl.calculate(PricingContext)` และบันทึกราคาทุกส่วน ณ เวลาจอง
-8. `BookingRepository.save(...)` บันทึก Booking พร้อม BookingPet และ BookingExtraService ผ่าน cascade
-9. `BookingMapper.toResponse(...)` สร้างผลลัพธ์ แล้วกลับไปหน้ารายละเอียด `/bookings/{id}` หลัง transaction สำเร็จ
+แสดงการส่งฟอร์มผ่าน `POST /bookings` หลังลูกค้าเข้าสู่ระบบและกรอกข้อมูลการจอง
 
-อ่านกรอบ `alt` เป็นทางเลือก, `opt` เป็นขั้นตอนที่มีเมื่อเลือกโปรโมชัน, `loop` เป็นการวนบริการ และ `break` เป็นข้อผิดพลาดที่หยุดเส้นทางที่เหลือ กรณีผิดพลาด Controller โหลดตัวเลือกกลับมาและแสดงฟอร์มพร้อมข้อความผิดพลาด
+1. `BookingController` ดึงผู้ใช้ผ่าน `CurrentUserServiceImpl.getByEmail(principal.getName())`
+2. กำหนด `form.setUserId(user.getId())` จากบัญชีที่เข้าสู่ระบบ และตรวจข้อมูลฟอร์ม
+3. เรียก `BookingServiceImpl.createBooking(form)` ซึ่งใช้ `prepareBooking(request, true)`
+4. ตรวจข้อมูล โหลดผู้ใช้ ล็อกห้องและสัตว์เลี้ยง แล้วตรวจสถานะห้อง เจ้าของสัตว์ ความพร้อมใช้ และความจุ
+5. ตรวจการจองสัตว์เลี้ยงซ้อนช่วงวันที่ ก่อนตรวจห้องว่างผ่าน `AvailabilityServiceImpl.checkRoomAvailable(...)`
+6. สร้าง `Booking` และ `BookingPet` พร้อมตรวจบริการเสริมและโปรโมชันที่เลือก
+7. คำนวณราคาผ่าน `PricingServiceImpl.calculate(PricingContext)` และเก็บราคา ณ เวลาจอง
+8. บันทึกผ่าน `BookingRepository.save(...)` โดยใช้ cascade บันทึก `BookingPet` และ `BookingExtraService`
+9. แปลงผลลัพธ์ผ่าน `BookingMapper.toResponse(...)` และกลับไปหน้ารายละเอียดการจองหลัง transaction สำเร็จ
 
-เพื่อให้ภาพอ่านง่าย รวม `UserRepository`, `RoomRepository`, `PetRepository`, `BookingPetRepository`, `ExtraServiceRepository` และ `PromotionRepository` ไว้ใน lifeline ชื่อ **Lookup Repositories** ซึ่งเป็นกลุ่มในภาพ ไม่ใช่คลาสใหม่ เมธอดบนลูกศรใช้ชื่อตัวแปร repository จริง ส่วน `BookingRepository` แสดงแยกเพื่อให้เห็นการตรวจห้องและจุดบันทึกชัดเจน
+เมื่อข้อมูลหรือเงื่อนไขไม่ถูกต้อง ระบบหยุดขั้นตอนที่เหลือ ไม่บันทึกการจอง และกลับไปแสดงฟอร์มพร้อมข้อผิดพลาด
 
-รูปที่สร้างแล้ว:
+`Lookup Repositories` เป็นกลุ่มที่รวม `UserRepository`, `RoomRepository`, `PetRepository`, `BookingPetRepository`, `ExtraServiceRepository` และ `PromotionRepository` เพื่อให้อ่านภาพง่าย ไม่ใช่คลาสใหม่ในระบบ
 
 ![Create Booking Sequence](../img/diagrams/sequence-create-booking.png)
 
-## 3. จบด้วย Activity กระบวนการจอง
+## 3. Activity Diagram: กระบวนการจอง
 
-เปิด [`activity-booking.puml`](diagrams/activity-booking.puml) ภาพนี้แสดงการจองหนึ่งครั้ง ตั้งแต่เลือกห้องจนได้รายการสถานะ `PENDING` ใช้สองช่องแบ่งหน้าที่ระหว่าง Customer และ PetsHotel System
+ต้นฉบับ: [activity-booking.puml](diagrams/activity-booking.puml)
 
-- ก่อนส่งฟอร์ม ระบบปิดสัตว์ที่ติดจอง และคำนวณราคา preview
-- หน้าเว็บต้องมีผลราคาสำเร็จที่ตรงกับข้อมูลปัจจุบัน จึงส่งฟอร์มหลังลูกค้ายืนยันใน dialog ได้
-- Preview ใช้ `prepareBooking(request, false)` จึงไม่บันทึก ไม่ล็อกข้อมูล และไม่ทำการตรวจห้อง/สัตว์ซ้อนขั้นสุดท้าย
-- ตอนสร้างจริงใช้ `prepareBooking(request, true)` ตรวจซ้ำก่อนบันทึก เพราะข้อมูลห้องว่างอาจเปลี่ยนระหว่างกรอกฟอร์ม
-- ทางแยกเมื่อข้อมูลผิด ห้องไม่ว่าง สัตว์จองซ้อน หรือบริการ/โปรโมชันใช้ไม่ได้ จะคืนฟอร์มพร้อมข้อผิดพลาด ลูกค้าสามารถแก้แล้วเริ่มการจองใหม่ได้
-- หลังบันทึกสำเร็จได้ `status = PENDING` และ `paymentStatus = UNPAID` การยืนยัน เช็กอิน เช็กเอาต์ และยกเลิกอยู่ใน State Diagram
+แสดงกระบวนการตั้งแต่เลือกห้องจนสร้างการจอง โดยแบ่งหน้าที่ระหว่าง Customer และ PetsHotel System
 
-รูปที่สร้างแล้ว:
+1. ลูกค้าเลือกห้อง ช่วงวันเข้าพัก สัตว์เลี้ยง และเลือกบริการเสริมหรือโปรโมชันได้
+2. ระบบตรวจข้อมูล แสดงสัตว์ที่ไม่ติดจอง และคำนวณราคาโดยประมาณ
+3. ลูกค้าตรวจรายละเอียดและยืนยันการจอง
+4. ระบบตรวจข้อมูลและความพร้อมของห้องกับสัตว์เลี้ยงอีกครั้ง ก่อนคำนวณราคาและบันทึก
+5. ลูกค้าเห็นรายละเอียดการจองสถานะ `PENDING` และสถานะชำระเงิน `UNPAID`
+
+การคำนวณราคาโดยประมาณใช้ `prepareBooking(request, false)` จึงไม่บันทึก ไม่ล็อกข้อมูล และไม่ตรวจความพร้อมขั้นสุดท้าย ส่วนการสร้างจริงใช้ `prepareBooking(request, true)` เพื่อตรวจซ้ำภายใน transaction
+
+หากพบข้อผิดพลาด ระบบแสดงข้อความให้ลูกค้าแก้ข้อมูลและลองใหม่ การยืนยันการจอง เช็กอิน เช็กเอาต์ และยกเลิกหลังสร้างการจองแสดงใน State Diagram
 
 ![Booking Activity Diagram](../img/diagrams/activity-booking.png)
 
-## ชื่อตัวแปรที่ตรวจเทียบกับโค้ดแล้ว
+## ตัวแปรที่ใช้ใน Diagram
 
-| ชื่อ | ชนิด / ความหมาย | แหล่งอ้างอิง |
+| ตัวแปร | ชนิด / ความหมาย | แหล่งอ้างอิง |
 |---|---|---|
-| `userId` | `Long` — Controller กำหนดจากผู้ใช้ที่ล็อกอิน ไม่รับจากฟอร์ม | `CreateBookingRequest`, `BookingController` |
+| `userId` | `Long` — กำหนดจากบัญชีที่เข้าสู่ระบบ | `CreateBookingRequest`, `BookingController` |
 | `roomId` | `Long` — ห้องที่เลือก | `CreateBookingRequest` |
-| `petIds` | `List<Long>` — สัตว์ที่เข้าพัก ต้องไม่ซ้ำและเป็นของผู้จอง | `CreateBookingRequest`, `validateCreateRequest()`, `validatePets()` |
-| `checkInDate`, `checkOutDate` | `LocalDate` — วันออกต้องหลังวันเข้า | `CreateBookingRequest`, `Booking` |
-| `servicePetIds` | `Map<Long, List<Long>>` — key คือ serviceId, value คือ petIds ที่รับบริการ | `CreateBookingRequest`, `addSelectedServices()` |
-| `promotionId` | `Long` — ไม่บังคับเลือก | `CreateBookingRequest` |
-| `bookingPets`, `extraServices` | รายการ BookingPet และ BookingExtraService ที่บันทึกผ่าน cascade | `Booking` |
-| `bookingPetsByPetId` | `Map<Long, BookingPet>` — ใช้ผูกบริการกับสัตว์ในการจอง | `BookingServiceImpl.prepareBooking()` |
-| `roomAmount`, `serviceAmount`, `surchargeAmount`, `discountAmount`, `totalPrice` | `BigDecimal` — ราคาที่เก็บใน Booking | `Booking`, `BookingServiceImpl.prepareBooking()` |
-| `promotionName` | `String` — เก็บชื่อโปรโมชัน ณ เวลาจอง | `Booking` |
+| `petIds` | `List<Long>` — สัตว์เลี้ยงที่เข้าพัก ต้องไม่ซ้ำและเป็นของผู้จอง | `CreateBookingRequest`, `BookingServiceImpl` |
+| `checkInDate`, `checkOutDate` | `LocalDate` — วันเช็กเอาต์ต้องอยู่หลังวันเช็กอิน | `CreateBookingRequest`, `Booking` |
+| `servicePetIds` | `Map<Long, List<Long>>` — จับคู่รหัสบริการกับรหัสสัตว์ที่รับบริการ | `CreateBookingRequest` |
+| `promotionId` | `Long` — โปรโมชันที่เลือก ไม่บังคับระบุ | `CreateBookingRequest` |
+| `bookingPets`, `extraServices` | รายการสัตว์และบริการเสริมของการจอง บันทึกผ่าน cascade | `Booking` |
+| `bookingPetsByPetId` | `Map<Long, BookingPet>` — ใช้ผูกบริการกับสัตว์ในการจอง | `BookingServiceImpl` |
+| `roomAmount`, `serviceAmount`, `surchargeAmount`, `discountAmount`, `totalPrice` | `BigDecimal` — ราคาแต่ละส่วนและยอดรวม ณ เวลาจอง | `Booking` |
+| `promotionName` | `String` — ชื่อโปรโมชัน ณ เวลาจอง | `Booking` |
 | `status`, `paymentStatus` | `BookingStatus`, `PaymentStatus` — สถานะการจองและการชำระเงิน | `Booking` |
-| `PET_RESERVING_STATUSES`, `ACTIVE_STATUSES` | `PENDING`, `CONFIRMED`, `CHECKED_IN` — สถานะที่นับว่าครองห้อง/สัตว์ | `BookingServiceImpl`, `AvailabilityServiceImpl` |
+| `PET_RESERVING_STATUSES`, `ACTIVE_STATUSES` | กลุ่มสถานะ `PENDING`, `CONFIRMED`, `CHECKED_IN` ที่นับว่าครองห้องหรือสัตว์ | `BookingServiceImpl`, `AvailabilityServiceImpl` |
 
-ไฟล์โค้ดสำหรับตรวจต่อ:
+## โค้ดที่เกี่ยวข้อง
 
-- [BookingStatus.java](../code/src/main/java/com/example/petshotel/domain/enums/BookingStatus.java)
 - [Booking.java](../code/src/main/java/com/example/petshotel/domain/entity/Booking.java)
-- [BookingPet.java](../code/src/main/java/com/example/petshotel/domain/entity/BookingPet.java)
 - [CreateBookingRequest.java](../code/src/main/java/com/example/petshotel/dto/request/CreateBookingRequest.java)
 - [BookingController.java](../code/src/main/java/com/example/petshotel/controller/web/BookingController.java)
-- [BookingRestController.java](../code/src/main/java/com/example/petshotel/controller/api/BookingRestController.java)
 - [BookingServiceImpl.java](../code/src/main/java/com/example/petshotel/service/impl/BookingServiceImpl.java)
 - [AvailabilityServiceImpl.java](../code/src/main/java/com/example/petshotel/service/impl/AvailabilityServiceImpl.java)
-- [booking-form.js](../code/src/main/resources/static/js/booking-form.js)
-- [State implementations](../code/src/main/java/com/example/petshotel/state)
-
-## แก้ .puml แล้วสร้างรูปใหม่
-
-โครงสร้างเหมือนของเพื่อน: ต้นฉบับอยู่ใน `doc/diagrams/` และ PNG อยู่ใน `img/diagrams/` โดยชื่อไฟล์ตรงกัน
-
-เปิด PowerShell ที่โฟลเดอร์โปรเจกต์ชั้นในซึ่งมี `README.md`, `code`, `doc`, `img` แล้วรัน:
-
-```powershell
-.\doc\diagrams\render-booking-diagrams.ps1
-```
-
-สคริปต์ตรวจไวยากรณ์ก่อน แล้วสร้าง PNG ใหม่เฉพาะสามไฟล์ส่วนการจอง รองรับ Java ที่อยู่ใน PATH, `JAVA_HOME` หรือ `.jdks` ภายในโฟลเดอร์ผู้ใช้ และเพิ่มขนาดสูงสุดของภาพเพื่อป้องกันภาพยาวถูกตัด
-
-ครั้งนี้ใช้ PlantUML 1.2025.2 ที่ดาวน์โหลดไว้ในโฟลเดอร์ชั่วคราว หากไฟล์ชั่วคราวถูกล้าง ให้ระบุ jar ที่มีอยู่ในเครื่อง:
-
-```powershell
-.\doc\diagrams\render-booking-diagrams.ps1 -PlantUmlJar 'C:\path\to\plantuml.jar'
-```
-
-หากหา Java ไม่พบ สามารถเพิ่ม `-JavaExecutable 'C:\path\to\java.exe'` ได้
-
-## ใส่รูปในเอกสารเหมือนเพื่อน
-
-หากเอกสาร Markdown อยู่ใน `doc/` ใช้รูปแบบนี้:
-
-```markdown
-![Booking State Diagram](../img/diagrams/state-booking.png)
-![Create Booking Sequence](../img/diagrams/sequence-create-booking.png)
-![Booking Activity Diagram](../img/diagrams/activity-booking.png)
-```
-
-หากใส่ใน `README.md` ที่รากโปรเจกต์ ให้ใช้ `img/diagrams/...` แทน `../img/diagrams/...` คู่มือนี้แทรกรูปทั้งสามไว้แล้ว
+- [State implementations](../code/src/main/java/com/example/petshotel/state) 
