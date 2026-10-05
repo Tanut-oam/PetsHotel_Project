@@ -1,0 +1,181 @@
+@startuml er-diagram
+title PetsHotel - ER Diagram
+
+skinparam defaultFontName Tahoma
+skinparam defaultFontSize 12
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam entity {
+    BackgroundColor #FFFFFF
+    BorderColor #64748B
+}
+skinparam ArrowColor #64748B
+hide circle
+
+' <<PK>> Primary Key  <<FK>> Foreign Key  <<UK>> Unique  * = NOT NULL
+
+entity "users" as users {
+    * id : BIGINT <<PK>>
+    --
+    * first_name : VARCHAR(255)
+    * last_name : VARCHAR(255)
+    * email : VARCHAR(255) <<UK>>
+    * password : VARCHAR(255)
+    * phone_number : VARCHAR(255)
+    * role : VARCHAR(255)
+    * active : BOOLEAN
+    * created_at : TIMESTAMP
+}
+
+entity "rooms" as rooms {
+    * id : BIGINT <<PK>>
+    --
+    * room_number : VARCHAR(255) <<UK>>
+    * name : VARCHAR(255)
+    description : VARCHAR(255)
+    * capacity : INTEGER
+    * price_per_pet_per_night : NUMERIC(10,2)
+    * status : VARCHAR(255)
+    image_url : VARCHAR(500)
+}
+
+entity "pets" as pets {
+    * id : BIGINT <<PK>>
+    --
+    * owner_id : BIGINT <<FK>>
+    * name : VARCHAR(255)
+    * type : VARCHAR(255)
+    breed : VARCHAR(255)
+    age : INTEGER
+    weight : DOUBLE PRECISION
+    gender : VARCHAR(255)
+    medical_note : VARCHAR(255)
+    feeding_instruction : VARCHAR(255)
+    special_note : VARCHAR(255)
+    image_url : VARCHAR(255)
+    * active : BOOLEAN
+}
+
+entity "bookings" as bookings {
+    * id : BIGINT <<PK>>
+    --
+    * user_id : BIGINT <<FK>>
+    * room_id : BIGINT <<FK>>
+    promotion_id : BIGINT <<FK>>
+    * check_in_date : DATE
+    * check_out_date : DATE
+    * status : VARCHAR(255)
+    room_amount : NUMERIC(10,2)
+    service_amount : NUMERIC(10,2)
+    surcharge_amount : NUMERIC(10,2)
+    discount_amount : NUMERIC(10,2)
+    total_price : NUMERIC(38,2)
+    promotion_name : VARCHAR(255)
+    * payment_status : VARCHAR(255)
+    paid_amount : NUMERIC(10,2)
+    paid_at : TIMESTAMP
+    * created_at : TIMESTAMP
+}
+
+entity "booking_pets" as booking_pets {
+    * id : BIGINT <<PK>>
+    --
+    * booking_id : BIGINT <<FK>>
+    * pet_id : BIGINT <<FK>>
+}
+
+entity "extra_services" as extra_services {
+    * id : BIGINT <<PK>>
+    --
+    * name : VARCHAR(255)
+    description : TEXT
+    * price : NUMERIC(10,2)
+    * active : BOOLEAN
+}
+
+entity "booking_extra_services" as booking_extra_services {
+    * id : BIGINT <<PK>>
+    --
+    * booking_id : BIGINT <<FK>>
+    * extra_service_id : BIGINT <<FK>>
+    booking_pet_id : BIGINT <<FK>>
+    * quantity : INTEGER
+    * unit_price : NUMERIC(10,2)
+    * total_price : NUMERIC(10,2)
+}
+
+entity "promotions" as promotions {
+    * id : BIGINT <<PK>>
+    --
+    * name : VARCHAR(255)
+    description : TEXT
+    * type : VARCHAR(255)
+    * value : NUMERIC(10,2)
+    start_date : DATE
+    end_date : DATE
+    minimum_nights : INTEGER
+    * active : BOOLEAN
+}
+
+entity "receipts" as receipts {
+    * id : BIGINT <<PK>>
+    --
+    * booking_id : BIGINT <<FK>> <<UK>>
+    * receipt_number : VARCHAR(255) <<UK>>
+    * issued_at : TIMESTAMP
+    room_amount : NUMERIC(10,2)
+    service_amount : NUMERIC(10,2)
+    surcharge_amount : NUMERIC(10,2)
+    discount_amount : NUMERIC(10,2)
+    * total_amount : NUMERIC(10,2)
+}
+
+entity "daily_care_reports" as daily_care_reports {
+    * id : BIGINT <<PK>>
+    --
+    * booking_pet_id : BIGINT <<FK>>
+    * recorded_by_id : BIGINT <<FK>>
+    * report_date : DATE
+    feeding_morning : VARCHAR(255)
+    feeding_evening : VARCHAR(255)
+    walking_minutes : INTEGER
+    grooming : VARCHAR(255)
+    mood : VARCHAR(255)
+    health_note : VARCHAR(255)
+    general_note : VARCHAR(255)
+    * created_at : TIMESTAMP
+    ..
+    UNIQUE (booking_pet_id, report_date)
+}
+
+' ---------- One-to-Many ----------
+users ||--o{ pets : "owns\n(owner_id)"
+users ||--o{ bookings : "makes\n(user_id)"
+rooms ||--o{ bookings : "is booked in\n(room_id)"
+promotions |o--o{ bookings : "applied to\n(promotion_id)"
+
+' ---------- Many-to-Many: bookings <-> pets ----------
+bookings ||--|{ booking_pets : "includes\n(booking_id)"
+pets ||--o{ booking_pets : "stays in\n(pet_id)"
+
+' ---------- Many-to-Many: bookings <-> extra_services ----------
+bookings ||--o{ booking_extra_services : "has\n(booking_id)"
+extra_services ||--o{ booking_extra_services : "ordered as\n(extra_service_id)"
+booking_pets |o--o{ booking_extra_services : "received by\n(booking_pet_id)"
+
+' ---------- Daily care ----------
+booking_pets ||--o{ daily_care_reports : "reported in\n(booking_pet_id)"
+users ||--o{ daily_care_reports : "records\n(recorded_by_id)"
+
+' ---------- One-to-One ----------
+bookings ||--o| receipts : "has receipt\n(booking_id UNIQUE)"
+
+legend bottom
+    * = NOT NULL   <<PK>> Primary Key   <<FK>> Foreign Key   <<UK>> Unique
+    Crow's foot notation: one-to-many (users-pets, rooms-bookings, ...), one-to-one (bookings-receipts).
+    Circle on the "one" side = optional FK (bookings.promotion_id, booking_extra_services.booking_pet_id).
+    booking_pets and booking_extra_services resolve Many-to-Many relationships.
+    Enum columns (role, status, type, payment_status) are stored as VARCHAR.
+endlegend
+@enduml

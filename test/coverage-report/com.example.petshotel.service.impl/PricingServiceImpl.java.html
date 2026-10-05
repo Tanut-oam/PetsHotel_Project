@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PricingServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">PricingServiceImpl.java</span></div><h1>PricingServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import com.example.petshotel.domain.enums.PricingCategory;
+import com.example.petshotel.dto.response.BookingPriceResponse;
+import com.example.petshotel.pricing.PricingContext;
+import com.example.petshotel.pricing.PricingStrategy;
+import com.example.petshotel.service.PricingService;
+
+@Service
+public class PricingServiceImpl implements PricingService {
+
+    private final List&lt;PricingStrategy&gt; strategies;
+
+<span class="fc" id="L21">    public PricingServiceImpl(List&lt;PricingStrategy&gt; strategies) {</span>
+<span class="fc" id="L22">        this.strategies = strategies;</span>
+<span class="fc" id="L23">    }</span>
+
+    @Override
+    public BookingPriceResponse calculate(PricingContext input) {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        if (input == null</span>
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">            || input.getRoom() == null</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">            || input.getCheckIn() == null</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">            || input.getCheckOut() == null</span>
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">            || input.getPetCount() &lt;= 0</span>
+        ) {
+<span class="nc" id="L33">            throw new IllegalArgumentException(</span>
+                &quot;Invalid pricing data&quot;
+            );
+        }
+
+<span class="fc" id="L38">        long nights = ChronoUnit.DAYS.between(input.getCheckIn(), input.getCheckOut());</span>
+<span class="pc bpc" id="L39" title="1 of 4 branches missed.">        if (nights &lt;= 0 || nights &gt; Integer.MAX_VALUE) {</span>
+<span class="fc" id="L40">            throw new IllegalArgumentException(</span>
+                &quot;Check-out must be after check-in&quot;
+            );
+        }
+
+<span class="fc" id="L45">        PricingContext context = new PricingContext();</span>
+<span class="fc" id="L46">        context.setRoom(input.getRoom());</span>
+<span class="fc" id="L47">        context.setPetCount(input.getPetCount());</span>
+<span class="fc" id="L48">        context.setNights(Math.toIntExact(nights));</span>
+<span class="fc" id="L49">        context.setCheckIn(input.getCheckIn());</span>
+<span class="fc" id="L50">        context.setCheckOut(input.getCheckOut());</span>
+<span class="fc" id="L51">        context.setExtraServices(input.getExtraServices());</span>
+<span class="fc" id="L52">        context.setPromotion(input.getPromotion());</span>
+
+<span class="fc" id="L54">        EnumMap&lt;PricingCategory, BigDecimal&gt; amounts = new EnumMap&lt;&gt;(PricingCategory.class);</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        for(PricingStrategy strategy : strategies){</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            if (strategy.category() != PricingCategory.DISCOUNT) {</span>
+<span class="fc" id="L58">                BigDecimal amount = strategy.calculate(context, BigDecimal.ZERO);</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">                if (amount == null) {</span>
+<span class="nc" id="L60">                    throw new IllegalStateException(&quot;Pricing strategy returned no amount&quot;);</span>
+                }
+
+<span class="fc" id="L63">                PricingCategory category = strategy.category();</span>
+<span class="fc" id="L64">                BigDecimal previous = amounts.get(category);</span>
+
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">                if (previous == null) {</span>
+<span class="fc" id="L67">                    amounts.put(category, amount);</span>
+                } else {
+<span class="nc" id="L69">                    amounts.put(category, previous.add(amount));</span>
+                }
+            }
+<span class="fc" id="L72">        }</span>
+
+<span class="fc" id="L74">        BigDecimal room = amounts.getOrDefault(</span>
+                PricingCategory.ROOM, BigDecimal.ZERO)
+<span class="fc" id="L76">                .setScale(2, RoundingMode.HALF_UP);</span>
+
+<span class="fc" id="L78">        BigDecimal extra = amounts.getOrDefault(</span>
+                PricingCategory.EXTRA_SERVICE, BigDecimal.ZERO)
+<span class="fc" id="L80">                .setScale(2, RoundingMode.HALF_UP);</span>
+
+<span class="fc" id="L82">        BigDecimal holiday = amounts.getOrDefault(</span>
+                PricingCategory.HOLIDAY_SURCHARGE, BigDecimal.ZERO)
+<span class="fc" id="L84">                .setScale(2, RoundingMode.HALF_UP);</span>
+        
+<span class="fc" id="L86">        BigDecimal subtotal = room.add(extra).add(holiday);</span>
+
+<span class="fc" id="L88">        BigDecimal discount = BigDecimal.ZERO;</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        for(PricingStrategy strategy : strategies){</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">            if (strategy.category() == PricingCategory.DISCOUNT) {</span>
+<span class="fc" id="L91">                discount = discount.max(strategy.calculate(context, subtotal));</span>
+            }
+<span class="fc" id="L93">        }</span>
+
+<span class="fc" id="L95">        discount = discount.setScale(2, RoundingMode.HALF_UP).min(subtotal);</span>
+<span class="fc" id="L96">        BigDecimal total = subtotal.subtract(discount);</span>
+
+<span class="fc" id="L98">        return new BookingPriceResponse(</span>
+            room, extra, holiday, discount, total
+        );
+
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

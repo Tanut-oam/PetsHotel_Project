@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>รายละเอียดการจอง · PetsHotel</title>
+
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script defer th:src="@{/js/booking-ui.js}"></script>
+
+  <style>
+    [hidden] {
+      display: none !important;
+    }
+
+    dialog {
+      border: 0;
+      border-radius: 12px;
+      padding: 24px;
+      width: min(480px, 90vw);
+    }
+
+    dialog::backdrop {
+      background: rgb(0 0 0 / 40%);
+    }
+
+    [data-booking-page="detail"] {
+      max-width: 1100px;
+    }
+
+    #booking-detail {
+      padding: 24px;
+    }
+
+    .booking-detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .booking-detail-grid > section {
+      min-width: 0;
+    }
+
+    .booking-detail-grid h2 {
+      margin: 0 0 18px;
+    }
+
+    .booking-detail-grid dl {
+      display: grid;
+      grid-template-columns: minmax(110px, 0.85fr) minmax(0, 1.15fr);
+      gap: 12px 16px;
+      margin: 0;
+    }
+
+    .booking-detail-grid dt {
+      color: #657770;
+    }
+
+    .booking-detail-grid dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .booking-price {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #f6faf7;
+    }
+
+    .booking-price dt:last-of-type,
+    .booking-price dd:last-of-type {
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: #245e47;
+      font-weight: 700;
+    }
+
+    #booking-detail > section {
+      margin-top: 24px;
+    }
+
+    #booking-detail > .row {
+      margin-top: 24px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    #booking-detail > .row form {
+      margin: 0;
+    }
+
+    @media (max-width: 800px) {
+      .booking-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      #booking-detail {
+        padding: 18px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .booking-detail-grid dl {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      .booking-detail-grid dd {
+        margin-bottom: 10px;
+      }
+    }
+
+    .booking-cancel-hint {
+      margin: 16px 0 0;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="content" data-booking-page="detail">
+      <h1 th:text="${'รายละเอียดการจอง #' + booking.id}">
+        รายละเอียดการจอง
+      </h1>
+
+      <p th:if="${message}"
+         th:text="${message}"
+         role="status"></p>
+
+      <p th:if="${error}"
+         th:text="${error}"
+         role="alert"></p>
+
+         <div class="booking-detail-status-summary">
+            <span class="booking-status-badge"
+                  data-status-label
+                  th:attr="data-status-label=${booking.status}"
+                  th:text="${booking.status}">
+            </span>
+
+            <span class="payment-status-badge"
+                  data-payment-label
+                  th:attr="data-payment-label=${booking.paymentStatus}"
+                  th:text="${booking.paymentStatus}">
+            </span>
+          </div>
+
+          <section class="booking-cancelled-notice"
+                  th:if="${booking.status != null
+                    and booking.status.name() == 'CANCELLED'}"
+                  role="status">
+
+            <span class="booking-cancelled-icon"
+                  aria-hidden="true">
+              ✕
+            </span>
+
+            <div>
+              <h2>การจองนี้ถูกยกเลิกแล้ว</h2>
+
+              <p>
+                ห้องพักและช่วงวันที่ของรายการนี้ไม่ถูกสงวนไว้แล้ว
+                หากต้องการเข้าพัก กรุณาสร้างการจองใหม่
+              </p>
+            </div>
+          </section>
+
+      <section id="booking-detail" class="panel">
+        <div class="booking-detail-grid">
+          <section class="booking-information">
+            <h2>ข้อมูลการจอง</h2>
+
+            <dl>
+              <dt>เลขที่การจอง</dt>
+              <dd th:text="${booking.id}"></dd>
+
+              <dt>ห้องพัก</dt>
+              <dd th:text="${booking.roomName}"></dd>
+
+              <dt>สัตว์เลี้ยง</dt>
+              <dd>
+                <span th:if="${#lists.isEmpty(booking.petNames)}">
+                  ไม่มีข้อมูล
+                </span>
+
+                <span th:each="petName, item : ${booking.petNames}"
+                      th:text="${petName + (item.last ? '' : ', ')}"></span>
+              </dd>
+
+              <dt>วันเช็กอิน</dt>
+                <dd th:text="${#temporals.format(
+                  booking.checkInDate,
+                  'dd/MM/yyyy'
+                )}">
+                  02/10/2026
+                </dd>
+
+                <dt>วันเช็กเอาต์</dt>
+                <dd th:text="${#temporals.format(
+                  booking.checkOutDate,
+                  'dd/MM/yyyy'
+                )}">
+                  04/10/2026
+                </dd>
+
+              <dt>สถานะ</dt>
+              <dd>
+                <span class="booking-status-badge"
+                    data-status-label
+                    th:attr="data-status-label=${booking.status}"
+                    th:text="${booking.status}">
+              </span>
+              </dd>
+
+              <dt>การชำระเงิน</dt>
+              <dd>
+                  <span class="payment-status-badge"
+                      data-payment-label
+                      th:attr="data-payment-label=${booking.paymentStatus}"
+                      th:text="${booking.paymentStatus}">
+                </span>
+              </dd>
+
+              <dt>โปรโมชันตอนจอง</dt>
+              <dd th:text="${booking.promotionName != null
+                ? booking.promotionName : 'ไม่ใช้โปรโมชัน'}"></dd>
+            </dl>
+          </section>
+
+          <section class="booking-price">
+            <h2>รายละเอียดราคา</h2>
+
+            <dl>
+              <dt>ค่าห้องพัก</dt>
+              <dd th:text="${booking.roomAmount != null
+                ? booking.roomAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+
+              <dt>ค่าบริการเสริม</dt>
+              <dd th:text="${booking.serviceAmount != null
+                ? booking.serviceAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+
+              <dt>ค่าธรรมเนียมเพิ่มเติม</dt>
+              <dd th:text="${booking.surchargeAmount != null
+                ? booking.surchargeAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+
+              <dt>ส่วนลด</dt>
+              <dd th:text="${booking.discountAmount != null
+                ? booking.discountAmount + ' บาท' : 'ไม่มีข้อมูล'}"></dd>
+
+              <dt>ยอดรวม</dt>
+              <dd>
+                <strong th:text="${booking.totalPrice != null
+                  ? booking.totalPrice + ' บาท' : 'ไม่มีข้อมูล'}"></strong>
+              </dd>
+            </dl>
+          </section>
+        </div>
+
+        <section th:if="${not #lists.isEmpty(booking.extraServices)}">
+          <h2>บริการเสริมที่จอง</h2>
+
+          <div class="table-scroll">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>บริการ</th>
+                  <th>สัตว์ที่รับบริการ</th>
+                  <th>ราคาต่อหน่วย (บาท)</th>
+                  <th>รวม (บาท)</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr th:each="service : ${booking.extraServices}">
+                  <td th:text="${service.name}"></td>
+                  <td th:text="${service.petName != null
+                    ? service.petName : 'รายการเดิมไม่ระบุสัตว์'}"></td>
+                  <td th:text="${service.unitPrice}"></td>
+                  <td th:text="${service.totalPrice}"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="row">
+          <a class="btn" th:href="@{/bookings}">
+            กลับรายการของฉัน
+          </a>
+
+          <a class="btn btn-primary"
+             th:if="${booking.paymentStatus != null
+               and booking.paymentStatus.name() == 'PAID'}"
+             th:href="@{/bookings/{id}/receipt(id=${booking.id})}">
+            ดูใบเสร็จ
+          </a>
+
+          <form method="post"
+                th:if="${booking.paymentStatus != null
+                  and booking.paymentStatus.name() == 'UNPAID'
+                  and booking.status != null
+                  and (booking.status.name() == 'PENDING'
+                    or booking.status.name() == 'CONFIRMED')}"
+                th:action="@{/bookings/{id}/cancel(id=${booking.id})}"
+                th:attr="data-confirm=${'ยืนยันยกเลิกการจอง #'
+                  + booking.id + ' หรือไม่?'}">
+
+            <button class="btn" type="submit">
+              ยกเลิกการจอง
+            </button>
+          </form>
+        </div>
+
+       <p class="muted booking-cancel-hint"
+          th:if="${booking.status != null
+            and booking.status.name() != 'CANCELLED'}">
+          ยกเลิกได้เฉพาะรายการที่ยังไม่ชำระเงิน
+          และอยู่ในสถานะรอยืนยันหรือยืนยันแล้ว
+      </p>
+      </section>
+
+      <dialog id="booking-dialog" aria-labelledby="dialog-title">
+        <h2 id="dialog-title">ยืนยันการดำเนินการ</h2>
+
+        <p id="dialog-text" style="white-space: pre-line"></p>
+
+        <div class="row">
+          <button id="dialog-close" class="btn" type="button">
+            ปิด
+          </button>
+
+          <button id="dialog-confirm"
+                  class="btn btn-primary"
+                  type="button">
+            ยืนยัน
+          </button>
+        </div>
+      </dialog>
+    </main>
+  </div>
+</body>
+</html>

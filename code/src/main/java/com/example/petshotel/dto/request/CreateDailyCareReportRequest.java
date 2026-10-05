@@ -4,19 +4,31 @@ import java.time.LocalDate;
 
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.NotNull;
-
+import io.swagger.v3.oas.annotations.media.Schema;
 public record CreateDailyCareReportRequest(
     @NotNull(message = "Report date is required")
+    @Schema(description = "วันที่บันทึกรายงาน ต้องอยู่ในช่วงเข้าพัก", example = "2026-10-03")
     LocalDate reportDate,
 
+    @Schema(description = "อาหารที่ให้ช่วงเช้า", example = "อาหารเม็ด 100 กรัม")
     String feedingMorning,
+
+    @Schema(description = "อาหารที่ให้ช่วงเย็น", example = "อาหารเปียก 1 ซอง")
     String feedingEvening,
-    
+
     @PositiveOrZero(message = "Walking minutes must be zero or greater")
+    @Schema(description = "ระยะเวลาเดินเล่นเป็นนาที", example = "15")
     Integer walkingMinutes,
 
+    @Schema(description = "การดูแลความสะอาด", example = "แปรงขน")
     String grooming,
+
+    @Schema(description = "อารมณ์ของสัตว์เลี้ยง", example = "ร่าเริง")
     String mood,
+
+    @Schema(description = "ข้อมูลสุขภาพประจำวัน", example = "สุขภาพปกติ")
     String healthNote,
+
+    @Schema(description = "หมายเหตุเพิ่มเติม", example = "กินอาหารครบทั้งสองมื้อ")
     String generalNote
 ) {}

@@ -29,6 +29,7 @@ public class Pet {
     private String medicalNote;
     private String feedingInstruction;
     private String specialNote;
+    private String imageUrl;
     private String gender;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

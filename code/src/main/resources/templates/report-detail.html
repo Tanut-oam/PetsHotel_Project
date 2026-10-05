@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>รายละเอียดรายงานการดูแล | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/customer-report-date-picker.css}">
+  <script th:src="@{/js/customer-report-date-picker.js}" defer></script>
+</head>
+<body>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="content">
+      <p><a th:href="@{/reports}">← กลับไปรายการรายงาน</a></p>
+
+      <div class="section-title">
+        <h1 th:text="|รายงานการดูแลของ ${petName}|">
+          รายงานการดูแลของสัตว์เลี้ยง
+        </h1>
+      </div>
+
+      <p class="muted"
+         th:text="|การจอง #${bookingId} · ${reportCount} รายงาน|">
+        ข้อมูลการจอง
+      </p>
+
+      <div class="customer-report-date-toolbar"
+           th:if="${reportCount > 1}"
+           th:attr="data-selected-date=${selectedReport.reportDate}"
+           data-customer-report-date-picker>
+        <strong>วันที่รายงาน</strong>
+
+        <button class="customer-report-date-toggle"
+                type="button"
+                data-calendar-toggle
+                aria-expanded="false"
+                aria-controls="customer-report-calendar">
+          <span class="material-symbols-outlined"
+                aria-hidden="true">calendar_month</span>
+          <time th:datetime="${selectedReport.reportDate}"
+                th:text="${#temporals.format(
+                    selectedReport.reportDate, 'dd/MM/yyyy')}">
+            วันที่รายงาน
+          </time>
+          <span aria-hidden="true">⌄</span>
+        </button>
+
+        <div id="customer-report-calendar"
+             class="customer-report-date-popup"
+             data-calendar-popup
+             hidden>
+          <div class="calendar-month-navigation">
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-calendar-previous
+                    aria-label="เดือนก่อนหน้า">←</button>
+
+            <strong data-calendar-month
+                    aria-live="polite">เดือนและปี</strong>
+
+            <button class="calendar-icon-button"
+                    type="button"
+                    data-calendar-next
+                    aria-label="เดือนถัดไป">→</button>
+          </div>
+
+          <div class="calendar-weekdays"
+               aria-hidden="true">
+            <span>อา.</span>
+            <span>จ.</span>
+            <span>อ.</span>
+            <span>พ.</span>
+            <span>พฤ.</span>
+            <span>ศ.</span>
+            <span>ส.</span>
+          </div>
+
+          <div class="room-calendar-grid customer-report-date-grid"
+               data-calendar-grid
+               role="group"
+               aria-label="วันที่มีรายงาน">
+          </div>
+
+          <p class="customer-report-date-help">
+            เลือกได้เฉพาะวันที่มีรายงาน
+          </p>
+        </div>
+
+        <div hidden>
+          <a th:each="item : ${reportDates}"
+             th:attr="data-report-date=${item.reportDate}"
+             th:href="@{/reports/pets/{bookingPetId}(
+                 bookingPetId=${bookingPetId},
+                 reportId=${item.id})}">
+          </a>
+        </div>
+      </div>
+
+      <article class="panel">
+        <div class="row">
+          <h2>
+            วันที่
+            <time th:datetime="${selectedReport.reportDate}"
+                  th:text="${#temporals.format(
+                      selectedReport.reportDate, 'dd/MM/yyyy')}">
+              วันที่รายงาน
+            </time>
+          </h2>
+
+          <span class="badge"
+                th:text="|การจอง #${bookingId}|">
+            เลขการจอง
+          </span>
+        </div>
+
+        <div class="grid cols-3">
+          <section>
+            <h3>อาหาร</h3>
+            <p>
+              เช้า:
+              <span th:text="${#strings.isEmpty(
+                  selectedReport.feedingMorning)
+                  ? '—' : selectedReport.feedingMorning}">—</span>
+            </p>
+            <p>
+              เย็น:
+              <span th:text="${#strings.isEmpty(
+                  selectedReport.feedingEvening)
+                  ? '—' : selectedReport.feedingEvening}">—</span>
+            </p>
+          </section>
+
+          <section>
+            <h3>กิจกรรมและความสะอาด</h3>
+            <p>
+              เดินเล่น:
+              <span th:text="${selectedReport.walkingMinutes == null
+                  ? '—' : selectedReport.walkingMinutes + ' นาที'}">—</span>
+            </p>
+            <p>
+              ดูแลความสะอาด:
+              <span th:text="${#strings.isEmpty(selectedReport.grooming)
+                  ? '—' : selectedReport.grooming}">—</span>
+            </p>
+          </section>
+
+          <section>
+            <h3>อารมณ์และสุขภาพ</h3>
+            <p>
+              อารมณ์:
+              <span th:text="${#strings.isEmpty(selectedReport.mood)
+                  ? '—' : selectedReport.mood}">—</span>
+            </p>
+            <p>
+              สุขภาพ:
+              <span th:text="${#strings.isEmpty(selectedReport.healthNote)
+                  ? '—' : selectedReport.healthNote}">—</span>
+            </p>
+          </section>
+        </div>
+
+        <p>
+          <strong>หมายเหตุเพิ่มเติม:</strong>
+          <span th:text="${#strings.isEmpty(selectedReport.generalNote)
+              ? 'ไม่มี' : selectedReport.generalNote}">
+            ไม่มี
+          </span>
+        </p>
+      </article>
+    </main>
+  </div>
+
+  <footer class="footer">
+    PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด
+  </footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# SOLID Analysis
+
+## กิตติธัช: Room, User และ Notification
+
+| หลักการ | ไฟล์ : บรรทัด | สิ่งที่เห็นในโค้ด | เหตุผล |
+|---|---|---|---|
+| **S** Single Responsibility | `service/impl/RoomServiceImpl.java:26`, `service/impl/LocalFileStorageService.java:22`, `mapper/RoomMapper.java:8` | `RoomServiceImpl` ทำเฉพาะกฎของห้อง (ห้ามเลขห้องซ้ำ, สถานะเริ่มต้น `ACTIVE`) งานบันทึกไฟล์รูปแยกไป `LocalFileStorageService` และการแปลง Entity เป็น DTO แยกไป `RoomMapper` ส่วน validation อยู่ใน `CreateRoomRequest` | แต่ละคลาสมีเหตุผลที่ต้องเปลี่ยนเพียงอย่างเดียว เช่นถ้าเปลี่ยนที่เก็บรูปไป cloud จะแก้แค่ storage ไม่กระทบกฎของห้อง |
+| **O** Open/Closed | `service/impl/BookingServiceImpl.java:389-390`, `notification/BookingConfirmedListener.java:26` | ตอนยืนยันการจอง service แค่ `publishEvent(new BookingConfirmedEvent(...))` การส่งอีเมลอยู่ใน Listener แยก | เพิ่มช่องทางแจ้งเตือนใหม่ (เช่น SMS) ได้ด้วยการ**เพิ่ม Listener ใหม่** โดยไม่ต้องแก้ `BookingServiceImpl` |
+| **L** Liskov Substitution | `service/FileStorageService.java:5`, `service/impl/LocalFileStorageService.java:22`, `service/impl/RoomServiceImpl.java:137` | `RoomServiceImpl` เรียก `fileStorageService.storeRoomImage()` ผ่าน interface ใน test ใช้ mock แทน `LocalFileStorageService` ได้ และทำงานถูกต้องเหมือนกัน | ตัว implement ใดๆ ของ `FileStorageService` ใช้แทนกันได้โดย `RoomServiceImpl` ไม่ต้องรู้และไม่พัง ไม่มีเมธอดไหนโยน `UnsupportedOperationException` |
+| **I** Interface Segregation | `service/AuthService.java:5`, `service/CurrentUserService.java:5`, `service/UserService.java:8`, `controller/web/AdminUserPageController.java:26` | งานเกี่ยวกับผู้ใช้แยกเป็น 3 interface เล็ก: `AuthService` (สมัคร), `CurrentUserService` (หาผู้ใช้ที่ล็อกอิน), `UserService` (แอดมินจัดการสมาชิก) | คลาสที่ใช้พึ่งเฉพาะเมธอดที่ต้องใช้ เช่น `AuthController` ไม่ต้องรู้จักเมธอดค้นหาหรือแก้ไขสมาชิกของแอดมิน |
+| **D** Dependency Inversion | `service/impl/RoomServiceImpl.java:30-35`, `controller/api/RoomRestController.java:37-39` | `RoomServiceImpl` รับ `FileStorageService` (interface) ผ่าน constructor ไม่ได้ `new LocalFileStorageService()` เอง และ `RoomRestController` รับ `RoomService` (interface) ผ่าน constructor | ชั้นบนพึ่ง abstraction ไม่พึ่งคลาสจริง ใช้ Constructor Injection ตามที่ใบงานกำหนด Spring เป็นผู้ส่งตัวจริงเข้ามา |

@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +21,12 @@ import org.mockito.ArgumentCaptor;
 
 import com.example.petshotel.domain.entity.Booking;
 import com.example.petshotel.domain.entity.Receipt;
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.repository.BookingRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.ReceiptServiceImpl;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 public class ReceiptServiceTest  {
     private ReceiptRepository receiptRepository;
@@ -41,11 +45,20 @@ public class ReceiptServiceTest  {
     private Booking bookingWithPrices(){
         Booking booking = new Booking();
         booking.setId(1L);
+        User customer = new User();
+        customer.setId(10L);
+        customer.setFirstName("กิตติญาดา");
+        customer.setLastName("กองคำ");
+        booking.setUser(customer);
         booking.setRoomAmount(new BigDecimal("5000.00"));
         booking.setServiceAmount(new BigDecimal("200.00"));
         booking.setSurchargeAmount(new BigDecimal("900.00"));
         booking.setDiscountAmount(new BigDecimal("610.00"));
         booking.setTotalPrice(new BigDecimal("5490.00"));
+        booking.setPaymentStatus(PaymentStatus.PAID);
+        booking.setPaidAmount(new BigDecimal("5490.00"));
+        booking.setPaidAt(LocalDateTime.of(2026, 10, 1, 10, 0));
+
         return booking;
     }
 
@@ -53,7 +66,7 @@ public class ReceiptServiceTest  {
     void createsReceiptUsingSavedBookingPrices(){
         Booking booking = bookingWithPrices();
 
-        when(bookingRepository.findById(1L))
+        when(bookingRepository.findByIdForUpdate(1L))
             .thenReturn(Optional.of(booking));
         when(receiptRepository.findByBookingId(1L))
             .thenReturn(Optional.empty());
@@ -88,7 +101,7 @@ public class ReceiptServiceTest  {
         existing.setId(10L);
         existing.setBooking(booking);
 
-        when(bookingRepository.findById(1L))
+        when(bookingRepository.findByIdForUpdate(1L))
             .thenReturn(Optional.of(booking));
         when(receiptRepository.findByBookingId(1L))
             .thenReturn(Optional.of(existing));
@@ -101,12 +114,13 @@ public class ReceiptServiceTest  {
 
     @Test 
     void rejectsMissingBooking(){
-        when(bookingRepository.findById(99L))
+        when(bookingRepository.findByIdForUpdate(99L))
             .thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class,
-            () -> receiptService.createReceipt(99L));
+        ResourceNotFoundException exception = assertThrows(
+            ResourceNotFoundException.class, () -> receiptService.createReceipt(99L));
         
+        assertEquals("Booking not found: 99", exception.getMessage());
         verify(receiptRepository, never()).save(any(Receipt.class));
     }
 
@@ -115,7 +129,7 @@ public class ReceiptServiceTest  {
         Booking booking = bookingWithPrices();
         booking.setDiscountAmount(null);
 
-        when(bookingRepository.findById(1L))
+        when(bookingRepository.findByIdForUpdate(1L))
             .thenReturn(Optional.of(booking));
         when(receiptRepository.findByBookingId(1L))
             .thenReturn(Optional.empty());
@@ -125,6 +139,51 @@ public class ReceiptServiceTest  {
 
         verify(receiptRepository, never()).save(any(Receipt.class));
         
+    }
+
+    @Test
+    void rejectsUnpaidBooking() {
+        Booking booking = bookingWithPrices();
+        booking.setPaymentStatus(PaymentStatus.UNPAID);
+        booking.setPaidAmount(null);
+        booking.setPaidAt(null);
+
+        when(bookingRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(booking));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> receiptService.createReceipt(1L));
+
+        verify(receiptRepository, never()).save(any(Receipt.class));
+    }
+
+    @Test
+    void customerNameShouldRemainSnapshot() {
+        Booking booking = bookingWithPrices();
+
+        when(bookingRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(booking));
+
+        when(receiptRepository.findByBookingId(1L))
+                .thenReturn(Optional.empty());
+
+        when(receiptRepository.save(any(Receipt.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Receipt receipt = receiptService.createReceipt(1L);
+
+        assertEquals(
+                "กิตติญาดา กองคำ",
+                receipt.getCustomerName()
+        );
+
+        booking.getUser().setFirstName("ชื่อใหม่");
+
+        assertEquals(
+                "กิตติญาดา กองคำ",
+                receipt.getCustomerName()
+        );
     }
 
 }

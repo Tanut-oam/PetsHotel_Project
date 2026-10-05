@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="th"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+
+  <title th:text="${room.name} + ' | PetsHotel'">
+    ห้องพัก | PetsHotel
+  </title>
+
+  <link rel="stylesheet"
+        th:href="@{/css/styles.css}">
+
+  <script th:src="@{/js/room-availability.js}"
+          defer></script>
+</head>
+
+<body>
+  <header th:replace="~{fragments/layout :: topbar}">
+  </header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}">
+    </aside>
+
+    <main class="content">
+      <a th:href="@{/rooms}">
+        ← กลับไปหน้าห้องพัก
+      </a>
+
+      <div class="section-title">
+        <h1 th:text="${room.name}">
+          Deluxe Room
+        </h1>
+
+        <span class="badge"
+              th:if="${room.status.name() == 'ACTIVE'}">
+          เปิดให้จอง
+        </span>
+
+        <span class="badge badge-warning"
+              th:if="${room.status.name() == 'MAINTENANCE'}">
+          ปิดซ่อม
+        </span>
+
+        <span class="badge badge-danger"
+              th:if="${room.status.name() == 'INACTIVE'}">
+          ปิดใช้งาน
+        </span>
+      </div>
+
+      <p class="muted">
+        ห้อง
+        <span th:text="${room.roomNumber}">
+          101
+        </span>
+
+        · รองรับสัตว์เลี้ยงสูงสุด
+
+        <span th:text="${room.capacity}">
+          3
+        </span>
+
+        ตัวต่อการจอง
+      </p>
+
+      <img th:if="${room.imageUrl}"
+           class="room-image large"
+           th:src="@{${room.imageUrl}}"
+           th:alt="${room.name}">
+
+      <div class="detail-layout">
+        <div>
+          <section class="panel">
+            <h2>รายละเอียดห้อง</h2>
+
+            <p th:text="${room.description}">
+              รายละเอียดห้อง
+            </p>
+
+            <div class="grid cols-2">
+              <p>
+                🐾 รองรับสัตว์เลี้ยง
+
+                <span th:text="${room.capacity}">
+                  3
+                </span>
+
+                ตัว
+              </p>
+
+              <p>
+                🏠 หนึ่งห้องต่อหนึ่งการจอง
+              </p>
+            </div>
+
+            <hr class="divider">
+
+            <h3>เวลาเข้าพัก</h3>
+
+            <p>
+              เช็กอิน 14:00 น.
+              ·
+              เช็กเอาต์ 12:00 น.
+            </p>
+          </section>
+        </div>
+
+        <aside class="panel room-booking-panel">
+          <h2 class="room-price">
+            ฿<span th:text="${#numbers.formatDecimal(
+                    room.pricePerPetPerNight,
+                    1,
+                    'COMMA',
+                    2,
+                    'POINT'
+                  )}">
+              500.00
+            </span>
+
+            <small>/ ตัว / คืน</small>
+          </h2>
+
+          <div th:if="${room.status.name() == 'ACTIVE'}"
+               id="room-booking-widget"
+               th:attr="
+                 data-room-id=${room.id},
+                 data-calendar-url=@{/api/rooms/{roomId}/availability-calendar(
+                   roomId=${room.id}
+                 )},
+                 data-booking-url=@{/bookings/new}
+               ">
+
+            <p class="muted booking-help">
+              เลือกช่วงวันเข้าพักจากปฏิทิน
+              วันที่ไม่ว่างจะไม่สามารถเลือกได้
+            </p>
+
+            <div class="booking-compact-fields">
+              <button id="open-room-calendar"
+                      class="date-range-trigger"
+                      type="button"
+                      aria-haspopup="dialog"
+                      aria-controls="room-calendar-dialog">
+
+                <span class="date-range-trigger-icon"
+                      aria-hidden="true">
+                  📅
+                </span>
+
+                <span>
+                  <small>ช่วงวันเข้าพัก</small>
+
+                  <strong id="selected-date-range">
+                    เลือกเช็กอินและเช็กเอาต์
+                  </strong>
+                </span>
+              </button>
+
+              <label class="pet-count-field"
+                     for="room-pet-count">
+
+                <span>จำนวนสัตว์เลี้ยง</span>
+
+                <select id="room-pet-count"
+                        name="petCount">
+
+                  <option th:each="count :
+                                  ${#numbers.sequence(
+                                    1,
+                                    room.capacity
+                                  )}"
+                          th:value="${count}"
+                          th:text="${count} + ' ตัว'">
+                    1 ตัว
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <p id="room-availability-status"
+               class="room-availability-status"
+               role="status"
+               aria-live="polite">
+              กรุณาเลือกช่วงวันเข้าพัก
+            </p>
+
+            <a id="continue-booking"
+               class="btn btn-primary room-booking-button"
+               aria-disabled="true"
+               tabindex="-1">
+              เลือกวันเข้าพักก่อน
+            </a>
+          </div>
+
+          <p th:unless="${room.status.name() == 'ACTIVE'}"
+             class="muted">
+            ห้องนี้ไม่เปิดให้จองในขณะนี้
+          </p>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="room-calendar-dialog"
+          class="availability-calendar-dialog"
+          aria-labelledby="room-calendar-title">
+
+    <div class="availability-calendar-shell">
+      <header class="availability-calendar-header">
+        <div>
+          <h2 id="room-calendar-title">
+            เลือกช่วงวันเข้าพัก
+          </h2>
+
+          <p id="calendar-selection-help"
+             class="muted">
+            เลือกวันเช็กอินก่อน
+          </p>
+        </div>
+
+        <button id="close-room-calendar"
+                class="calendar-icon-button"
+                type="button"
+                aria-label="ปิดปฏิทิน">
+          ✕
+        </button>
+      </header>
+
+      <div class="calendar-month-navigation">
+        <button id="previous-calendar-month"
+                class="calendar-icon-button"
+                type="button"
+                aria-label="เดือนก่อนหน้า">
+          ‹
+        </button>
+
+        <strong id="calendar-month-label">
+          ตุลาคม 2026
+        </strong>
+
+        <button id="next-calendar-month"
+                class="calendar-icon-button"
+                type="button"
+                aria-label="เดือนถัดไป">
+          ›
+        </button>
+      </div>
+
+      <div class="calendar-weekdays"
+           aria-hidden="true">
+
+        <span>อา.</span>
+        <span>จ.</span>
+        <span>อ.</span>
+        <span>พ.</span>
+        <span>พฤ.</span>
+        <span>ศ.</span>
+        <span>ส.</span>
+      </div>
+
+      <div id="room-calendar-grid"
+           class="room-calendar-grid"
+           role="grid"
+           aria-labelledby="calendar-month-label">
+      </div>
+
+      <p id="calendar-loading"
+         class="calendar-loading"
+         role="status"
+         hidden>
+        กำลังโหลดวันที่ว่าง...
+      </p>
+
+      <p id="calendar-error"
+         class="calendar-error"
+         role="alert"
+         hidden>
+      </p>
+
+      <div class="calendar-legend"
+           aria-label="คำอธิบายปฏิทิน">
+
+        <span>
+          <i class="calendar-legend-mark is-available">
+          </i>
+          ว่าง
+        </span>
+
+        <span>
+          <i class="calendar-legend-mark is-selected">
+          </i>
+          วันที่เลือก
+        </span>
+
+        <span>
+          <i class="calendar-legend-mark is-unavailable">
+          </i>
+          ไม่ว่าง
+        </span>
+      </div>
+
+      <div class="calendar-selection-summary">
+        <div>
+          <small>เช็กอิน</small>
+
+          <strong id="calendar-check-in-summary">
+            ยังไม่ได้เลือก
+          </strong>
+        </div>
+
+        <span aria-hidden="true">→</span>
+
+        <div>
+          <small>เช็กเอาต์</small>
+
+          <strong id="calendar-check-out-summary">
+            ยังไม่ได้เลือก
+          </strong>
+        </div>
+      </div>
+
+      <footer class="availability-calendar-actions">
+        <button id="clear-calendar-selection"
+                class="btn"
+                type="button">
+          ล้างวันที่
+        </button>
+
+        <button id="apply-calendar-selection"
+                class="btn btn-primary"
+                type="button"
+                disabled>
+          ยืนยันช่วงวัน
+        </button>
+      </footer>
+    </div>
+  </dialog>
+
+  <footer class="footer">
+    PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด
+  </footer>
+</body>
+
+</html>

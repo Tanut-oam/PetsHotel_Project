@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สัตว์เลี้ยง | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="admin">
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
+
+    <main class="content">
+      <h1>สัตว์เลี้ยงในระบบ</h1>
+
+      <div class="panel" th:if="${#lists.isEmpty(pets)}">
+        ยังไม่มีสัตว์เลี้ยงที่ใช้งานในระบบ
+      </div>
+
+      <section th:unless="${#lists.isEmpty(pets)}">
+        <div class="toolbar">
+          <label class="field">
+            ค้นหาสัตว์เลี้ยงหรือเจ้าของ
+            <input type="search"
+                   id="pet-search"
+                   placeholder="ค้นหาสัตว์เลี้ยงหรือเจ้าของ">
+          </label>
+
+          <label class="field">
+            ประเภท
+            <select id="pet-type-filter">
+              <option value="ALL">ทั้งหมด</option>
+              <option value="DOG">สุนัข</option>
+              <option value="CAT">แมว</option>
+              <option value="OTHER">สัตว์ชนิดอื่น</option>
+            </select>
+          </label>
+        </div>
+
+        <p class="panel"
+           id="pet-filter-empty"
+           role="status"
+           hidden>
+          ไม่พบสัตว์เลี้ยงที่ตรงกับการค้นหา
+        </p>
+
+        <div class="panel table-scroll">
+          <table class="table" id="pet-table">
+            <thead>
+              <tr>
+                <th>ชื่อ</th>
+                <th>เจ้าของ</th>
+                <th>ประเภท</th>
+                <th>สายพันธุ์</th>
+                <th>อายุ</th>
+                <th>น้ำหนัก</th>
+                <th>ข้อควรระวัง</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr th:each="pet : ${pets}"
+                  th:attr="data-pet-type=${pet.type.name()}">
+                <td class="pet-name" th:text="${pet.name}">—</td>
+                <td class="pet-owner" th:text="${pet.ownerName}">—</td>
+                <td th:switch="${pet.type.name()}">
+                  <span th:case="'DOG'">สุนัข</span>
+                  <span th:case="'CAT'">แมว</span>
+                  <span th:case="*">สัตว์ชนิดอื่น</span>
+                </td>
+                <td th:text="${#strings.isEmpty(pet.breed) ? '—' : pet.breed}">—</td>
+                <td th:text="${pet.age == null ? '—' : pet.age + ' เดือน'}">—</td>
+                <td th:text="${pet.weight == null ? '—' : pet.weight + ' กก.'}">—</td>
+                <td th:text="${#strings.isEmpty(pet.medicalNote) ? 'ไม่มี' : pet.medicalNote}">ไม่มี</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script th:src="@{/js/admin-pets.js}" defer></script>
+</body>
+</html>

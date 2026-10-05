@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Booking.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.domain.entity</a> &gt; <span class="el_source">Booking.java</span></div><h1>Booking.java</h1><pre class="source lang-java linenums">package com.example.petshotel.domain.entity;
+
+import com.example.petshotel.domain.enums.BookingStatus;
+import com.example.petshotel.domain.enums.PaymentStatus;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = &quot;bookings&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Booking {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;room_id&quot;, nullable = false)
+    private Room room;
+
+    @Column(nullable = false)
+    private LocalDate checkInDate;
+
+    @Column(nullable = false)
+    private LocalDate checkOutDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BookingStatus status;
+
+    private BigDecimal totalPrice;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal roomAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal serviceAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal surchargeAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discountAmount;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @OneToMany(
+            mappedBy = &quot;booking&quot;,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List&lt;BookingPet&gt; bookingPets = new ArrayList&lt;&gt;();
+
+    @OneToMany(
+            mappedBy = &quot;booking&quot;,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List&lt;BookingExtraService&gt; extraServices = new ArrayList&lt;&gt;();
+
+    @PrePersist
+    public void prePersist() {
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (status == null) {</span>
+<span class="fc" id="L81">            status = BookingStatus.PENDING;</span>
+        }
+
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (paymentStatus == null) {</span>
+<span class="nc" id="L85">            paymentStatus = PaymentStatus.UNPAID;</span>
+        }
+
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if (createdAt == null) {</span>
+<span class="fc" id="L89">            createdAt = LocalDateTime.now();</span>
+        }
+<span class="fc" id="L91">    }</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;promotion_id&quot;)
+    private Promotion promotion;
+
+    @Column(name = &quot;promotion_name&quot;, updatable = false)
+    private String promotionName;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    private LocalDateTime paidAt;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal paidAmount;
+
+    public boolean canCheckInOn(LocalDate currentDate) {
+<span class="pc bpc" id="L111" title="3 of 6 branches missed.">        if (currentDate == null</span>
+                || checkInDate == null
+                || checkOutDate == null) {
+<span class="nc" id="L114">            return false;</span>
+        }
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        return status == BookingStatus.CONFIRMED</span>
+<span class="fc bfc" id="L118" title="All 2 branches covered.">                &amp;&amp; !currentDate.isBefore(checkInDate)</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">                &amp;&amp; currentDate.isBefore(checkOutDate);</span>
+    }
+
+    public boolean canCheckOutOn(LocalDate currentDate) {
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">        if (currentDate == null</span>
+                || checkOutDate == null) {
+<span class="nc" id="L125">            return false;</span>
+        }
+
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        return status == BookingStatus.CHECKED_IN</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                &amp;&amp; !currentDate.isBefore(checkOutDate);</span>
+    }
+
+    public void addPet(Pet pet) {
+<span class="fc" id="L133">        BookingPet bookingPet = BookingPet.builder()</span>
+<span class="fc" id="L134">                .booking(this)</span>
+<span class="fc" id="L135">                .pet(pet)</span>
+<span class="fc" id="L136">                .build();</span>
+
+<span class="fc" id="L138">        bookingPets.add(bookingPet);</span>
+<span class="fc" id="L139">    }</span>
+
+    public void addExtraService(BookingExtraService service) {
+<span class="fc" id="L142">        extraServices.add(service);</span>
+<span class="fc" id="L143">        service.setBooking(this);</span>
+<span class="fc" id="L144">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

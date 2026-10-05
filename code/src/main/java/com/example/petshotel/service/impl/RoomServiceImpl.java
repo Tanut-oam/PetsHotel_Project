@@ -10,28 +10,36 @@ import com.example.petshotel.domain.enums.RoomStatus;
 import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.repository.RoomRepository;
+import com.example.petshotel.service.FileStorageService;
 import com.example.petshotel.service.RoomService;
 
+
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class RoomServiceImpl implements RoomService {
     
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
+    private final FileStorageService fileStorageService;
 
-    public RoomServiceImpl(RoomRepository roomRepository,RoomMapper roomMapper){
+    public RoomServiceImpl(RoomRepository roomRepository, RoomMapper roomMapper,FileStorageService fileStorageService) {
         this.roomRepository = roomRepository;
         this.roomMapper = roomMapper;
+        this.fileStorageService = fileStorageService;
     }
 
+    @Override
     @Transactional
     public RoomResponse createRoom(CreateRoomRequest request){
         if(roomRepository.existsByRoomNumber(request.roomNumber())){
-            throw new IllegalArgumentException("Room number already exists: " + request.roomNumber());
+            throw new DuplicateResourceException("Room number already exists: " + request.roomNumber());
         }
 
         Room room = new Room();
@@ -46,14 +54,27 @@ public class RoomServiceImpl implements RoomService {
 
         return roomMapper.toResponse(saved);
 
-    };
+    }
 
+    @Override
     @Transactional(readOnly = true)
     public  RoomResponse getRoomById(Long id){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
         return roomMapper.toResponse(room);
     }
 
+    @Override
+    @Transactional(readOnly  = true)
+    public List<RoomResponse> getActiveRooms() {
+        List<RoomResponse> ActiveRooms = new ArrayList<>();
+        for(Room room:roomRepository.findByStatus(RoomStatus.ACTIVE)){
+            RoomResponse response = roomMapper.toResponse(room);
+            ActiveRooms.add(response);
+        }
+        return ActiveRooms;
+    }
+
+    @Override
     @Transactional(readOnly  = true)
     public List<RoomResponse> getAllRooms(){
         List<RoomResponse> AllRoom = new ArrayList<>();
@@ -64,20 +85,22 @@ public class RoomServiceImpl implements RoomService {
         }
         
         return AllRoom;
-    };
+    }
 
+    @Override
     @Transactional
     public RoomResponse deactivateRoom(Long id){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
         room.setStatus(RoomStatus.INACTIVE);
         roomRepository.save(room);
 
         return roomMapper.toResponse(room);
     }
 
+    @Override
     @Transactional
     public RoomResponse setRoomStatus(Long id,UpdateStatusRequest request){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
         room.setStatus(request.status());
         roomRepository.save(room);
 
@@ -85,13 +108,14 @@ public class RoomServiceImpl implements RoomService {
         return roomMapper.toResponse(room);
     }
 
+    @Override
     @Transactional
     public RoomResponse updateRoom(Long id,UpdateRoomRequest request){
-        Room room = roomRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Room not found: " + id));
+        Room room = roomRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Room", id));
 
         //ถ้าroomใหม่ไม่เท่ากับ roomเก่า และ roomไม่ซ้ำใคร
         if (!room.getRoomNumber().equals(request.roomNumber()) && roomRepository.existsByRoomNumber(request.roomNumber())) {
-            throw new IllegalArgumentException("Room number already exists: " + request.roomNumber());
+            throw new DuplicateResourceException("Room number already exists: " + request.roomNumber());
         }
 
         room.setRoomNumber(request.roomNumber());
@@ -99,10 +123,35 @@ public class RoomServiceImpl implements RoomService {
         room.setDescription(request.description());
         room.setCapacity(request.capacity());
         room.setPricePerPetPerNight(request.pricePerPetPerNight());
-
         roomRepository.save(room);
+        return roomMapper.toResponse(room);
+    }
+
+    @Override
+    @Transactional
+    public RoomResponse updateRoomImage(Long id, MultipartFile image) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Room", id));
+
+        String oldImageUrl = room.getImageUrl();
+        room.setImageUrl(fileStorageService.storeRoomImage(image));
+        roomRepository.save(room);
+        fileStorageService.deleteRoomImage(oldImageUrl);
 
         return roomMapper.toResponse(room);
+    }
 
-    };
+    @Override
+    @Transactional
+    public RoomResponse removeRoomImage(Long id) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Room", id));
+
+        String oldImageUrl = room.getImageUrl();
+        room.setImageUrl(null);
+        roomRepository.save(room);
+        fileStorageService.deleteRoomImage(oldImageUrl);
+
+        return roomMapper.toResponse(room);
+    }
 }

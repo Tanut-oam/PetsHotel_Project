@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>แก้ไขห้องพัก | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body class="admin">
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
+
+    <main class="content">
+      <div class="section-title">
+        <h1>
+          แก้ไขห้อง
+          <span th:text="${room.roomNumber}">A101</span>
+        </h1>
+
+        <a class="btn" th:href="@{/admin/rooms}">
+          กลับหน้าจัดการห้องพัก
+        </a>
+      </div>
+
+      <div th:if="${error}"
+           class="flash-notice flash-error"
+           role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+      </div>
+
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+      </div>
+
+      <form class="panel grid cols-2"
+            th:action="@{/admin/rooms/{id}(id=${room.id})}"
+            method="post"
+            enctype="multipart/form-data">
+
+        <label class="field">
+          เลขห้อง
+          <input type="text"
+                 name="roomNumber"
+                 th:value="${room.roomNumber}"
+                 required>
+        </label>
+
+        <label class="field">
+          ชื่อห้อง
+          <input type="text"
+                 name="name"
+                 th:value="${room.name}"
+                 required>
+        </label>
+
+        <label class="field" style="grid-column:1 / -1">
+          รายละเอียด
+          <textarea name="description"
+                    th:text="${room.description}"></textarea>
+        </label>
+
+        <label class="field">
+          รับได้ (ตัว)
+          <input type="number"
+                 name="capacity"
+                 min="1"
+                 step="1"
+                 th:value="${room.capacity}"
+                 required>
+        </label>
+
+        <label class="field">
+          ราคา/ตัว/คืน (บาท)
+          <input type="number"
+                 name="pricePerPetPerNight"
+                 min="0"
+                 step="0.01"
+                 th:value="${room.pricePerPetPerNight}"
+                 required>
+        </label>
+
+        <div class="field" style="grid-column:1 / -1">
+          รูปห้องปัจจุบัน
+          <img th:if="${room.imageUrl}"
+               class="room-image"
+               style="max-width:320px; border-radius:12px"
+               th:src="@{${room.imageUrl}}"
+               th:alt="${room.name}">
+          <span th:unless="${room.imageUrl}" class="muted">ยังไม่มีรูป</span>
+        </div>
+
+        <label class="field" style="grid-column:1 / -1">
+          เปลี่ยนรูปห้อง (JPG/PNG ไม่เกิน 5 MB)
+          <input type="file"
+                 name="image"
+                 accept="image/jpeg,image/png">
+        </label>
+
+        <div style="grid-column:1 / -1">
+          <button class="btn btn-primary" type="submit">
+            บันทึกการแก้ไข
+          </button>
+
+          <a class="btn" th:href="@{/admin/rooms}">
+            ยกเลิก
+          </a>
+        </div>
+      </form>
+
+      <div class="table-actions" style="margin-top:20px">
+        <form th:if="${room.imageUrl}"
+              th:action="@{/admin/rooms/{id}/image/delete(id=${room.id})}"
+              method="post"
+              onsubmit="return confirm('ยืนยันลบรูปห้องนี้?');">
+          <button class="btn" type="submit">ลบรูปห้อง</button>
+        </form>
+
+        <form th:action="@{/admin/rooms/{id}/deactivate(id=${room.id})}"
+              method="post"
+              onsubmit="return confirm('ยืนยันปิดใช้งานห้องนี้?');">
+          <button class="btn btn-danger"
+                  type="submit"
+                  th:disabled="${room.status.name() == 'INACTIVE'}">
+            ปิดใช้งานห้องนี้
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

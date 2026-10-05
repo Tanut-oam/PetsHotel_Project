@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingRestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.api</a> &gt; <span class="el_source">BookingRestController.java</span></div><h1>BookingRestController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.api;
+
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.domain.enums.UserRole;
+import com.example.petshotel.dto.request.CreateBookingApiRequest;
+import com.example.petshotel.dto.request.CreateBookingRequest;
+import com.example.petshotel.dto.response.BookingResponse;
+import com.example.petshotel.dto.response.BookingPriceResponse;
+import com.example.petshotel.dto.response.PetAvailabilityResponse;
+import com.example.petshotel.service.BookingService;
+import com.example.petshotel.service.CurrentUserService;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.exception.ErrorResponse;
+
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Objects;
+import java.time.LocalDate;
+
+@RestController
+@RequestMapping(&quot;/api/bookings&quot;)
+@Tag(name = &quot;Bookings&quot;,
+        description = &quot;การจองห้องพัก: สร้าง ดู ยกเลิก และเปลี่ยนสถานะ &quot;
+                + &quot;(PENDING → CONFIRMED → CHECKED_IN → CHECKED_OUT, ยกเลิกได้ตอน PENDING/CONFIRMED)&quot;)
+@RequiredArgsConstructor
+public class BookingRestController {
+
+    private final BookingService bookingService;
+    private final CurrentUserService currentUserService;
+
+    @PostMapping
+    @Operation(summary = &quot;สร้างการจอง&quot;,
+            description = &quot;ต้องล็อกอิน · จองให้ผู้ใช้ที่ล็อกอินอยู่ · การจองใหม่มีสถานะ PENDING &quot;
+                    + &quot;· ระบบตรวจห้องว่าง ความจุ และสัตว์ที่ติดจองช่วงเดียวกัน&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;สร้างการจองสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ข้อมูลไม่ถูกต้อง เช่น วันที่ผิด สัตว์เกินความจุ หรือโปรโมชันหมดอายุ&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;บัญชีถูกระงับ&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบห้อง สัตว์ หรือโปรโมชัน&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;ห้องไม่ว่าง หรือสัตว์มีการจองซ้อนในช่วงเดียวกัน&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity&lt;BookingResponse&gt; createBooking(
+            @Valid @RequestBody CreateBookingApiRequest request,
+            Principal principal) {
+
+<span class="fc" id="L69">        User user = currentUser(principal);</span>
+
+<span class="fc" id="L71">        CreateBookingRequest serviceRequest = CreateBookingRequest.builder()</span>
+<span class="fc" id="L72">                .userId(user.getId())</span>
+<span class="fc" id="L73">                .roomId(request.roomId())</span>
+<span class="fc" id="L74">                .petIds(request.petIds())</span>
+<span class="fc" id="L75">                .checkInDate(request.checkInDate())</span>
+<span class="fc" id="L76">                .checkOutDate(request.checkOutDate())</span>
+<span class="fc" id="L77">                .servicePetIds(request.servicePetIds())</span>
+<span class="fc" id="L78">                .promotionId(request.promotionId())</span>
+<span class="fc" id="L79">                .build();</span>
+
+<span class="fc" id="L81">        BookingResponse response =</span>
+<span class="fc" id="L82">                bookingService.createBooking(serviceRequest);</span>
+
+<span class="fc" id="L84">        return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+    }
+
+    @PostMapping(&quot;/preview-price&quot;)
+    @Operation(summary = &quot;คำนวณราคาก่อนจอง&quot;,
+            description = &quot;ต้องล็อกอิน · คำนวณราคาจากข้อมูลเดียวกับการจอง แต่ไม่บันทึกและไม่กันห้อง&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;คำนวณสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;ข้อมูลไม่ถูกต้อง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบห้อง สัตว์ หรือโปรโมชัน&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public BookingPriceResponse previewPrice(
+            @Valid @RequestBody CreateBookingApiRequest request,
+            Principal principal) {
+
+<span class="fc" id="L102">        User user = currentUser(principal);</span>
+
+<span class="fc" id="L104">        return bookingService.previewPrice(CreateBookingRequest.builder()</span>
+<span class="fc" id="L105">                .userId(user.getId())</span>
+<span class="fc" id="L106">                .roomId(request.roomId())</span>
+<span class="fc" id="L107">                .petIds(request.petIds())</span>
+<span class="fc" id="L108">                .checkInDate(request.checkInDate())</span>
+<span class="fc" id="L109">                .checkOutDate(request.checkOutDate())</span>
+<span class="fc" id="L110">                .servicePetIds(request.servicePetIds())</span>
+<span class="fc" id="L111">                .promotionId(request.promotionId())</span>
+<span class="fc" id="L112">                .build());</span>
+    }
+
+    @GetMapping(&quot;/pet-availability&quot;)
+    @Operation(summary = &quot;ดูสัตว์ที่ติดจองในช่วงวันที่&quot;,
+            description = &quot;ต้องล็อกอิน · คืนรหัสสัตว์ของผู้ใช้ที่มีการจองซ้อนในช่วงนี้ (ใช้ปิดตัวเลือกในฟอร์มจอง)&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;สำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;วันที่ไม่ถูกต้อง หรือไม่ได้ระบุ&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content)
+    })
+    public PetAvailabilityResponse getPetAvailability(
+            @Parameter(description = &quot;วันเช็กอิน (yyyy-MM-dd)&quot;, example = &quot;2026-11-01&quot;)
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate checkInDate,
+
+            @Parameter(description = &quot;วันเช็กเอาต์ (yyyy-MM-dd)&quot;, example = &quot;2026-11-03&quot;)
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate checkOutDate,
+
+            Principal principal) {
+
+<span class="fc" id="L137">                User user = currentUser(principal);</span>
+
+<span class="fc" id="L139">                return bookingService.getPetAvailability(</span>
+<span class="fc" id="L140">                        user.getId(),</span>
+                        checkInDate,
+                        checkOutDate
+                );
+            }
+
+    @GetMapping
+    @Operation(summary = &quot;ดูการจองทั้งหมด&quot;, description = &quot;เฉพาะ STAFF / ADMIN&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;สำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ STAFF หรือ ADMIN&quot;, content = @Content)
+    })
+    public List&lt;BookingResponse&gt; getAllBookings(Principal principal) {
+<span class="fc" id="L154">        requireStaffOrAdmin(currentUser(principal));</span>
+
+<span class="fc" id="L156">        return bookingService.getAllBookings();</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @Operation(summary = &quot;ดูรายละเอียดการจอง&quot;,
+            description = &quot;เจ้าของการจองดูได้เฉพาะของตัวเอง · STAFF / ADMIN ดูได้ทุกรายการ&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;สำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่การจองของตัวเอง&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบการจอง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public BookingResponse getBookingById(
+        @Parameter(description = &quot;รหัสการจอง&quot;, example = &quot;1&quot;)
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal) {
+
+<span class="fc" id="L174">        User user = currentUser(principal);</span>
+<span class="fc" id="L175">        BookingResponse booking = bookingService.getBookingById(id);</span>
+
+<span class="fc" id="L177">        requireOwnerOrStaff(user, booking);</span>
+
+<span class="fc" id="L179">        return booking;</span>
+    }
+
+    @PostMapping(&quot;/{id}/confirm&quot;)
+    // ⑥ confirmBooking
+    @Operation(summary = &quot;ยืนยันการจอง&quot;,
+            description = &quot;เฉพาะ STAFF / ADMIN · PENDING → CONFIRMED และส่งอีเมลแจ้งลูกค้า&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;เปลี่ยนสถานะสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ STAFF หรือ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบการจอง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;สถานะหรือวันที่ปัจจุบันไม่อนุญาตให้ทำรายการนี้&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public BookingResponse confirmBooking(
+        @Parameter(description = &quot;รหัสการจอง&quot;, example = &quot;1&quot;)
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal) {
+
+<span class="fc" id="L200">        requireStaffOrAdmin(currentUser(principal));</span>
+
+<span class="fc" id="L202">        return bookingService.confirmBooking(id);</span>
+    }
+
+    @PostMapping(&quot;/{id}/check-in&quot;)
+    // ⑦ checkIn
+    @Operation(summary = &quot;เช็กอิน&quot;,
+            description = &quot;เฉพาะ STAFF / ADMIN · CONFIRMED → CHECKED_IN · ทำได้ตั้งแต่วันเช็กอินจนถึงก่อนวันเช็กเอาต์&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;เปลี่ยนสถานะสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ STAFF หรือ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบการจอง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;สถานะหรือวันที่ปัจจุบันไม่อนุญาตให้ทำรายการนี้&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public BookingResponse checkIn(
+        @Parameter(description = &quot;รหัสการจอง&quot;, example = &quot;1&quot;)
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal) {
+
+<span class="fc" id="L223">        requireStaffOrAdmin(currentUser(principal));</span>
+
+<span class="fc" id="L225">        return bookingService.checkIn(id);</span>
+    }
+
+    // ⑧ checkOut
+    @PostMapping(&quot;/{id}/check-out&quot;)
+    @Operation(summary = &quot;เช็กเอาต์&quot;,
+            description = &quot;เฉพาะ STAFF / ADMIN · CHECKED_IN → CHECKED_OUT · ทำได้ตั้งแต่วันเช็กเอาต์&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;เปลี่ยนสถานะสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่ STAFF หรือ ADMIN&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบการจอง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;สถานะหรือวันที่ปัจจุบันไม่อนุญาตให้ทำรายการนี้&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public BookingResponse checkOut(
+        @Parameter(description = &quot;รหัสการจอง&quot;, example = &quot;1&quot;)
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal) {
+
+<span class="fc" id="L246">        requireStaffOrAdmin(currentUser(principal));</span>
+
+<span class="fc" id="L248">        return bookingService.checkOut(id);</span>
+    }
+
+    @PostMapping(&quot;/{id}/cancel&quot;)
+    @Operation(summary = &quot;ยกเลิกการจอง&quot;,
+            description = &quot;เจ้าของหรือ STAFF / ADMIN · ยกเลิกได้เมื่อเป็น PENDING หรือ CONFIRMED และยังไม่ชำระเงิน&quot;)
+    @ApiResponses({
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;ยกเลิกสำเร็จ&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;ยังไม่ล็อกอิน&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;ไม่ใช่การจองของตัวเอง&quot;, content = @Content),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;ไม่พบการจอง&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;ยกเลิกไม่ได้ เช่น เช็กอินแล้ว หรือชำระเงินแล้ว&quot;,
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public BookingResponse cancelBooking(
+        @Parameter(description = &quot;รหัสการจอง&quot;, example = &quot;1&quot;)
+            @PathVariable(&quot;id&quot;) Long id,
+            Principal principal) {
+
+<span class="fc" id="L268">        User user = currentUser(principal);</span>
+<span class="fc" id="L269">        BookingResponse booking = bookingService.getBookingById(id);</span>
+
+<span class="fc" id="L271">        requireOwnerOrStaff(user, booking);</span>
+
+<span class="fc" id="L273">        return bookingService.cancelBooking(id);</span>
+    }
+
+    private User currentUser(Principal principal) {
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">        if (principal == null) {</span>
+<span class="nc" id="L278">            throw new ResponseStatusException(</span>
+                    HttpStatus.UNAUTHORIZED,
+                    &quot;Login is required&quot;
+            );
+        }
+
+        User user;
+
+        try {
+<span class="fc" id="L287">            user = currentUserService.getByEmail(principal.getName());</span>
+<span class="nc" id="L288">        } catch (ResourceNotFoundException ex) {</span>
+<span class="nc" id="L289">            throw new ResponseStatusException(</span>
+                    HttpStatus.UNAUTHORIZED,
+                    &quot;Authenticated user was not found&quot;
+            );
+<span class="fc" id="L293">        }</span>
+
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        if (!Boolean.TRUE.equals(user.getActive())) {</span>
+<span class="fc" id="L296">            throw new AccessDeniedException(&quot;Account is inactive&quot;);</span>
+        }
+
+<span class="fc" id="L299">        return user;</span>
+    }
+
+    private boolean isStaffOrAdmin(User user) {
+<span class="fc bfc" id="L303" title="All 2 branches covered.">        return user.getRole() == UserRole.STAFF</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">                || user.getRole() == UserRole.ADMIN;</span>
+    }
+
+    private void requireStaffOrAdmin(User user) {
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">        if (!isStaffOrAdmin(user)) {</span>
+<span class="nc" id="L309">            throw new AccessDeniedException(</span>
+                    &quot;This operation requires STAFF or ADMIN&quot;
+            );
+        }
+<span class="fc" id="L313">    }</span>
+
+    private void requireOwnerOrStaff(
+            User user,
+            BookingResponse booking) {
+
+<span class="fc" id="L319">        boolean owner = Objects.equals(</span>
+<span class="fc" id="L320">                user.getId(),</span>
+<span class="fc" id="L321">                booking.getUserId()</span>
+        );
+
+<span class="fc bfc" id="L324" title="All 4 branches covered.">        if (!owner &amp;&amp; !isStaffOrAdmin(user)) {</span>
+<span class="fc" id="L325">            throw new AccessDeniedException(</span>
+                    &quot;You cannot access another customer's booking&quot;
+            );
+        }
+<span class="fc" id="L329">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

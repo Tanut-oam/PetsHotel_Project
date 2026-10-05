@@ -19,6 +19,9 @@ public class Receipt {
     @Column(name = "receipt_number", nullable = false, unique = true)
     private String receiptNumber;
 
+    @Column(name = "customer_name", updatable = false)
+    private String customerName;
+
     @Column(name = "issued_at", nullable = false)
     private LocalDateTime issuedAt;
 

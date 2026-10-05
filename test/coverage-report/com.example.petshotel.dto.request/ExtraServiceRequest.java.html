@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExtraServiceRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.dto.request</a> &gt; <span class="el_source">ExtraServiceRequest.java</span></div><h1>ExtraServiceRequest.java</h1><pre class="source lang-java linenums">package com.example.petshotel.dto.request;
+
+import java.math.BigDecimal;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+@Schema(description = &quot;ข้อมูลสำหรับเพิ่มหรือแก้ไขบริการเสริม&quot;)
+<span class="fc" id="L13">public record ExtraServiceRequest(</span>
+
+    @Schema(
+        description = &quot;ชื่อบริการเสริม&quot;,
+        example = &quot;อาบน้ำ&quot;
+    )
+    @NotBlank(message = &quot;Extra service name is required&quot;)
+    String name,
+
+    @Schema(
+        description = &quot;รายละเอียดบริการเสริม ไม่จำเป็นต้องระบุ &quot;
+            + &quot;หากไม่ส่งตอนแก้ไข รายละเอียดเดิมจะถูกเปลี่ยนเป็น null&quot;,
+        example = &quot;บริการอาบน้ำและเป่าขนสัตว์เลี้ยง&quot;
+    )
+    String description,
+
+    @Schema(
+        description = &quot;ราคาบริการเสริม หน่วยเป็นบาท &quot;
+            + &quot;ต้องไม่ติดลบ รองรับทศนิยมไม่เกิน 2 ตำแหน่ง &quot;
+            + &quot;และจำนวนเต็มไม่เกิน 8 หลัก&quot;,
+        example = &quot;250.00&quot;
+    )
+    @NotNull(message = &quot;Price is required&quot;)
+    @DecimalMin(
+        value = &quot;0.00&quot;,
+        message = &quot;Price must not be negative&quot;
+    )
+    @Digits(
+        integer = 8,
+        fraction = 2,
+        message = &quot;Price must have at most 8 digits and 2 decimal places&quot;
+    )
+    BigDecimal price,
+
+    @Schema(
+        description = &quot;สถานะเปิดใช้งาน: true คือเปิดใช้ false คือปิดใช้ &quot;
+            + &quot;หากไม่ส่งหรือส่งเป็น null ตอนเพิ่มจะเปิดใช้ &quot;
+            + &quot;แต่ตอนแก้ไขจะคงสถานะเดิม&quot;,
+        example = &quot;true&quot;
+    )
+    Boolean active
+
+) {}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

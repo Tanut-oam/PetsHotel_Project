@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>บริการเสริม | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body class="admin">
+  <header th:replace="~{fragments/layout :: admin-topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
+
+    <main class="content">
+      <div class="section-title">
+        <h1>บริการเสริม</h1>
+        <a class="btn btn-primary"
+            data-open-form
+            th:href="@{/admin/services(create=true)}">
+            + เพิ่มบริการ
+        </a>
+      </div>
+
+        <div th:if="${message}"
+            class="flash-notice flash-success"
+            role="status">
+        <span class="flash-icon" aria-hidden="true">✓</span>
+        <span th:text="${message}"></span>
+        </div>
+
+        <div th:if="${error}"
+            class="flash-notice flash-error"
+            role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+        </div>
+
+        <div id="list-filters" hidden>
+          <div class="toolbar">
+            <label class="field">
+              ค้นหาชื่อ
+              <input id="list-search"
+                    type="search"
+                    placeholder="พิมพ์ชื่อที่ต้องการค้นหา">
+            </label>
+
+            <label class="field">
+              สถานะเปิดใช้งาน
+              <select id="list-status">
+                <option value="ALL">ทั้งหมด</option>
+                <option value="ACTIVE">เปิดใช้</option>
+                <option value="INACTIVE">ปิดใช้</option>
+              </select>
+            </label>
+
+            <button id="clear-filters"
+                    class="btn"
+                    type="button">
+              ล้างตัวกรอง
+            </button>
+          </div>
+        </div>
+
+      <div class="panel table-scroll">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ชื่อบริการ</th>
+              <th>ราคา/ตัว/การจอง</th>
+              <th>สถานะ</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr th:if="${#lists.isEmpty(extraServices)}">
+              <td colspan="4">ยังไม่มีบริการเสริม</td>
+            </tr>
+
+            <tr th:each="service : ${extraServices}"
+              data-filter-row
+              th:attr="data-name=${service.name},
+                      data-status=${service.active == true ? 'ACTIVE' : 'INACTIVE'}">
+              <td th:text="${service.name}">ชื่อบริการ</td>
+              <td th:text="|฿${service.price}|">฿0.00</td>
+
+            <td>
+            <span th:if="${service.active}" class="badge">
+                เปิดใช้
+            </span>
+            <span th:unless="${service.active}" class="badge badge-danger">
+                ปิดใช้
+            </span>
+            </td>    
+
+              <td>
+                <a class="btn btn-small"
+                    th:href="@{/admin/services(editId=${service.id})}">
+                    แก้ไข
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p id="filter-empty"
+        class="muted"
+        role="status"
+        hidden>
+        ไม่พบรายการที่ตรงกับชื่อและสถานะที่เลือก
+      </p>
+
+      <dialog class="admin-form-dialog"
+        aria-labelledby="service-dialog-title">
+
+        <form id="extra-service-form"
+                class="admin-dialog-form"
+                th:action="@{/admin/services}"
+                th:object="${serviceForm}"
+                th:attr="data-auto-open=${editingId != null or #fields.hasAnyErrors()}"
+                method="post">
+
+            <h2 id="service-dialog-title"
+                th:text="${editingId == null ? 'เพิ่มบริการ' : 'แก้ไขบริการ'}">
+            เพิ่มบริการ
+            </h2>
+
+            <input th:if="${editingId != null}"
+                type="hidden"
+                name="id"
+                th:value="${editingId}">
+
+            <div class="admin-form-errors"
+                th:if="${#fields.hasAnyErrors()}"
+                role="alert">
+            <ul>
+                <li th:each="formError : ${#fields.allErrors()}"
+                    th:text="${formError}">
+                ข้อมูลไม่ถูกต้อง
+                </li>
+            </ul>
+            </div>
+
+            <div class="grid cols-2">
+            <label class="field">
+                ชื่อบริการ
+                <input th:field="*{name}" required autofocus>
+            </label>
+
+            <label class="field">
+                ราคา/ตัว/การจอง
+                <input type="number"
+                    th:field="*{price}"
+                    min="0"
+                    step="0.01"
+                    required>
+            </label>
+
+            <label class="field admin-dialog-full">
+                รายละเอียด
+                <textarea th:field="*{description}"></textarea>
+            </label>
+
+            <label class="admin-dialog-check admin-dialog-full">
+                <input type="checkbox" th:field="*{active}">
+                เปิดใช้บริการ
+            </label>
+            </div>
+
+            <div class="admin-dialog-actions">
+            <button class="btn"
+                    type="button"
+                    data-close-form>
+                ยกเลิก
+            </button>
+
+            <button class="btn btn-primary" type="submit">
+                บันทึก
+            </button>
+            </div>
+        </form>
+        </dialog>
+    </main>
+  </div>
+    <script th:src="@{/js/admin-form-dialog.js}" defer></script>
+    <script th:src="@{/js/admin-list-filter.js}" defer></script>
+</body>
+</html>

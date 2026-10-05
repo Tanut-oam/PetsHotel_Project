@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreatePromotionRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.dto.request</a> &gt; <span class="el_source">CreatePromotionRequest.java</span></div><h1>CreatePromotionRequest.java</h1><pre class="source lang-java linenums">package com.example.petshotel.dto.request;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.example.petshotel.domain.enums.PromotionType;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
+@Schema(description = &quot;ข้อมูลสำหรับเพิ่มหรือแก้ไขโปรโมชัน&quot;)
+<span class="fc" id="L18">public record CreatePromotionRequest(</span>
+
+    @Schema(
+        description = &quot;ชื่อโปรโมชัน&quot;,
+        example = &quot;ลดเดือนตุลาคม&quot;
+    )
+    @NotBlank(message = &quot;Promotion name is required&quot;)
+    String name,
+
+    @Schema(
+        description = &quot;ประเภทส่วนลด: PERCENTAGE คือเปอร์เซ็นต์ &quot;
+            + &quot;และ FIXED_AMOUNT คือจำนวนเงินเป็นบาท&quot;,
+        example = &quot;PERCENTAGE&quot;
+    )
+    @NotNull(message = &quot;Promotion type is required&quot;)
+    PromotionType type,
+
+    @Schema(
+        description = &quot;มูลค่าส่วนลด ต้องมากกว่า 0 &quot;
+            + &quot;ถ้าเป็นเปอร์เซ็นต์ต้องไม่เกิน 100 &quot;
+            + &quot;รองรับทศนิยมไม่เกิน 2 ตำแหน่ง&quot;,
+        example = &quot;10.00&quot;
+    )
+    @NotNull(message = &quot;Discount value is required&quot;)
+    @Positive(message = &quot;Discount value must be greater than zero&quot;)
+    @Digits(
+        integer = 8,
+        fraction = 2,
+        message = &quot;Discount value must have at most 8 digits and 2 decimal places&quot;
+    )
+    BigDecimal discountValue,
+
+    @Schema(
+        description = &quot;วันเริ่มต้นโปรโมชัน รูปแบบ yyyy-MM-dd&quot;,
+        example = &quot;2026-10-01&quot;
+    )
+    @NotNull(message = &quot;Start date is required&quot;)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate startDate,
+
+    @Schema(
+        description = &quot;วันสิ้นสุดโปรโมชัน รูปแบบ yyyy-MM-dd &quot;
+            + &quot;ต้องไม่ก่อนวันเริ่มต้น และเป็นวันเดียวกันได้&quot;,
+        example = &quot;2026-10-31&quot;
+    )
+    @NotNull(message = &quot;End date is required&quot;)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    LocalDate endDate,
+
+    @Schema(
+        description = &quot;สถานะเปิดใช้งาน: true คือเปิดใช้ &quot;
+            + &quot;โปรโมชันจะใช้งานได้เมื่ออยู่ในช่วงวันที่กำหนดด้วย&quot;,
+        example = &quot;true&quot;
+    )
+    boolean active
+
+) {}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

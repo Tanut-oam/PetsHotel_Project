@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">UserServiceImpl.java</span></div><h1>UserServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.util.List;
+
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.petshotel.domain.entity.User;
+import com.example.petshotel.domain.enums.UserRole;
+import com.example.petshotel.dto.request.UpdateUserRequest;
+import com.example.petshotel.dto.response.UserResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.mapper.UserMapper;
+import com.example.petshotel.repository.UserRepository;
+import com.example.petshotel.service.UserService;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+
+<span class="fc" id="L25">    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {</span>
+<span class="fc" id="L26">        this.userRepository = userRepository;</span>
+<span class="fc" id="L27">        this.userMapper = userMapper;</span>
+<span class="fc" id="L28">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;UserResponse&gt; searchUsers(String keyword, String sort) {
+<span class="fc" id="L33">        Sort sortBy = toSort(sort);</span>
+
+<span class="pc bpc" id="L35" title="1 of 4 branches missed.">        List&lt;User&gt; users = (keyword == null || keyword.isBlank())</span>
+<span class="fc" id="L36">                ? userRepository.findAll(sortBy)</span>
+<span class="fc" id="L37">                : userRepository.search(keyword.trim(), sortBy);</span>
+
+<span class="fc" id="L39">        return users.stream()</span>
+<span class="fc" id="L40">                .map(userMapper::toResponse)</span>
+<span class="fc" id="L41">                .toList();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserById(Long id) {
+<span class="nc" id="L47">        User user = userRepository.findById(id)</span>
+<span class="nc" id="L48">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, id));</span>
+<span class="nc" id="L49">        return userMapper.toResponse(user);</span>
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUser(Long id, UpdateUserRequest request, String currentAdminEmail) {
+<span class="fc" id="L55">        User user = userRepository.findById(id)</span>
+<span class="fc" id="L56">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User&quot;, id));</span>
+
+<span class="fc" id="L58">        String email = request.email().trim().toLowerCase();</span>
+
+        
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        if (user.getEmail().equals(currentAdminEmail)</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                &amp;&amp; (request.role() != UserRole.ADMIN</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">                    || !request.active()</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">                    || !user.getEmail().equals(email))) {</span>
+<span class="fc" id="L65">            throw new IllegalStateException(&quot;You cannot change your role, suspend your account, or change your email address.&quot;);</span>
+        }
+
+<span class="pc bpc" id="L68" title="1 of 4 branches missed.">        if (!user.getEmail().equals(email) &amp;&amp; userRepository.existsByEmail(email)) {</span>
+<span class="fc" id="L69">            throw new DuplicateResourceException(&quot;อีเมลนี้ถูกใช้แล้ว: &quot; + email);</span>
+        }
+
+<span class="fc" id="L72">        user.setFirstName(request.firstName().trim());</span>
+<span class="fc" id="L73">        user.setLastName(request.lastName().trim());</span>
+<span class="fc" id="L74">        user.setEmail(email);</span>
+<span class="fc" id="L75">        user.setPhoneNumber(request.phoneNumber().trim());</span>
+<span class="fc" id="L76">        user.setRole(request.role());</span>
+<span class="fc" id="L77">        user.setActive(request.active());</span>
+
+<span class="fc" id="L79">        return userMapper.toResponse(userRepository.save(user));</span>
+    }
+
+    
+    private Sort toSort(String sort) {
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (sort == null) {</span>
+<span class="nc" id="L85">            return Sort.by(&quot;id&quot;);</span>
+        }
+<span class="pc bpc" id="L87" title="4 of 6 branches missed.">        return switch (sort) {</span>
+<span class="nc" id="L88">            case &quot;newest&quot; -&gt; Sort.by(Sort.Direction.DESC, &quot;createdAt&quot;);</span>
+<span class="nc" id="L89">            case &quot;oldest&quot; -&gt; Sort.by(Sort.Direction.ASC, &quot;createdAt&quot;);</span>
+<span class="fc" id="L90">            case &quot;name&quot;   -&gt; Sort.by(&quot;firstName&quot;, &quot;lastName&quot;);</span>
+<span class="nc" id="L91">            case &quot;email&quot;  -&gt; Sort.by(&quot;email&quot;);</span>
+<span class="nc" id="L92">            case &quot;role&quot;   -&gt; Sort.by(&quot;role&quot;, &quot;firstName&quot;);</span>
+<span class="fc" id="L93">            default       -&gt; Sort.by(&quot;id&quot;);</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,0 +1,81 @@
+@startuml component-diagram
+title PetsHotel - Component Diagram
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+skinparam componentStyle uml2
+left to right direction
+
+actor "ผู้เยี่ยมชม / ลูกค้า" as Customer
+actor "พนักงาน / ผู้ดูแลระบบ" as Staff
+actor "ระบบภายนอก / Swagger UI" as ApiClient
+
+node "PetsHotel (Spring Boot 4, Java 26)" {
+
+  package "Presentation Layer" {
+    component "Thymeleaf Views\n+ layout fragments\n+ static JS/CSS" as Views
+    component "Web Controllers\n(controller.web)\nAuth, Availability, Booking,\nPet, Room, Profile, Admin*" as WebCtl
+    component "REST Controllers\n(controller.api)\nRooms, RoomSearch, Availability,\nBookings, Payments, Pets,\nCareReports, Promotions, ExtraServices" as RestCtl
+    component "GlobalExceptionHandler\n→ ErrorResponse" as ErrHandler
+    component "OpenAPI / Swagger\n(springdoc)" as Swagger
+  }
+
+  package "Security" {
+    component "SecurityConfig\n(session, CSRF, roles, remember-me)" as Security
+    component "CustomUserDetailsService" as UserDetails
+    component "RoleBasedLoginSuccessHandler" as LoginHandler
+  }
+
+  package "Service Layer" {
+    component "Services (interfaces + impl)\nAuth, CurrentUser, User, Room,\nRoomSearch, Availability, Booking,\nPayment, Receipt, Pet, DailyCareReport,\nPromotion, ExtraService, Dashboard" as Services
+    component "Booking State\n(state)" as State
+    component "Pricing Strategy\n(pricing)" as Pricing
+    component "Mappers\n(Entity → DTO)" as Mappers
+  }
+
+  package "Notification (Observer)" {
+    component "BookingConfirmedEvent\n→ BookingConfirmedListener" as Events
+    component "EmailNotificationService" as Email
+  }
+
+  package "Repository Layer" {
+    component "Spring Data JPA\nRepositories" as Repos
+  }
+}
+
+database "PostgreSQL" as DB
+node "Mailpit (SMTP)" as Mail
+
+Customer --> Views : HTTP (browser)
+Staff --> Views : HTTP (browser)
+ApiClient --> RestCtl : JSON / HTTP
+ApiClient --> Swagger : /swagger-ui
+
+Views <--> WebCtl
+Security ..> WebCtl : protects
+Security ..> RestCtl : protects
+Security --> UserDetails
+Security --> LoginHandler
+
+WebCtl --> Services
+RestCtl --> Services
+RestCtl ..> ErrHandler : exceptions
+WebCtl --> Mappers
+RestCtl --> Mappers
+
+Services --> State
+Services --> Pricing
+Services --> Mappers
+Services --> Repos
+Services ..> Events : publishEvent
+Events --> Email
+UserDetails --> Repos
+
+Repos --> DB : JDBC
+Email --> Mail : SMTP
+
+note bottom of Repos
+  Controller ไม่เรียก Repository ตรง
+  (Layered Architecture)
+end note
+@enduml

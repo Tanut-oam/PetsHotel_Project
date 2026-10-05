@@ -1,0 +1,183 @@
+@startuml sequence-checkout
+
+title petshotel - Checkout, Confirm Payment and Issue Receipt
+
+autonumber
+hide footbox
+
+skinparam defaultFontName Tahoma
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 220
+
+actor "Staff / Admin" as Staff
+
+box "Web Controller" #FEFCE8
+    participant AdminBookingController as Controller
+end box
+
+box "Business Services" #EFF6FF
+    participant BookingServiceImpl as BookingService
+    participant CheckedInState as State
+    participant BookingMapper as Mapper
+    participant PaymentServiceImpl as PaymentService
+    participant ReceiptServiceImpl as ReceiptService
+end box
+
+box "Domain" #F0FDF4
+    participant "booking: Booking" as Booking
+end box
+
+box "Repositories" #F5F3FF
+    participant BookingRepository as BookingRepo
+    participant ReceiptRepository as ReceiptRepo
+end box
+
+note over Staff, Controller
+    ผู้ใช้เข้าสู่ระบบ บัญชีเปิดใช้งาน
+    และมีสิทธิ์ STAFF หรือ ADMIN
+    Controller ตรวจสิทธิ์และ id ก่อนเรียก Service
+end note
+
+== 1. Check out ==
+
+Staff -> Controller : POST /admin/bookings/{id}/check-out
+activate Controller
+
+Controller -> BookingService : checkOut(id)
+activate BookingService
+
+BookingService -> BookingRepo : findByIdForUpdate(id)
+BookingRepo --> BookingService : Optional<Booking>
+
+BookingService -> BookingService : getState(booking.status)
+note right of BookingService
+    กรณีสำเร็จนี้:
+    status = CHECKED_IN
+    จึงเลือก CheckedInState
+end note
+
+BookingService -> Booking : canCheckOutOn(currentDate)
+note right of Booking
+    currentDate ใช้เขตเวลา Asia/Bangkok
+    เช็กเอาต์ได้เมื่อถึงหรือเลยวัน checkOutDate
+end note
+Booking --> BookingService : true
+
+BookingService -> State : checkOut(booking)
+activate State
+State -> Booking : setStatus(CHECKED_OUT)
+State --> BookingService : void
+deactivate State
+
+BookingService -> BookingRepo : save(booking)
+BookingRepo --> BookingService : savedBooking
+
+BookingService -> Mapper : toResponse(savedBooking)
+Mapper --> BookingService : BookingResponse
+
+BookingService --> Controller : BookingResponse
+deactivate BookingService
+
+Controller -> Controller : addFlashAttribute("message", ...)
+Controller --> Staff : redirect:/admin/bookings
+deactivate Controller
+
+note over BookingService, ReceiptService
+    checkOut() เปลี่ยนสถานะการจองเท่านั้น
+    ไม่ยืนยันรับเงินและไม่สร้างใบเสร็จ
+end note
+
+== 2. Confirm payment ==
+
+Staff -> Controller : POST /admin/bookings/{id}/payment/confirm
+activate Controller
+
+Controller -> PaymentService : confirmPayment(id)
+activate PaymentService
+
+PaymentService -> BookingRepo : findByIdForUpdate(id)
+BookingRepo --> PaymentService : Optional<Booking>
+
+alt paymentStatus = PAID
+    note right of PaymentService
+        ยืนยันซ้ำ:
+        ใช้ paidAmount และ paidAt เดิม
+        ไม่บันทึกการรับเงินซ้ำ
+    end note
+
+else paymentStatus != PAID
+    PaymentService -> PaymentService : ตรวจสถานะและยอดรวม
+
+    note right of PaymentService
+        รับเงินได้เมื่อสถานะเป็น:
+        CONFIRMED / CHECKED_IN / CHECKED_OUT
+        totalPrice ต้องไม่เป็น null และไม่ติดลบ
+    end note
+
+    PaymentService -> Booking : setPaymentStatus(PAID)
+    PaymentService -> Booking : setPaidAmount(totalPrice)
+    PaymentService -> Booking : setPaidAt(LocalDateTime.now())
+
+    PaymentService -> BookingRepo : save(booking)
+    BookingRepo --> PaymentService : savedBooking
+end
+
+== 3. Issue receipt ==
+
+PaymentService -> ReceiptService : createReceipt(id)
+activate ReceiptService
+
+ReceiptService -> BookingRepo : findByIdForUpdate(id)
+BookingRepo --> ReceiptService : Optional<Booking>
+
+ReceiptService -> ReceiptService : ตรวจข้อมูลการชำระเงิน
+
+note right of ReceiptService
+    paymentStatus ต้องเป็น PAID
+    paidAt, paidAmount, totalPrice ต้องครบ
+    paidAmount ไม่ติดลบและเท่ากับ totalPrice
+end note
+
+ReceiptService -> ReceiptRepo : findByBookingId(id)
+ReceiptRepo --> ReceiptService : Optional<Receipt>
+
+alt มีใบเสร็จแล้ว
+    ReceiptService -> ReceiptService : ใช้ใบเสร็จเดิม
+
+else ยังไม่มีใบเสร็จ
+    ReceiptService -> ReceiptService : ตรวจ price snapshot
+    ReceiptService -> ReceiptService : สร้าง Receipt
+    ReceiptService -> ReceiptService : คัดลอกยอดเงิน
+
+    note over ReceiptService, ReceiptRepo
+        กำหนด booking, receiptNumber และ issuedAt
+        คัดลอก roomAmount, serviceAmount,
+        surchargeAmount และ discountAmount
+        กำหนด totalAmount = paidAmount
+    end note
+
+    ReceiptService -> ReceiptRepo : save(receipt)
+    ReceiptRepo --> ReceiptService : savedReceipt
+end
+
+ReceiptService --> PaymentService : Receipt
+deactivate ReceiptService
+
+PaymentService -> PaymentService : new PaymentResponse(...)
+PaymentService --> Controller : PaymentResponse
+deactivate PaymentService
+
+Controller -> Controller : addFlashAttribute("message",\n"บันทึกการชำระเงินและออกใบเสร็จเรียบร้อยแล้ว")
+Controller --> Staff : redirect:/admin/bookings
+deactivate Controller
+
+legend bottom
+    แสดงขั้นตอนสำเร็จและกรณียืนยันรับเงินซ้ำ
+    เส้นทึบ: เรียกทำงาน
+    เส้นประ: ส่งผลลัพธ์กลับ
+    ไม่แสดงรายละเอียดทุกกรณีผิดพลาด
+endlegend
+
+@enduml

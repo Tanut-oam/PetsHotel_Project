@@ -23,6 +23,7 @@ import com.example.petshotel.domain.enums.PromotionType;
 import com.example.petshotel.dto.request.CreatePromotionRequest;
 import com.example.petshotel.repository.PromotionRepository;
 import com.example.petshotel.service.impl.PromotionServiceImpl;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 public class PromotionServiceTest {
     private PromotionRepository promotionRepository;
@@ -161,9 +162,9 @@ public class PromotionServiceTest {
             request(PromotionType.PERCENTAGE, "10");
         when(promotionRepository.findById(99L))
             .thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class,
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
             () -> promotionService.updatePromotion(99L, request));
-
+        assertEquals("Promotion not found: 99", exception.getMessage());    
         verify(promotionRepository, never()).save(any(Promotion.class));
     }
 

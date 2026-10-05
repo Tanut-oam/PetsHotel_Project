@@ -1,0 +1,104 @@
+@startuml use-case
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+title PetsHotel - Use Case Diagram
+
+actor "Guest" as Guest
+actor "Customer" as Customer
+actor "Staff" as Staff
+actor "Admin" as Admin
+actor "Email Server" as Mail <<system>>
+
+Customer --|> Guest
+Admin --|> Staff
+
+rectangle "PetsHotel System" {
+
+  package "Account" {
+    usecase "Register" as UC_Register
+    usecase "Log In" as UC_Login
+    usecase "View My Account" as UC_Profile
+  }
+
+  package "Rooms" {
+    usecase "View Rooms" as UC_ViewRooms
+    usecase "View Room Details" as UC_RoomDetail
+    usecase "Search Available Rooms" as UC_SearchRoom
+  }
+
+  package "Pets & Bookings" {
+    usecase "Manage Pets\n(Add / Edit / Remove)" as UC_ManagePets
+    usecase "Book a Room" as UC_Book
+    usecase "Check Room Availability" as UC_CheckAvail
+    usecase "Calculate Price" as UC_Price
+    usecase "Select Extra Services" as UC_Extra
+    usecase "Apply Promotion" as UC_Promo
+    usecase "View My Bookings" as UC_MyBookings
+    usecase "Cancel Booking" as UC_Cancel
+    usecase "View Receipt" as UC_Receipt
+    usecase "View Care Reports" as UC_ViewReport
+  }
+
+  package "Staff Operations" {
+    usecase "Confirm Booking" as UC_Confirm
+    usecase "Send Booking\nConfirmation Email" as UC_Email
+    usecase "Check In" as UC_CheckIn
+    usecase "Check Out" as UC_CheckOut
+    usecase "Confirm Payment" as UC_Pay
+    usecase "Issue Receipt" as UC_IssueReceipt
+    usecase "Write Care Report" as UC_WriteReport
+  }
+
+  package "Administration" {
+    usecase "Manage Rooms\n(Add / Edit / Status / Image)" as UC_ManageRooms
+    usecase "Manage Promotions" as UC_ManagePromo
+    usecase "Manage Extra Services" as UC_ManageExtra
+    usecase "Manage Users" as UC_ManageUsers
+    usecase "View All Pets" as UC_AllPets
+    usecase "View Revenue Dashboard" as UC_Dashboard
+  }
+}
+
+' ---------- Guest ----------
+Guest --> UC_Register
+Guest --> UC_Login
+Guest --> UC_ViewRooms
+Guest --> UC_RoomDetail
+Guest --> UC_SearchRoom
+
+' ---------- Customer ----------
+Customer --> UC_Profile
+Customer --> UC_ManagePets
+Customer --> UC_Book
+Customer --> UC_MyBookings
+Customer --> UC_Cancel
+Customer --> UC_Receipt
+Customer --> UC_ViewReport
+
+UC_Book ..> UC_CheckAvail : <<include>>
+UC_Book ..> UC_Price : <<include>>
+UC_Extra ..> UC_Book : <<extend>>
+UC_Promo ..> UC_Book : <<extend>>
+
+' ---------- Staff ----------
+Staff --> UC_Login
+Staff --> UC_Confirm
+Staff --> UC_CheckIn
+Staff --> UC_CheckOut
+Staff --> UC_Pay
+Staff --> UC_WriteReport
+Staff --> UC_Cancel
+
+UC_Confirm ..> UC_Email : <<include>>
+UC_Email --> Mail
+UC_Pay ..> UC_IssueReceipt : <<include>>
+
+' ---------- Admin ----------
+Admin --> UC_ManageRooms
+Admin --> UC_ManagePromo
+Admin --> UC_ManageExtra
+Admin --> UC_ManageUsers
+Admin --> UC_AllPets
+Admin --> UC_Dashboard
+@enduml

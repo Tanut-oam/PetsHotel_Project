@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.petshotel.domain.entity.Room;
 import com.example.petshotel.domain.enums.RoomStatus;
@@ -21,6 +22,8 @@ import com.example.petshotel.dto.request.CreateRoomRequest;
 import com.example.petshotel.dto.request.UpdateRoomRequest;
 import com.example.petshotel.dto.request.UpdateStatusRequest;
 import com.example.petshotel.dto.response.RoomResponse;
+import com.example.petshotel.exception.DuplicateResourceException;
+import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.mapper.RoomMapper;
 import com.example.petshotel.repository.RoomRepository;
 import com.example.petshotel.service.impl.RoomServiceImpl;
@@ -37,6 +40,9 @@ public class RoomServiceTest {
     @InjectMocks
     private RoomServiceImpl roomService;
 
+    @Mock
+    private FileStorageService fileStorageService;
+
     private Room room;
     private RoomResponse roomResponse;
     
@@ -51,7 +57,7 @@ public class RoomServiceTest {
         room.setPricePerPetPerNight(new BigDecimal("500"));
         room.setStatus(RoomStatus.ACTIVE);
 
-        roomResponse = new RoomResponse(room.getId(),room.getRoomNumber(),room.getName(),room.getDescription(),room.getCapacity(),room.getPricePerPetPerNight(),room.getStatus());
+        roomResponse = new RoomResponse(room.getId(),room.getRoomNumber(),room.getName(),room.getDescription(),room.getCapacity(),room.getPricePerPetPerNight(),room.getStatus(), null);
     }
 
     //ควรโยน_exception_เมื่อเลขห้องซ้ำ
@@ -77,7 +83,7 @@ public class RoomServiceTest {
         when(roomRepository.existsByRoomNumber("101")).thenReturn(true);
 
 
-        assertThrows(IllegalArgumentException.class, () -> roomService.createRoom(request));
+        assertThrows(DuplicateResourceException.class, () -> roomService.createRoom(request));
         verify(roomRepository, never()).save(any(Room.class));
     }
 
@@ -95,7 +101,7 @@ public class RoomServiceTest {
     @Test
     void getRoomById_exception(){
         when(roomRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> roomService.getRoomById(99L));
+        assertThrows(ResourceNotFoundException.class, () -> roomService.getRoomById(99L));
     }
 
     @Test
@@ -127,7 +133,7 @@ public class RoomServiceTest {
             4, new BigDecimal("600"));
         when(roomRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> roomService.updateRoom(99L, request));
+        assertThrows(ResourceNotFoundException.class, () -> roomService.updateRoom(99L, request));
         verify(roomRepository, never()).save(any(Room.class));
 }
 
@@ -149,7 +155,7 @@ public class RoomServiceTest {
         UpdateStatusRequest request = new UpdateStatusRequest(RoomStatus.MAINTENANCE);
         when(roomRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> roomService.setRoomStatus(99L, request));
+        assertThrows(ResourceNotFoundException.class, () -> roomService.setRoomStatus(99L, request));
         verify(roomRepository, never()).save(any(Room.class));
     }
 
@@ -169,8 +175,46 @@ public class RoomServiceTest {
     void deactivateRoom_exception() {
         when(roomRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> roomService.deactivateRoom(99L));
+        assertThrows(ResourceNotFoundException.class, () -> roomService.deactivateRoom(99L));
         verify(roomRepository, never()).save(any(Room.class));
+    }
+
+    @Test
+    void updateRoom_duplicateRoomNumber() {
+        UpdateRoomRequest request = new UpdateRoomRequest("102", "Deluxe V2", "อัปเดตแล้ว",
+                4, new BigDecimal("600"));
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
+        when(roomRepository.existsByRoomNumber("102")).thenReturn(true);
+
+        assertThrows(DuplicateResourceException.class, () -> roomService.updateRoom(1L, request));
+        verify(roomRepository, never()).save(any(Room.class));
+    }
+
+    @Test
+    void updateRoomImage_storesNewAndDeletesOld() {
+        room.setImageUrl("/uploads/rooms/old.png");
+        MultipartFile image = mock(MultipartFile.class);
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
+        when(fileStorageService.storeRoomImage(image)).thenReturn("/uploads/rooms/new.png");
+        when(roomMapper.toResponse(room)).thenReturn(roomResponse);
+
+        roomService.updateRoomImage(1L, image);
+
+        assertEquals("/uploads/rooms/new.png", room.getImageUrl());
+        verify(fileStorageService).deleteRoomImage("/uploads/rooms/old.png");
+        verify(roomRepository).save(room);
+    }
+
+    @Test
+    void removeRoomImage_clearsUrlAndDeletesFile() {
+        room.setImageUrl("/uploads/rooms/old.png");
+        when(roomRepository.findById(1L)).thenReturn(Optional.of(room));
+        when(roomMapper.toResponse(room)).thenReturn(roomResponse);
+
+        roomService.removeRoomImage(1L);
+
+        assertNull(room.getImageUrl());
+        verify(fileStorageService).deleteRoomImage("/uploads/rooms/old.png");
     }
 
 

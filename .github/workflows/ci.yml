@@ -1,0 +1,73 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pethotel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SPRING_DATASOURCE_PASSWORD: postgres
+      TEST_DB_PASSWORD: postgres
+
+    defaults:
+      run:
+        working-directory: code
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 26
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '26'
+          cache: maven
+
+      # repository test ใช้ database แยกชื่อ pethotel_test
+      - name: Create test database
+        run: psql -h localhost -U postgres -c "CREATE DATABASE pethotel_test;"
+        env:
+          PGPASSWORD: postgres
+
+      - name: Build and test
+        run: bash mvnw -B package
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            code/target/surefire-reports
+            code/target/site/jacoco
+
+      - name: Build Docker image
+        run: docker build -t petshotel:ci .
+
+  deploy:
+    needs: build-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

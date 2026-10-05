@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PromotionRestController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.api</a> &gt; <span class="el_source">PromotionRestController.java</span></div><h1>PromotionRestController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.api;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.petshotel.dto.request.CreatePromotionRequest;
+import com.example.petshotel.dto.response.PromotionResponse;
+import com.example.petshotel.mapper.PromotionMapper;
+import com.example.petshotel.service.PromotionService;
+
+import jakarta.validation.Valid;
+
+import com.example.petshotel.exception.ErrorResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@RestController
+@RequestMapping(&quot;/api/promotions&quot;)
+@Tag(
+    name = &quot;Promotions&quot;,
+    description = &quot;API สำหรับจัดการโปรโมชัน ต้องเข้าสู่ระบบก่อนใช้งาน &quot;
+        + &quot;การเพิ่ม แก้ไข และปิดใช้โปรโมชันต้องใช้สิทธิ์ ADMIN&quot;
+)
+public class PromotionRestController {
+    private final PromotionService promotionService;
+    private final PromotionMapper promotionMapper;
+
+    public PromotionRestController(
+            PromotionService promotionService,
+<span class="fc" id="L45">            PromotionMapper promotionMapper){</span>
+<span class="fc" id="L46">        this.promotionService = promotionService;</span>
+<span class="fc" id="L47">        this.promotionMapper = promotionMapper;</span>
+<span class="fc" id="L48">    }</span>
+
+    @Operation(
+        summary = &quot;ดูโปรโมชันทั้งหมด&quot;,
+        description = &quot;แสดงโปรโมชันทั้งหมด รวมรายการที่ปิดใช้ &quot;
+            + &quot;ยังไม่เริ่มใช้งาน และหมดอายุแล้ว&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;แสดงรายการโปรโมชันสำเร็จ ถ้าไม่มีข้อมูลจะคืนรายการว่าง&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        )
+    })
+    @GetMapping
+    public List&lt;PromotionResponse&gt; getAllPromotions(){
+<span class="fc" id="L69">        return promotionService.getAllPromotions().stream()</span>
+<span class="fc" id="L70">                .map(promotionMapper::toResponse).toList();</span>
+    }
+
+
+    @Operation(
+        summary = &quot;ดูโปรโมชันที่ใช้งานได้ในวันนี้&quot;,
+        description = &quot;แสดงเฉพาะโปรโมชันที่เปิดใช้ &quot;
+            + &quot;และวันนี้อยู่ระหว่างวันเริ่มต้นกับวันสิ้นสุด &quot;
+            + &quot;โดยรวมวันเริ่มต้นและวันสิ้นสุดด้วย&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;แสดงโปรโมชันที่ใช้งานได้สำเร็จ&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        )
+    })
+    @GetMapping(&quot;/active&quot;)
+    public List&lt;PromotionResponse&gt; getActivePromotions(){
+<span class="fc" id="L94">        return promotionService.getActivePromotions().stream()</span>
+<span class="fc" id="L95">                .map(promotionMapper::toResponse).toList();</span>
+    }
+
+    @Operation(
+        summary = &quot;ดูโปรโมชันตามรหัส&quot;,
+        description = &quot;ค้นหาโปรโมชันหนึ่งรายการด้วย id &quot;
+            + &quot;สามารถดูรายการที่ปิดใช้หรือหมดอายุแล้วได้&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;พบโปรโมชัน&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;รหัสโปรโมชันมีรูปแบบไม่ถูกต้อง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;ไม่พบโปรโมชันตามรหัสที่ระบุ&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @GetMapping(&quot;/{id}&quot;)
+    public PromotionResponse getPromotionById(@PathVariable Long id){
+<span class="fc" id="L133">        return promotionMapper.toResponse(</span>
+<span class="fc" id="L134">            promotionService.getPromotionById(id));</span>
+    }
+
+    @Operation(
+        summary = &quot;เพิ่มโปรโมชัน&quot;,
+        description = &quot;สำหรับ ADMIN สร้างโปรโมชันใหม่ &quot;
+            + &quot;ส่งวันที่เป็น yyyy-MM-dd &quot;
+            + &quot;วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น &quot;
+            + &quot;และสามารถเป็นวันเดียวกันได้&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;201&quot;,
+            description = &quot;สร้างโปรโมชันสำเร็จ&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;ข้อมูลไม่ถูกต้อง เช่น ไม่ระบุชื่อ &quot;
+                + &quot;ส่วนลดไม่เป็นบวก เปอร์เซ็นต์เกิน 100 &quot;
+                + &quot;หรือวันสิ้นสุดก่อนวันเริ่มต้น&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;403&quot;,
+            description = &quot;ไม่มีสิทธิ์ ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;,
+            content = @Content
+        )
+    })
+    @PostMapping
+    public ResponseEntity&lt;PromotionResponse&gt; createPromotion(@Valid @RequestBody CreatePromotionRequest request){
+<span class="fc" id="L173">        PromotionResponse response = promotionMapper.toResponse(</span>
+<span class="fc" id="L174">            promotionService.createPromotion(request));</span>
+<span class="fc" id="L175">        return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+    }
+
+    @Operation(
+        summary = &quot;แก้ไขโปรโมชัน&quot;,
+        description = &quot;สำหรับ ADMIN แก้ไขโปรโมชันตาม id &quot;
+            + &quot;โดยส่งข้อมูลทุกช่องตาม CreatePromotionRequest &quot;
+            + &quot;รวมถึงสถานะเปิดใช้งาน&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;200&quot;,
+            description = &quot;แก้ไขโปรโมชันสำเร็จ&quot;,
+            useReturnTypeSchema = true
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;รหัสหรือข้อมูลโปรโมชันไม่ถูกต้อง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;403&quot;,
+            description = &quot;ไม่มีสิทธิ์ ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;ไม่พบโปรโมชันที่ต้องการแก้ไข&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @PutMapping(&quot;/{id}&quot;)
+    public PromotionResponse updatePromotion(@PathVariable Long id, @Valid @RequestBody CreatePromotionRequest request){
+<span class="fc" id="L219">        return promotionMapper.toResponse(</span>
+<span class="fc" id="L220">            promotionService.updatePromotion(id, request));</span>
+    }
+
+    @Operation(
+        summary = &quot;ปิดใช้โปรโมชัน&quot;,
+        description = &quot;สำหรับ ADMIN เปลี่ยนสถานะ active เป็น false &quot;
+            + &quot;โดยยังเก็บข้อมูลโปรโมชันไว้ในฐานข้อมูล &quot;
+            + &quot;เมื่อสำเร็จจะไม่มีข้อมูลใน response body&quot;
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = &quot;204&quot;,
+            description = &quot;ปิดใช้โปรโมชันสำเร็จ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;400&quot;,
+            description = &quot;รหัสโปรโมชันมีรูปแบบไม่ถูกต้อง&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = &quot;401&quot;,
+            description = &quot;ยังไม่ได้เข้าสู่ระบบ&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;403&quot;,
+            description = &quot;ไม่มีสิทธิ์ ADMIN หรือ CSRF token ไม่ถูกต้อง&quot;,
+            content = @Content
+        ),
+        @ApiResponse(
+            responseCode = &quot;404&quot;,
+            description = &quot;ไม่พบโปรโมชันที่ต้องการปิดใช้&quot;,
+            content = @Content(
+                mediaType = &quot;application/json&quot;,
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @DeleteMapping(&quot;/{id}&quot;)
+    public ResponseEntity&lt;Void&gt; deactivatePromotion(@PathVariable Long id){
+<span class="fc" id="L264">        promotionService.deactivatePromotion(id);</span>
+<span class="fc" id="L265">        return ResponseEntity.noContent().build();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

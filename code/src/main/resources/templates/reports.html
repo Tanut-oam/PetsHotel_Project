@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>รายงานการดูแล | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/customer-report.css}">
+  <link rel="stylesheet" th:href="@{/css/customer-report-filter.css}">
+</head>
+<body>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="content">
+      <div class="section-title">
+        <h1>รายงานการดูแลรายวัน</h1>
+      </div>
+
+      <form class="customer-report-filters"
+            method="get"
+            th:action="@{/reports}">
+        <label class="customer-report-date-field">
+          วันที่มีรายงาน
+          <input type="date"
+                 name="reportDate"
+                 th:value="${reportDate}">
+        </label>
+
+        <button class="btn btn-primary" type="submit">
+          ค้นหา
+        </button>
+
+        <a class="btn"
+           th:if="${reportDate != null}"
+           th:href="@{/reports}">
+          ล้างตัวกรอง
+        </a>
+      </form>
+
+      <p class="customer-report-result-count muted"
+         th:if="${reportDate != null}"
+         th:text="|พบ ${totalBookings} การจองที่มีรายงานวันที่ ${#temporals.format(reportDate, 'dd/MM/yyyy')}|">
+        จำนวนการจองที่พบ
+      </p>
+
+      <div class="panel"
+           th:if="${bookingGroups.isEmpty()}"
+           role="status">
+        <span th:if="${reportDate != null}">
+          ไม่พบการจองที่มีรายงานในวันที่เลือก
+        </span>
+        <span th:unless="${reportDate != null}">
+          ยังไม่มีรายงานการดูแลสำหรับการจองของคุณ
+        </span>
+      </div>
+
+      <div class="customer-booking-list"
+           th:unless="${bookingGroups.isEmpty()}">
+
+        <details class="panel customer-booking"
+                 th:each="booking : ${bookingGroups}"
+                 th:with="bookingInfo=${bookingsById[booking.key]}">
+
+          <summary class="customer-booking-toggle">
+            <span class="customer-booking-summary">
+              <strong class="customer-booking-title"
+                      th:text="|การจอง #${booking.key}|">
+                การจอง #1
+              </strong>
+
+              <span class="muted"
+                    th:if="${bookingInfo != null}"
+                    th:text="|เข้าพัก ${#temporals.format(bookingInfo.checkInDate, 'dd/MM/yyyy')} ถึง ${#temporals.format(bookingInfo.checkOutDate, 'dd/MM/yyyy')}|">
+                วันที่เข้าพัก
+              </span>
+
+              <span class="muted"
+                    th:text="|สัตว์เลี้ยงที่มีรายงาน ${#maps.size(booking.value)} ตัว|">
+                จำนวนสัตว์เลี้ยง
+              </span>
+            </span>
+
+            <span class="customer-booking-meta">
+              <span class="badge"
+                    th:text="|${reportCountsByBooking[booking.key]} รายงาน|">
+                จำนวนรายงาน
+              </span>
+              <span class="customer-booking-chevron"
+                    aria-hidden="true"></span>
+            </span>
+          </summary>
+
+          <div class="customer-booking-body">
+            <h2 class="customer-booking-caption">
+              สัตว์เลี้ยงที่มีรายงาน
+            </h2>
+
+            <div class="customer-pet-list">
+              <div class="customer-pet-row"
+                   th:each="petGroup : ${booking.value}"
+                   th:with="latest=${petGroup.value[0]}">
+
+                <div class="customer-pet-summary">
+                  <strong th:text="${latest.petName}">
+                    ชื่อสัตว์เลี้ยง
+                  </strong>
+
+                  <span class="muted"
+                        th:text="|${#lists.size(petGroup.value)} รายงาน · ล่าสุด ${#temporals.format(latest.reportDate, 'dd/MM/yyyy')}|">
+                    จำนวนและวันที่รายงาน
+                  </span>
+                </div>
+
+                <a class="btn btn-primary"
+                   th:href="@{/reports/pets/{bookingPetId}(bookingPetId=${petGroup.key})}"
+                   th:aria-label="|ดูรายงานของ ${latest.petName} ในการจอง #${booking.key}|">
+                  ดูรายงาน
+                </a>
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <nav class="customer-report-pagination"
+           th:if="${totalPages > 1}"
+           aria-label="หน้ารายงานการดูแล">
+
+        <a class="btn"
+           th:if="${page > 0}"
+           th:href="@{/reports(page=${page - 1}, reportDate=${reportDate})}">
+          ← ก่อนหน้า
+        </a>
+
+        <span class="customer-report-page-status"
+              th:text="|หน้า ${page + 1} จาก ${totalPages}|">
+          เลขหน้า
+        </span>
+
+        <a class="btn"
+           th:if="${page + 1 < totalPages}"
+           th:href="@{/reports(page=${page + 1}, reportDate=${reportDate})}">
+          ถัดไป →
+        </a>
+      </nav>
+    </main>
+  </div>
+
+  <footer class="footer">
+    PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด
+  </footer>
+</body>
+</html>

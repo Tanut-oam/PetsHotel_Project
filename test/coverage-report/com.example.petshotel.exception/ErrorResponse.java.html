@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ErrorResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.exception</a> &gt; <span class="el_source">ErrorResponse.java</span></div><h1>ErrorResponse.java</h1><pre class="source lang-java linenums">package com.example.petshotel.exception;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = &quot;รูปแบบ error มาตรฐานของทุก REST API (สร้างโดย GlobalExceptionHandler)&quot;)
+<span class="fc" id="L11">public record ErrorResponse(</span>
+        @Schema(description = &quot;เวลาที่เกิด error&quot;, example = &quot;2026-10-03T10:15:30&quot;)
+        LocalDateTime timestamp,
+
+        @Schema(description = &quot;HTTP status code&quot;, example = &quot;400&quot;)
+        int status,
+
+        @Schema(description = &quot;ชื่อ HTTP status&quot;, example = &quot;Bad Request&quot;)
+        String error,
+
+        @Schema(description = &quot;ข้อความอธิบาย error&quot;, example = &quot;วันที่ Check-out ต้องอยู่หลังวันที่ Check-in&quot;)
+        String message,
+
+        @Schema(description = &quot;path ที่เรียก&quot;, example = &quot;/api/rooms/available&quot;)
+        String path,
+
+        @Schema(description = &quot;error รายช่อง (กรณีข้อมูลไม่ผ่าน validation) key = ชื่อ field&quot;,
+                example = &quot;{\&quot;petCount\&quot;: \&quot;must be greater than or equal to 1\&quot;}&quot;)
+        Map&lt;String, String&gt; fieldErrors) {
+
+    public static ErrorResponse of(HttpStatus status, String message, String path) {
+<span class="fc" id="L32">        return of(status, message, path, Map.of());</span>
+    }
+
+    public static ErrorResponse of(HttpStatus status, String message, String path, Map&lt;String, String&gt; fieldErrors) {
+<span class="fc" id="L36">        return new ErrorResponse(LocalDateTime.now(), status.value(), status.getReasonPhrase(), message, path, fieldErrors);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

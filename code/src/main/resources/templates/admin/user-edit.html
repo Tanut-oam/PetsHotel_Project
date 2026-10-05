@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>แก้ไขสมาชิก | PetsHotel Admin</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body class="admin">
+    <header th:replace="~{fragments/layout :: admin-topbar}"></header>
+
+    <div class="layout">
+    <aside th:replace="~{fragments/layout :: admin-sidebar}"></aside>
+
+    <main class="content">
+    <div class="section-title">
+        <h1>
+            แก้ไขสมาชิก
+            <span th:text="${user.fullName()}">ตัวอย่างผู้ใช้</span>
+        </h1>
+
+        <a class="btn" th:href="@{/admin/users}">กลับหน้าสมาชิก</a>
+    </div>
+
+    <div th:if="${error}" class="flash-notice flash-error" role="alert">
+        <span class="flash-icon" aria-hidden="true">!</span>
+        <span th:text="${error}"></span>
+    </div>
+
+    <form class="panel grid cols-2"
+            th:action="@{/admin/users/{id}(id=${user.id})}"
+            method="post">
+
+        <label class="field">
+            ชื่อ
+        <input type="text" name="firstName" th:value="${user.firstName}" required>
+        </label>
+
+        <label class="field">
+            นามสกุล
+        <input type="text" name="lastName" th:value="${user.lastName}" required>
+        </label>
+
+        <label class="field">
+            อีเมล
+        <input type="email" name="email" th:value="${user.email}" required>
+        </label>
+
+        <label class="field">
+            เบอร์โทร
+            <input type="tel" name="phoneNumber" th:value="${user.phoneNumber}"
+            pattern="0[0-9]{8,9}" required>
+        </label>
+
+        <label class="field">
+            บทบาท
+            <select name="role" required>
+            <option th:each="r : ${roles}"
+                    th:value="${r.name()}"
+                    th:selected="${r == user.role}"
+                    th:text="${r.name() == 'CUSTOMER'} ? 'ลูกค้า' : (${r.name() == 'STAFF'} ? 'พนักงาน' : 'แอดมิน')">
+            ลูกค้า
+            </option>
+            </select>
+        </label>
+
+        <label class="field">
+            สถานะบัญชี
+            <select name="active" required>
+            <option value="true"  th:selected="${user.active}">ใช้งาน</option>
+            <option value="false" th:selected="${!user.active}">ระงับ (ล็อกอินไม่ได้)</option>
+            </select>
+        </label>
+
+        <div style="grid-column:1 / -1">
+            <button class="btn btn-primary" type="submit">บันทึกการแก้ไข</button>
+            <a class="btn" th:href="@{/admin/users}">ยกเลิก</a>
+        </div>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

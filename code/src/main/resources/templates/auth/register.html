@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สมัครสมาชิก | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <link rel="stylesheet" th:href="@{/css/auth.css}">
+  <script th:src="@{/js/password-match.js}" defer></script>
+</head>
+<body>
+  <main class="auth-page">
+    <section class="auth-card auth-card-wide">
+      <h1>🐾 สมัครสมาชิก</h1>
+      <p class="auth-subtitle">สร้างบัญชีเพื่อจองห้องพักให้สัตว์เลี้ยงของคุณ</p>
+
+      <form class="auth-form" th:action="@{/register}" th:object="${registerRequest}" method="post">
+        <div class="grid cols-2">
+          <label class="field">
+            ชื่อ
+            <input type="text" th:field="*{firstName}" required>
+            <small th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></small>
+          </label>
+          <label class="field">
+            นามสกุล
+            <input type="text" th:field="*{lastName}" required>
+            <small th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></small>
+          </label>
+        </div>
+        <label class="field">
+          อีเมล
+          <input type="email" th:field="*{email}" required>
+          <small th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+        </label>
+        <label class="field">
+          เบอร์โทร
+          <input type="tel" th:field="*{phoneNumber}" required>
+          <small th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></small>
+        </label>
+        <label class="field">
+          รหัสผ่าน
+          <input type="password" th:field="*{password}" required minlength="8">
+          <small th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+        </label>
+        <label class="field">
+          ยืนยันรหัสผ่าน
+          <input type="password" th:field="*{confirmPassword}" required>
+          <small th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+        </label>
+        <button class="btn btn-primary" type="submit">สมัครสมาชิก</button>
+      </form>
+
+      <p class="auth-footer">มีบัญชีแล้ว? <a th:href="@{/login}">เข้าสู่ระบบ</a></p>
+    </section>
+  </main>
+</body>
+</html>

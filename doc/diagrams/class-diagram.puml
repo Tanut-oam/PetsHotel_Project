@@ -1,0 +1,473 @@
+@startuml petshotel-class-diagram
+
+title petshotel - Core Class Diagram with Design Patterns
+
+left to right direction
+
+skinparam defaultFontName Tahoma
+skinparam defaultFontSize 12
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam nodesep 25
+skinparam ranksep 40
+skinparam classBackgroundColor #FFFFFF
+skinparam interfaceBackgroundColor #EFF6FF
+skinparam classBorderColor #64748B
+skinparam ArrowColor #64748B
+
+' Selected important attributes and methods are shown.
+' Constructors and Lombok-generated accessors are omitted.
+
+' ============================================================
+' 1. BOOKING MANAGEMENT - STATE PATTERN
+' ============================================================
+
+package "Booking Management - State Pattern" as StatePattern #EFF6FF {
+
+    interface BookingService {
+        +createBooking(request: CreateBookingRequest): BookingResponse
+        +confirmBooking(id: Long): BookingResponse
+        +checkIn(id: Long): BookingResponse
+        +checkOut(id: Long): BookingResponse
+        +cancelBooking(id: Long): BookingResponse
+    }
+
+    class BookingServiceImpl <<Context>> {
+        -bookingRepository: BookingRepository
+        -pricingService: PricingService
+        -eventPublisher: ApplicationEventPublisher
+        --
+        +createBooking(request: CreateBookingRequest): BookingResponse
+        +confirmBooking(id: Long): BookingResponse
+        +checkIn(id: Long): BookingResponse
+        +checkOut(id: Long): BookingResponse
+        +cancelBooking(id: Long): BookingResponse
+        -getState(status: BookingStatus): BookingState
+    }
+
+    interface BookingState <<State>> {
+        +confirm(booking: Booking): void
+        +checkIn(booking: Booking): void
+        +checkOut(booking: Booking): void
+        +cancel(booking: Booking): void
+    }
+
+    together {
+        class PendingState <<ConcreteState>> {
+            +confirm(booking: Booking): void
+            +checkIn(booking: Booking): void
+            +checkOut(booking: Booking): void
+            +cancel(booking: Booking): void
+        }
+
+        class ConfirmedState <<ConcreteState>> {
+            +confirm(booking: Booking): void
+            +checkIn(booking: Booking): void
+            +checkOut(booking: Booking): void
+            +cancel(booking: Booking): void
+        }
+
+        class CheckedInState <<ConcreteState>> {
+            +confirm(booking: Booking): void
+            +checkIn(booking: Booking): void
+            +checkOut(booking: Booking): void
+            +cancel(booking: Booking): void
+        }
+
+        class CheckedOutState <<ConcreteState>> {
+            +confirm(booking: Booking): void
+            +checkIn(booking: Booking): void
+            +checkOut(booking: Booking): void
+            +cancel(booking: Booking): void
+        }
+
+        class CancelledState <<ConcreteState>> {
+            +confirm(booking: Booking): void
+            +checkIn(booking: Booking): void
+            +checkOut(booking: Booking): void
+            +cancel(booking: Booking): void
+        }
+    }
+
+    BookingServiceImpl ..|> BookingService
+    BookingServiceImpl ..> BookingState : selects and delegates
+
+    PendingState ..|> BookingState
+    ConfirmedState ..|> BookingState
+    CheckedInState ..|> BookingState
+    CheckedOutState ..|> BookingState
+    CancelledState ..|> BookingState
+}
+
+' ============================================================
+' 2. PRICING - STRATEGY PATTERN
+' ============================================================
+
+package "Pricing - Strategy Pattern" as StrategyPattern #F0FDF4 {
+
+    interface PricingService {
+        +calculate(input: PricingContext): BookingPriceResponse
+    }
+
+    class PricingServiceImpl <<Context>> {
+        -strategies: List<PricingStrategy>
+        --
+        +calculate(input: PricingContext): BookingPriceResponse
+    }
+
+    interface PricingStrategy <<Strategy>> {
+        +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+        +category(): PricingCategory
+    }
+
+    together {
+        class BaseRoomPriceStrategy <<ConcreteStrategy>> {
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+        }
+
+        class ExtraServicePricingStrategy <<ConcreteStrategy>> {
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+        }
+
+        class PromotionDiscountStrategy <<ConcreteStrategy>> {
+            {static} -ONE_HUNDRED: BigDecimal = 100
+            --
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+        }
+                class HolidaySurchargeStrategy <<ConcreteStrategy>> {
+            {static} -SURCHARGE_RATE: BigDecimal = 0.30
+            --
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+            -isHoliday(date: LocalDate): boolean
+        }
+
+        class LongStayDiscountStrategy <<ConcreteStrategy>> {
+            {static} -MINIMUM_NIGHTS: int = 5
+            {static} -DISCOUNT_RATE: BigDecimal = 0.10
+            --
+            +calculate(context: PricingContext, subtotal: BigDecimal): BigDecimal
+            +category(): PricingCategory
+        }
+    }
+
+    class PricingContext {
+        -room: Room
+        -petCount: int
+        -nights: int
+        -checkIn: LocalDate
+        -checkOut: LocalDate
+        -extraServices: List<BookingExtraService>
+        -promotion: Promotion
+    }
+
+    enum PricingCategory {
+        ROOM
+        EXTRA_SERVICE
+        HOLIDAY_SURCHARGE
+        DISCOUNT
+    }
+
+    class BookingPriceResponse <<record>> {
+        -basePrice: BigDecimal
+        -extraServicesPrice: BigDecimal
+        -holidaySurcharge: BigDecimal
+        -discountAmount: BigDecimal
+        -totalPrice: BigDecimal
+    }
+
+    PricingServiceImpl ..|> PricingService
+    PricingServiceImpl --> "0..*" PricingStrategy : strategies
+
+    BaseRoomPriceStrategy ..|> PricingStrategy
+    ExtraServicePricingStrategy ..|> PricingStrategy
+    PromotionDiscountStrategy ..|> PricingStrategy
+    HolidaySurchargeStrategy ..|> PricingStrategy
+    LongStayDiscountStrategy ..|> PricingStrategy
+
+    PricingStrategy ..> PricingContext : parameter
+    PricingStrategy ..> PricingCategory : returns
+    PricingServiceImpl ..> BookingPriceResponse : creates
+}
+
+' ============================================================
+' 3. NOTIFICATION - OBSERVER PATTERN
+' ============================================================
+
+package "Notification - Observer Pattern" as ObserverPattern #FFF7ED {
+
+    class BookingConfirmedEvent <<Event>> {
+        -booking: Booking
+        --
+        +getBooking(): Booking
+    }
+
+    class BookingConfirmedListener <<Observer>> {
+        -emailNotificationService: EmailNotificationService
+        -bookingRepository: BookingRepository
+        --
+        +handleBookingConfirmed(event: BookingConfirmedEvent): void
+    }
+
+    class EmailNotificationService {
+        -mailSender: JavaMailSender
+        --
+        +sendBookingConfirmedEmail(booking: Booking): void
+    }
+
+    package "Spring Framework References" {
+
+        interface ApplicationEventPublisher <<EventPublisher>> {
+            +publishEvent(event: Object): void
+        }
+
+        class ApplicationEvent <<Framework>> {
+            +getSource(): Object
+        }
+
+        interface JavaMailSender <<Framework>> {
+            +createMimeMessage(): MimeMessage
+            +send(message: MimeMessage): void
+        }
+    }
+
+    BookingConfirmedEvent --|> ApplicationEvent
+
+    BookingConfirmedListener ..> BookingConfirmedEvent : observes AFTER_COMMIT
+    BookingConfirmedListener --> EmailNotificationService
+    EmailNotificationService --> JavaMailSender
+}
+
+' ============================================================
+' 4. MAIN DOMAIN CLASSES
+' ============================================================
+
+package "Main Domain Classes" as DomainClasses #FFFFFF {
+
+    class Booking <<Entity>> {
+        -id: Long
+        -user: User
+        -room: Room
+        -checkInDate: LocalDate
+        -checkOutDate: LocalDate
+        -status: BookingStatus
+        -paymentStatus: PaymentStatus
+        -totalPrice: BigDecimal
+        -paidAmount: BigDecimal
+        -paidAt: LocalDateTime
+        -bookingPets: List<BookingPet>
+        -extraServices: List<BookingExtraService>
+        -promotion: Promotion
+        --
+        +canCheckInOn(currentDate: LocalDate): boolean
+        +canCheckOutOn(currentDate: LocalDate): boolean
+        +addPet(pet: Pet): void
+        +addExtraService(service: BookingExtraService): void
+    }
+
+    class User <<Entity>> {
+        -id: Long
+        -firstName: String
+        -lastName: String
+        -email: String
+        -role: UserRole
+    }
+
+    class Pet <<Entity>> {
+        -id: Long
+        -name: String
+        -type: PetType
+        -owner: User
+    }
+
+    class Room <<Entity>> {
+        -id: Long
+        -roomNumber: String
+        -capacity: Integer
+        -pricePerPetPerNight: BigDecimal
+        -status: RoomStatus
+    }
+
+    class BookingPet <<Entity>> {
+        -id: Long
+        -booking: Booking
+        -pet: Pet
+    }
+
+    class BookingExtraService <<Entity>> {
+        -id: Long
+        -booking: Booking
+        -extraService: ExtraService
+        -bookingPet: BookingPet
+        -quantity: Integer
+        -unitPrice: BigDecimal
+        -totalPrice: BigDecimal
+    }
+
+    class ExtraService <<Entity>> {
+        -id: Long
+        -name: String
+        -price: BigDecimal
+        -active: Boolean
+    }
+
+    class Promotion <<Entity>> {
+        -id: Long
+        -name: String
+        -type: PromotionType
+        -value: BigDecimal
+        -startDate: LocalDate
+        -endDate: LocalDate
+        -active: Boolean
+        --
+        +isAvailableOn(date: LocalDate): boolean
+    }
+
+    class Receipt <<Entity>> {
+        -id: Long
+        -receiptNumber: String
+        -issuedAt: LocalDateTime
+        -roomAmount: BigDecimal
+        -serviceAmount: BigDecimal
+        -surchargeAmount: BigDecimal
+        -discountAmount: BigDecimal
+        -totalAmount: BigDecimal
+        -booking: Booking
+    }
+
+    class DailyCareReport <<Entity>> {
+        -id: Long
+        -bookingPet: BookingPet
+        -recordedBy: User
+        -reportDate: LocalDate
+        -healthNote: String
+        --
+        +prePersist(): void
+    }
+
+    enum BookingStatus {
+        PENDING
+        CONFIRMED
+        CHECKED_IN
+        CHECKED_OUT
+        CANCELLED
+    }
+
+    enum PaymentStatus {
+        UNPAID
+        PAID
+    }
+
+    Booking "0..*" --> "1" User : user
+    Pet "0..*" --> "1" User : owner
+    Booking "0..*" --> "1" Room : room
+
+    Booking "1" -- "0..*" BookingPet : bookingPets / booking
+    BookingPet "0..*" --> "1" Pet : pet
+
+    Booking "1" -- "0..*" BookingExtraService : extraServices / booking
+    BookingExtraService "0..*" --> "1" ExtraService : extraService
+    BookingExtraService "0..*" --> "0..1" BookingPet : bookingPet
+
+    Booking "0..*" --> "0..1" Promotion : promotion
+    Receipt "0..1" --> "1" Booking : booking
+
+    DailyCareReport "0..*" --> "1" BookingPet : bookingPet
+    DailyCareReport "0..*" --> "1" User : recordedBy
+
+    Booking --> BookingStatus : status
+    Booking --> PaymentStatus : paymentStatus
+}
+
+' ============================================================
+' 5. PAYMENT AND RECEIPT SERVICES
+' ============================================================
+
+package "Payment and Receipt Management" as PaymentManagement #F0FDFA {
+
+    interface PaymentService {
+        +confirmPayment(bookingId: Long): PaymentResponse
+    }
+
+    class PaymentServiceImpl {
+        -bookingRepository: BookingRepository
+        -receiptService: ReceiptService
+        --
+        +confirmPayment(bookingId: Long): PaymentResponse
+    }
+
+    interface ReceiptService {
+        +createReceipt(bookingId: Long): Receipt
+        +getReceiptByBookingId(bookingId: Long): Optional<Receipt>
+    }
+
+    class ReceiptServiceImpl {
+        -bookingRepository: BookingRepository
+        -receiptRepository: ReceiptRepository
+        --
+        +createReceipt(bookingId: Long): Receipt
+        +getReceiptByBookingId(bookingId: Long): Optional<Receipt>
+    }
+
+    PaymentServiceImpl ..|> PaymentService
+    ReceiptServiceImpl ..|> ReceiptService
+
+    PaymentServiceImpl --> ReceiptService : receiptService
+    ReceiptServiceImpl -[norank,dashed]-> Receipt : creates
+}
+
+' ============================================================
+' 6. SELECTED REPOSITORIES
+' ============================================================
+
+package "Selected Repositories" as Persistence #F5F3FF {
+
+    interface BookingRepository <<Repository>> {
+        +findByIdForUpdate(id: Long): Optional<Booking>
+    }
+
+    interface ReceiptRepository <<Repository>> {
+        +findByBookingId(bookingId: Long): Optional<Receipt>
+    }
+}
+
+' ============================================================
+' 7. ESSENTIAL CONNECTIONS BETWEEN GROUPS
+' Cross-group links are visible but do not control ranking.
+' ============================================================
+
+BookingServiceImpl -[norank]-> PricingService : pricingService
+BookingState -[norank,dashed]-> Booking : changes status
+
+BookingServiceImpl -[norank]-> ApplicationEventPublisher : eventPublisher
+BookingServiceImpl -[norank,dashed]-> BookingConfirmedEvent : creates and publishes
+BookingConfirmedEvent -[norank]-> Booking : booking
+
+BookingServiceImpl -[norank]-> BookingRepository : bookingRepository
+BookingConfirmedListener -[norank]-> BookingRepository : bookingRepository
+
+PaymentServiceImpl -[norank]-> BookingRepository : bookingRepository
+ReceiptServiceImpl -[norank]-> BookingRepository : bookingRepository
+ReceiptServiceImpl -[norank]-> ReceiptRepository : receiptRepository
+
+BookingRepository -[norank,dashed]-> Booking : persists
+ReceiptRepository -[norank,dashed]-> Receipt : persists
+
+PricingContext -[norank]-> Room : room
+PricingContext -[norank]-> "0..1" Promotion : promotion
+PricingContext -[norank]-> "0..*" BookingExtraService : extraServices
+
+legend bottom
+    + Public / - Private
+    Colored frames identify State, Strategy and Observer patterns.
+    Important classes and members are selected from the actual code.
+    Constructors and Lombok-generated accessors are omitted.
+    All five concrete pricing strategies are shown.
+    Other DTO and supporting classes are omitted.
+endlegend
+
+@enduml

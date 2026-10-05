@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UpdateDailyCareReportRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.dto.request</a> &gt; <span class="el_source">UpdateDailyCareReportRequest.java</span></div><h1>UpdateDailyCareReportRequest.java</h1><pre class="source lang-java linenums">package com.example.petshotel.dto.request;
+
+import java.time.LocalDate;
+
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+<span class="fc" id="L8">public record UpdateDailyCareReportRequest(</span>
+    @NotNull(message = &quot;Booking pet ID is required&quot;)
+    @Positive(message = &quot;Booking pet ID must be greater than zero&quot;)
+    @Schema(description = &quot;รหัสสัตว์เลี้ยงในการจอง ต้องอยู่ในการจองเดิม&quot;, example = &quot;12&quot;)
+    Long bookingPetId,
+
+    @NotNull(message = &quot;Report date is required&quot;)
+    @Schema(description = &quot;วันที่รายงาน ต้องอยู่ในช่วงเข้าพัก&quot;, example = &quot;2026-10-03&quot;)
+    LocalDate reportDate,
+
+    @Schema(description = &quot;อาหารที่ให้ช่วงเช้า&quot;, example = &quot;อาหารเม็ด 100 กรัม&quot;)
+    String feedingMorning,
+
+    @Schema(description = &quot;อาหารที่ให้ช่วงเย็น&quot;, example = &quot;อาหารเปียก 1 ซอง&quot;)
+    String feedingEvening,
+
+    @PositiveOrZero(message = &quot;Walking minutes must be zero or greater&quot;)
+    @Schema(description = &quot;ระยะเวลาเดินเล่นเป็นนาที&quot;, example = &quot;15&quot;)
+    Integer walkingMinutes,
+
+    @Schema(description = &quot;การดูแลความสะอาด&quot;, example = &quot;แปรงขน&quot;)
+    String grooming,
+
+    @Schema(description = &quot;อารมณ์ของสัตว์เลี้ยง&quot;, example = &quot;ร่าเริง&quot;)
+    String mood,
+
+    @Schema(description = &quot;ข้อมูลสุขภาพประจำวัน&quot;, example = &quot;สุขภาพปกติ&quot;)
+    String healthNote,
+
+    @Schema(description = &quot;หมายเหตุเพิ่มเติม&quot;, example = &quot;กินอาหารครบทั้งสองมื้อ&quot;)
+    String generalNote
+) {
+    
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

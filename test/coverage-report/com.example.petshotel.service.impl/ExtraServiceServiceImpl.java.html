@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ExtraServiceServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">ExtraServiceServiceImpl.java</span></div><h1>ExtraServiceServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.petshotel.domain.entity.ExtraService;
+import com.example.petshotel.repository.ExtraServiceRepository;
+import com.example.petshotel.service.ExtraServiceService;
+import com.example.petshotel.exception.ResourceNotFoundException;
+
+@Service
+public class ExtraServiceServiceImpl implements ExtraServiceService {
+
+    private final ExtraServiceRepository extraServiceRepository;
+
+<span class="fc" id="L18">    public ExtraServiceServiceImpl(ExtraServiceRepository extraServiceRepository) {</span>
+<span class="fc" id="L19">        this.extraServiceRepository = extraServiceRepository;</span>
+<span class="fc" id="L20">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;ExtraService&gt; getAllExtraServices() {
+<span class="nc" id="L25">        return extraServiceRepository.findAll();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ExtraService getExtraServiceById(Long id) {
+<span class="fc" id="L31">        return extraServiceRepository.findById(id)</span>
+<span class="fc" id="L32">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;ExtraService&quot;, id));</span>
+    }
+
+    @Override 
+    @Transactional(readOnly = true)
+    public List&lt;ExtraService&gt; getActiveExtraServices(){
+<span class="fc" id="L38">        return extraServiceRepository.findByActiveTrue();</span>
+    }
+
+    @Override
+    @Transactional
+    public ExtraService createExtraService(ExtraService extraService) {
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">        if (extraService == null</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">                || extraService.getName() == null</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">                || extraService.getName().isBlank()</span>
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">                || extraService.getPrice() == null</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">                || extraService.getPrice().signum() &lt; 0) {</span>
+<span class="fc" id="L49">            throw new IllegalArgumentException(</span>
+                    &quot;Extra service requires a name and a non-negative price&quot;);
+        }
+<span class="fc" id="L52">        extraService.setName(extraService.getName().trim());</span>
+
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (extraService.getActive() == null) {</span>
+<span class="fc" id="L55">            extraService.setActive(true);</span>
+        }
+
+<span class="fc" id="L58">        return extraServiceRepository.save(extraService);</span>
+    }
+
+    @Override
+    @Transactional
+    public ExtraService updateExtraService(Long id, ExtraService extraServiceDetails) {
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        if (extraServiceDetails == null</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">                || extraServiceDetails.getName() == null</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">                || extraServiceDetails.getName().isBlank()</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">                || extraServiceDetails.getPrice() == null</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">                || extraServiceDetails.getPrice().signum() &lt; 0) {</span>
+<span class="fc" id="L69">            throw new IllegalArgumentException(</span>
+                    &quot;Extra service requires a name and a non-negative price&quot;);
+        }
+
+<span class="fc" id="L73">        ExtraService extraService = getExtraServiceById(id);</span>
+<span class="fc" id="L74">        extraService.setName(extraServiceDetails.getName().trim());</span>
+<span class="fc" id="L75">        extraService.setDescription(extraServiceDetails.getDescription());</span>
+<span class="fc" id="L76">        extraService.setPrice(extraServiceDetails.getPrice());</span>
+
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (extraServiceDetails.getActive() != null) {</span>
+<span class="fc" id="L79">            extraService.setActive(extraServiceDetails.getActive());</span>
+        }
+<span class="fc" id="L81">        return extraServiceRepository.save(extraService);</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteExtraService(Long id) {
+<span class="fc" id="L87">        ExtraService extraService = extraServiceRepository.findById(id)</span>
+<span class="pc" id="L88">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;ExtraService&quot;, id));</span>
+<span class="fc" id="L89">        extraService.setActive(false);</span>
+<span class="fc" id="L90">        extraServiceRepository.save(extraService);</span>
+<span class="fc" id="L91">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

@@ -1,6 +1,7 @@
 package com.example.petshotel.service.impl;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import com.example.petshotel.repository.PromotionRepository;
 import com.example.petshotel.service.PromotionService;
 import java.math.BigDecimal;
 import com.example.petshotel.domain.enums.PromotionType;
+import com.example.petshotel.exception.ResourceNotFoundException;
 
 @Service
 public class PromotionServiceImpl implements PromotionService {
@@ -33,17 +35,18 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional(readOnly = true)
     public Promotion getPromotionById(Long id) {
         return promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", id));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Promotion> getActivePromotions() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(
+                ZoneId.of("Asia/Bangkok")
+        );
+
         return promotionRepository.findAll().stream()
-                .filter(p -> Boolean.TRUE.equals(p.getActive()))
-                .filter(p -> p.getStartDate() != null && !today.isBefore(p.getStartDate()))
-                .filter(p -> p.getEndDate() != null && !today.isAfter(p.getEndDate()))
+                .filter(promotion -> promotion.isAvailableOn(today))
                 .toList();
     }
 
@@ -67,7 +70,7 @@ public class PromotionServiceImpl implements PromotionService {
     public Promotion updatePromotion(Long id, CreatePromotionRequest request) {
         validateDiscount(request);
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", id));
 
         promotion.setName(request.name().trim());
         promotion.setType(request.type());
@@ -83,7 +86,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Transactional
     public void deactivatePromotion(Long id) {
         Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Promotion", id));
 
         promotion.setActive(false);
         promotionRepository.save(promotion);

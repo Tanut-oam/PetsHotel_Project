@@ -14,11 +14,18 @@ import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportBookingSummary;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.mapper.DailyCareReportMapper;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.DailyCareReportRepository;
 import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.DailyCareReportService;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import java.util.Collection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 
 @Service
 public class DailyCareReportServiceImpl implements DailyCareReportService {
@@ -91,6 +98,62 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
 
         return reportRepository.findByBookingPet_IdOrderByReportDateDesc(bookingPetId).stream().map(mapper::toResponse).toList();
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyCareReportResponse> getReportsForOwner(Long currentUserId) {
+        User user = findUser(currentUserId);
+
+        return reportRepository.findAllForOwner(user.getId())
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public  List<DailyCareReportResponse> getAllReportsForStaffAndAdmin(Long currentUserId){
+        User currentUser = findUser(currentUserId);
+        requireStaffOrAdmin(currentUser);
+
+        return  reportRepository.findAllByOrderByReportDateDescIdDesc().stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReportableBookingPetResponse> getReportableBookingPetsForStaffAndAdmin(
+            Long currentUserId) {
+        User currentUser = findUser(currentUserId);
+        requireStaffOrAdmin(currentUser);
+
+        return bookingPetRepository.findReportableBookingPets(
+                List.of(BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT))
+                .stream()
+                .map(bookingPet -> {
+                Booking booking = bookingPet.getBooking();
+                User owner = booking.getUser();
+                var pet = bookingPet.getPet();
+
+                return new ReportableBookingPetResponse(
+                        bookingPet.getId(),
+                        booking.getId(),
+                        pet.getName(),
+                        owner.getFirstName() + " " + owner.getLastName(),
+                        owner.getEmail(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate(),
+                        pet.getType(),
+                        pet.getBreed(),
+                        pet.getAge(),
+                        pet.getWeight(),
+                        pet.getGender(),
+                        pet.getMedicalNote(),
+                        pet.getFeedingInstruction(),
+                        pet.getSpecialNote()
+                );
+})
+                .toList();
+    }
 
     @Override
     @Transactional 
@@ -113,7 +176,7 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
                     "The selected pet must be in the original booking"
             );
         }
-        
+
         requireDateWithinStay(request.reportDate(), originalBooking);
 
         if (reportRepository.existsByBookingPet_IdAndReportDateAndIdNot(
@@ -134,21 +197,24 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         return mapper.toResponse(reportRepository.save(report));
     }
     
-    private User findUser(Long userId){
-        return userRepository.findById(userId).orElseThrow(()-> new IllegalArgumentException("User not found: " +userId));
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     private BookingPet findBookingPet(Long bookingPetId) {
-        return bookingPetRepository.findById(bookingPetId).orElseThrow(() ->new IllegalArgumentException("Booking pet not found: " + bookingPetId));
+        return bookingPetRepository.findById(bookingPetId)
+            .orElseThrow(() -> new ResourceNotFoundException("Booking pet", bookingPetId));
     }
 
-    private DailyCareReport findReport(Long reportId){
-        return reportRepository.findById(reportId).orElseThrow(() -> new IllegalArgumentException("Report not found: " + reportId));
+    private DailyCareReport findReport(Long reportId) {
+        return reportRepository.findById(reportId)
+            .orElseThrow(() -> new ResourceNotFoundException("Report", reportId));
     }
 
     private  void requireStaffOrAdmin(User user){
         if (user.getRole() != UserRole.STAFF && user.getRole() != UserRole.ADMIN){
-            throw new IllegalArgumentException("Only staff or admin can change care reports");
+            throw new AccessDeniedException("Only staff or admin can change care reports");
         }
     }
 
@@ -159,7 +225,7 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         }
 
         if(user.getRole() != UserRole.CUSTOMER || !booking.getUser().getId().equals(user.getId())){
-            throw new IllegalArgumentException("You cannot view this care report");
+            throw new AccessDeniedException("You cannot view this care report");
         }
     }
 
@@ -168,5 +234,50 @@ public class DailyCareReportServiceImpl implements DailyCareReportService {
         if(reporDate.isBefore(booking.getCheckInDate()) || reporDate.isAfter(booking.getCheckOutDate())){
             throw new IllegalArgumentException("Report date must be within the stay");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReportBookingSummary> getReportBookingsForOwner(
+            Long currentUserId, Pageable pageable
+    ) {
+        User user = findUser(currentUserId);
+        return reportRepository.findReportBookingsForOwner(user.getId(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReportBookingSummary> getReportBookingsForOwnerOnDate(Long currentUserId,
+        LocalDate reportDate,Pageable pageable
+    ) {
+        if (reportDate == null) {
+            throw new IllegalArgumentException("Report date is required");
+        }
+
+        User user = findUser(currentUserId);
+
+        return reportRepository.findReportBookingsForOwnerOnDate(
+                user.getId(),
+                reportDate,
+                pageable
+        );
+}
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DailyCareReportResponse> getReportsForOwnerBookings(
+            Long currentUserId, Collection<Long> bookingIds
+    ) {
+        User user = findUser(currentUserId);
+
+        if (bookingIds == null || bookingIds.isEmpty()) {
+            return List.of();
+        }
+
+        return reportRepository
+                .findAllForOwnerAndBookingIds(user.getId(), bookingIds)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 }

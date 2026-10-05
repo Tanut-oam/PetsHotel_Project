@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UpdatePetRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.dto.request</a> &gt; <span class="el_source">UpdatePetRequest.java</span></div><h1>UpdatePetRequest.java</h1><pre class="source lang-java linenums">package com.example.petshotel.dto.request;
+
+import com.example.petshotel.domain.enums.PetType;
+import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+<span class="fc" id="L7">public record UpdatePetRequest(</span>
+    @NotBlank(message = &quot;Pet name is required&quot;)
+    @Schema(description = &quot;ชื่อสัตว์เลี้ยง&quot;, example = &quot;โมจิ&quot;)
+    String name,
+
+
+    @NotNull(message = &quot;Pet type is required&quot;)
+    @Schema(description = &quot;ประเภทสัตว์เลี้ยง: DOG, CAT หรือ OTHER&quot;, example = &quot;DOG&quot;)
+    PetType type,
+
+    @Schema(description = &quot;สายพันธุ์&quot;, example = &quot;ชิบะอินุ&quot;)
+    String breed,
+
+    @PositiveOrZero(message = &quot;Age must be zero or greater&quot;)
+    @Schema(description = &quot;อายุสัตว์เลี้ยงเป็นเดือน&quot;, example = &quot;3&quot;)
+    Integer age,
+
+    @Positive(message = &quot;Weight must be greater than zero&quot;)
+    @Schema(description = &quot;น้ำหนักสัตว์เลี้ยงเป็นกิโลกรัม&quot;, example = &quot;10.5&quot;)
+    Double weight,
+
+    @Schema(description = &quot;เพศ&quot;, example = &quot;ผู้&quot;)
+    String gender,
+
+    @Schema(description = &quot;ข้อมูลสุขภาพหรือโรคประจำตัว&quot;, example = &quot;ไม่มีโรคประจำตัว&quot;)
+    String medicalNote,
+
+    @Schema(description = &quot;คำแนะนำเรื่องอาหาร&quot;, example = &quot;ให้อาหารเม็ดวันละ 2 มื้อ&quot;)
+    String feedingInstruction,
+
+    @Schema(description = &quot;ข้อควรดูแลเพิ่มเติม&quot;, example = &quot;กลัวเสียงดัง&quot;)
+    String specialNote
+) {
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

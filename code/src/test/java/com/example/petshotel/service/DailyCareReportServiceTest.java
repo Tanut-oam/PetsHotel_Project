@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.LocalDate;
 import java.util.Optional;
-
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.domain.enums.UserRole;
 import com.example.petshotel.dto.request.CreateDailyCareReportRequest;
 import com.example.petshotel.dto.response.DailyCareReportResponse;
+import com.example.petshotel.dto.response.ReportableBookingPetResponse;
 import com.example.petshotel.mapper.DailyCareReportMapper;
 import com.example.petshotel.repository.BookingPetRepository;
 import com.example.petshotel.repository.DailyCareReportRepository;
@@ -26,6 +27,8 @@ import com.example.petshotel.repository.UserRepository;
 import com.example.petshotel.service.impl.DailyCareReportServiceImpl;
 import java.time.LocalDateTime;
 import com.example.petshotel.dto.request.UpdateDailyCareReportRequest;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 
 public class DailyCareReportServiceTest {
     private DailyCareReportRepository reportRepository;
@@ -145,7 +148,7 @@ public class DailyCareReportServiceTest {
             .thenReturn(Optional.of(staff));
 
     assertThrows(
-            IllegalArgumentException.class,
+            AccessDeniedException.class,
             () -> reportService.createReport(21L, 5L, request)
     );
 
@@ -266,7 +269,7 @@ public class DailyCareReportServiceTest {
             .thenReturn(Optional.of(report));
 
     assertThrows(
-            IllegalArgumentException.class,
+            AccessDeniedException.class,
             () -> reportService.getReportById(100L, 9L)
     );
     }
@@ -292,6 +295,21 @@ public class DailyCareReportServiceTest {
     assertEquals("โมจิ", response.petName());
     }
 
+    @Test
+    void getAllReportsForStaffAndAdminShouldRejectCustomer() {
+    staff.setRole(UserRole.CUSTOMER);
+    when(userRepository.findById(5L))
+        .thenReturn(Optional.of(staff));
+
+    assertThrows(
+        AccessDeniedException.class,
+        () -> reportService.getAllReportsForStaffAndAdmin(5L)
+    );
+
+    verify(reportRepository, never())
+        .findAllByOrderByReportDateDescIdDesc();
+    }
+
     private UpdateDailyCareReportRequest createUpdateRequest(Long bookingPetId, LocalDate reportDate) {
 
     return new UpdateDailyCareReportRequest(
@@ -305,6 +323,26 @@ public class DailyCareReportServiceTest {
             "ปกติ",
             "แก้ไขรายละเอียดการดูแล"
     );
+    }
+
+    @Test
+    void getAllReportsForStaffAndAdminShouldAllowStaff() {
+    User owner = new User();
+    owner.setId(8L);
+    DailyCareReport report = createExistingReport(owner);
+
+    when(userRepository.findById(5L))
+        .thenReturn(Optional.of(staff));
+    when(reportRepository.findAllByOrderByReportDateDescIdDesc())
+        .thenReturn(List.of(report));
+
+    List<DailyCareReportResponse> responses =
+        reportService.getAllReportsForStaffAndAdmin(5L);
+
+    assertEquals(1, responses.size());
+    assertEquals(Long.valueOf(100L), responses.get(0).id());
+    assertEquals("โมจิ", responses.get(0).petName());
+    verify(reportRepository).findAllByOrderByReportDateDescIdDesc();
     }
 
     @Test
@@ -532,11 +570,99 @@ public class DailyCareReportServiceTest {
             .thenReturn(Optional.of(customer));
 
     assertThrows(
-            IllegalArgumentException.class,
+            AccessDeniedException.class,
             () -> reportService.updateReport(100L, 8L, updateRequest)
     );
 
     verify(reportRepository, never())
             .save(any(DailyCareReport.class));
+    }
+
+    @Test
+    void createReportShouldFailWhenUserDoesNotExist() {
+    when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> reportService.createReport(21L, 99L, request)
+    );
+
+    verify(reportRepository, never()).save(any(DailyCareReport.class));
+    }
+
+    @Test
+    void createReportShouldFailWhenBookingPetDoesNotExist() {
+    when(userRepository.findById(5L)).thenReturn(Optional.of(staff));
+    when(bookingPetRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> reportService.createReport(99L, 5L, request)
+    );
+
+    verify(reportRepository, never()).save(any(DailyCareReport.class));
+    }
+
+    @Test
+    void getReportByIdShouldFailWhenReportDoesNotExist() {
+    when(userRepository.findById(5L)).thenReturn(Optional.of(staff));
+    when(reportRepository.findById(99L)).thenReturn(Optional.empty());
+
+    assertThrows(
+        ResourceNotFoundException.class,
+        () -> reportService.getReportById(99L, 5L)
+    );
+    }
+
+    @Test
+void getReportableBookingPetsShouldReturnOptionsForAdmin() {
+    User admin = new User();
+    admin.setId(6L);
+    admin.setRole(UserRole.ADMIN);
+
+    User owner = new User();
+    owner.setFirstName("กานต์");
+    owner.setLastName("ใจดี");
+    bookingPet.getBooking().setUser(owner);
+
+    List<BookingStatus> statuses =
+            List.of(BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT);
+
+    when(userRepository.findById(6L))
+            .thenReturn(Optional.of(admin));
+    when(bookingPetRepository.findReportableBookingPets(statuses))
+            .thenReturn(List.of(bookingPet));
+
+    List<ReportableBookingPetResponse> options =
+            reportService.getReportableBookingPetsForStaffAndAdmin(6L);
+
+    assertEquals(1, options.size());
+
+    ReportableBookingPetResponse option = options.get(0);
+    assertEquals(21L, option.bookingPetId());
+    assertEquals(10L, option.bookingId());
+    assertEquals("โมจิ", option.petName());
+    assertEquals("กานต์ ใจดี", option.ownerName());
+    assertEquals(LocalDate.of(2026, 9, 23), option.checkInDate());
+    assertEquals(LocalDate.of(2026, 9, 25), option.checkOutDate());
+
+    verify(bookingPetRepository).findReportableBookingPets(statuses);
+}
+
+    @Test
+    void getReportableBookingPetsShouldRejectCustomer() {
+        User customer = new User();
+        customer.setId(8L);
+        customer.setRole(UserRole.CUSTOMER);
+
+        when(userRepository.findById(8L))
+                .thenReturn(Optional.of(customer));
+
+        assertThrows(
+                AccessDeniedException.class,
+                () -> reportService.getReportableBookingPetsForStaffAndAdmin(8L)
+        );
+
+        verifyNoInteractions(bookingPetRepository);
     }
 }

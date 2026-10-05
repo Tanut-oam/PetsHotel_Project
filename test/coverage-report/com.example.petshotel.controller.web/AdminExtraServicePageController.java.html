@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminExtraServicePageController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.controller.web</a> &gt; <span class="el_source">AdminExtraServicePageController.java</span></div><h1>AdminExtraServicePageController.java</h1><pre class="source lang-java linenums">package com.example.petshotel.controller.web;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.example.petshotel.domain.entity.ExtraService;
+import com.example.petshotel.dto.request.ExtraServiceRequest;
+import com.example.petshotel.dto.response.ExtraServiceResponse;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.mapper.ExtraServiceMapper;
+import com.example.petshotel.service.ExtraServiceService;
+
+import jakarta.validation.Valid;
+
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+
+@Controller 
+@RequestMapping(&quot;/admin/services&quot;)
+public class AdminExtraServicePageController {
+
+    private final ExtraServiceService extraServiceService;
+    private final ExtraServiceMapper extraServiceMapper;
+
+<span class="fc" id="L35">    public AdminExtraServicePageController(ExtraServiceService extraServiceService, ExtraServiceMapper extraServiceMapper){</span>
+<span class="fc" id="L36">        this.extraServiceService = extraServiceService;</span>
+<span class="fc" id="L37">        this.extraServiceMapper = extraServiceMapper;</span>
+<span class="fc" id="L38">    }</span>
+
+    @GetMapping
+    public String showServices(@RequestParam(name = &quot;editId&quot;, required = false) Long editId, Model model){
+<span class="fc" id="L42">        List&lt;ExtraServiceResponse&gt; responses = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for(ExtraService service : extraServiceService.getAllExtraServices()){</span>
+<span class="fc" id="L45">            ExtraServiceResponse response = extraServiceMapper.toResponse(service);</span>
+<span class="fc" id="L46">            responses.add(response);</span>
+<span class="fc" id="L47">        }</span>
+
+<span class="fc" id="L49">        model.addAttribute(&quot;extraServices&quot;, responses);</span>
+<span class="fc" id="L50">        model.addAttribute(&quot;editingId&quot;, editId);</span>
+
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (!model.containsAttribute(&quot;serviceForm&quot;)) {</span>
+            ExtraServiceRequest form;
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            if (editId == null) {</span>
+<span class="fc" id="L56">                form = new ExtraServiceRequest(&quot;&quot;, &quot;&quot;, null, true);</span>
+            }else{
+<span class="fc" id="L58">                ExtraService service = extraServiceService.getExtraServiceById(editId);</span>
+
+<span class="fc" id="L60">                form = new ExtraServiceRequest(</span>
+<span class="fc" id="L61">                    service.getName(),</span>
+<span class="fc" id="L62">                    service.getDescription(),</span>
+<span class="fc" id="L63">                    service.getPrice(),</span>
+<span class="fc" id="L64">                    service.getActive());</span>
+            }
+<span class="fc" id="L66">            model.addAttribute(&quot;serviceForm&quot;, form);</span>
+        }
+<span class="fc" id="L68">        return &quot;admin/services&quot;;</span>
+    }
+
+    @PostMapping 
+    public String saveService(@RequestParam(name = &quot;id&quot;, required = false) Long id, @Valid @ModelAttribute(&quot;serviceForm&quot;) ExtraServiceRequest request,
+        BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes){
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (bindingResult.hasErrors()) {</span>
+<span class="fc" id="L75">            return showServices(id, model);</span>
+        }
+
+        try{
+<span class="fc" id="L79">            ExtraService service = extraServiceMapper.toEntity(request);</span>
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">            if (id == null) {</span>
+<span class="fc" id="L82">                extraServiceService.createExtraService(service);</span>
+            }else{
+<span class="fc" id="L84">                extraServiceService.updateExtraService(id, service);</span>
+            }
+<span class="nc" id="L86">        }catch(IllegalArgumentException exception){</span>
+<span class="nc" id="L87">            bindingResult.reject(&quot;service.invalid&quot;, exception.getMessage());</span>
+<span class="nc" id="L88">            return  showServices(id, model);</span>
+<span class="fc" id="L89">        }</span>
+
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        redirectAttributes.addFlashAttribute(&quot;message&quot;, id == null ? &quot;เพิ่มบริการเสริมสำเร็จ&quot; : &quot;แก้ไขบริการเสริมสำเร็จ&quot;);</span>
+<span class="fc" id="L92">        return &quot;redirect:/admin/services&quot;;</span>
+
+    }
+
+    @PostMapping(&quot;/{id}/deactivate&quot;)
+    public String deactivateService(@PathVariable Long id, RedirectAttributes redirectAttributes){
+<span class="fc" id="L98">        extraServiceService.deleteExtraService(id);</span>
+<span class="fc" id="L99">        redirectAttributes.addFlashAttribute(&quot;message&quot;, &quot;ปิดใช้บริการเสริมสำเร็จ&quot;);</span>
+<span class="fc" id="L100">        return &quot;redirect:/admin/services&quot;;</span>
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public String handleNotFound(ResourceNotFoundException exception, RedirectAttributes redirectAttributes){
+<span class="fc" id="L105">        redirectAttributes.addFlashAttribute(&quot;error&quot;, exception.getMessage());</span>
+<span class="fc" id="L106">        return &quot;redirect:/admin/services&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

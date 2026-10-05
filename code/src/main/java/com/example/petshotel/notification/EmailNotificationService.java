@@ -2,6 +2,7 @@ package com.example.petshotel.notification;
 
 import java.time.format.DateTimeFormatter;
 
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -28,14 +29,13 @@ public class EmailNotificationService {
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
             helper.setTo(toEmail);
-            helper.setSubject("ยืนยันการจอง #" + booking.getId() + " - PetStay");
+            helper.setSubject("ยืนยันการจอง #" + booking.getId() + " - PetsHotel");
             helper.setText(buildEmailBody(booking, customerName, roomName, fmt), true);
 
             mailSender.send(message);
             log.info("Sent confirmation email to {} for Booking #{}", toEmail, booking.getId());
 
-        } catch (MessagingException e) {
-            // อย่าให้การส่งอีเมลล้มเหลวไปทำให้ transaction การจองพัง
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send email for Booking #{}: {}", booking.getId(), e.getMessage());
         }
     }
@@ -52,7 +52,7 @@ public class EmailNotificationService {
                         <li>เช็คเอาท์: %s</li>
                         <li>ยอดรวม: %s บาท</li>
                     </ul>
-                    <p>ขอบคุณที่ใช้บริการ PetStay ครับ</p>
+                    <p>ขอบคุณที่ใช้บริการ PetsHotel ครับ</p>
                 </div>
                 """.formatted(
                 name,

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="th" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ห้องพัก | PetsHotel</title>
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <script th:src="@{/js/date-range-picker.js}" defer></script>
+</head>
+<body>
+  <header th:replace="~{fragments/layout :: topbar}"></header>
+
+  <div class="layout">
+    <aside th:replace="~{fragments/layout :: sidebar}"></aside>
+
+    <main class="content">
+      <h1>ห้องพักทั้งหมด</h1>
+
+      <section class="panel">
+        <form class="form-grid availability-search-form"
+              th:action="@{/rooms/available}"
+              method="get">
+
+          <div th:replace="~{
+            fragments/date-range-picker
+            :: picker(
+              null,
+              null,
+              'checkIn',
+              'checkOut'
+            )
+          }">
+          </div>
+
+          <label class="field">
+            จำนวนสัตว์เลี้ยง
+            <input type="number" name="petCount" min="1" value="1" required>
+          </label>
+
+          <button class="btn btn-primary" type="submit">ค้นหา</button>
+        </form>
+      </section>
+
+      <div class="grid cols-3">
+        <article class="card" th:each="r : ${rooms}">
+          <img th:if="${r.imageUrl}"
+               class="room-image"
+               th:src="@{${r.imageUrl}}"
+               th:alt="${r.name}"
+               loading="lazy">
+          <div th:unless="${r.imageUrl}" class="room-image room-image-placeholder">🐾</div>
+
+          <div class="card-body">
+            <div class="row">
+              <h3 th:text="${r.name}">Deluxe Room</h3>
+              <span class="badge">เปิดให้จอง</span>
+            </div>
+            <p>
+              ห้อง <span th:text="${r.roomNumber}">101</span> ·
+              รองรับ <span th:text="${r.capacity}">3</span> ตัว
+            </p>
+            <div class="row">
+              <span class="price">
+                ฿<span th:text="${#numbers.formatDecimal(r.pricePerPetPerNight, 1, 'COMMA', 2, 'POINT')}">500</span> / ตัว / คืน
+              </span>
+              <a class="btn btn-small" th:href="@{/rooms/{id}(id=${r.id})}">ดูห้อง</a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <p class="muted" th:if="${#lists.isEmpty(rooms)}">ยังไม่มีห้องพักที่เปิดให้จอง</p>
+    </main>
+  </div>
+
+  <footer class="footer">PetsHotel · บ้านหลังที่สองของเพื่อนตัวโปรด</footer>
+</body>
+</html>

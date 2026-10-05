@@ -5,12 +5,15 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
-
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.server.ResponseStatusException;
 class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler handler;
@@ -78,5 +81,49 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(500, response.getStatusCode().value());
         assertEquals("Unexpected server error", response.getBody().message());
+    }
+
+    @Test
+    void duplicateResourceShouldReturn409() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleConflict(new DuplicateResourceException("อีเมลนี้ถูกใช้สมัครแล้ว"), request);
+
+        assertEquals(409, response.getStatusCode().value());
+    }
+
+    @Test
+    void accessDeniedShouldReturn403() {
+        ResponseEntity<ErrorResponse> response =
+                handler.handleForbidden(new AccessDeniedException("not owner"), request);
+
+        assertEquals(403, response.getStatusCode().value());
+    }
+
+    @Test
+    void missingRequestParameterShouldReturn400() {
+        ResponseEntity<ErrorResponse> response = handler.handleMalformedRequest(
+                new MissingServletRequestParameterException("petCount", "Integer"), request);
+
+        assertEquals(400, response.getStatusCode().value());
+        assertEquals("Bad Request", response.getBody().error());
+        assertEquals("/api/test", response.getBody().path());
+    }
+
+    @Test
+    void responseStatusExceptionShouldKeepStatusAndReason() {
+        ResponseEntity<ErrorResponse> response = handler.handleResponseStatus(
+                new ResponseStatusException(HttpStatus.FORBIDDEN, "ไม่มีสิทธิ์ดูการจองนี้"), request);
+
+        assertEquals(403, response.getStatusCode().value());
+        assertEquals("ไม่มีสิทธิ์ดูการจองนี้", response.getBody().message());
+    }
+
+    @Test
+    void responseStatusExceptionWithoutReasonShouldUseStatusPhrase() {
+        ResponseEntity<ErrorResponse> response = handler.handleResponseStatus(
+                new ResponseStatusException(HttpStatus.NOT_FOUND), request);
+
+        assertEquals(404, response.getStatusCode().value());
+        assertEquals("Not Found", response.getBody().message());
     }
 }

@@ -2,6 +2,7 @@ package com.example.petshotel.controller.api;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -20,39 +21,53 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.PetType;
 import com.example.petshotel.dto.request.CreatePetRequest;
 import com.example.petshotel.dto.request.UpdatePetRequest;
 import com.example.petshotel.dto.response.PetResponse;
+import com.example.petshotel.exception.GlobalExceptionHandler;
+import com.example.petshotel.exception.ResourceNotFoundException;
+import com.example.petshotel.service.CurrentUserService;
 import com.example.petshotel.service.PetService;
 
 class PetRestControllerTest {
 
     private PetService petService;
+    private CurrentUserService currentUserService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        petService = org.mockito.Mockito.mock(PetService.class);
+        petService = mock(PetService.class);
+        currentUserService = mock(CurrentUserService.class);
+
+        User owner = new User();
+        owner.setId(1L);
+        owner.setEmail("owner@example.com");
+        owner.setActive(true);
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(owner);
 
         PetRestController controller =
-                new PetRestController(petService);
+                new PetRestController(petService, currentUserService);
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 
     @Test
     void createPetShouldReturnCreatedPet() throws Exception {
-        PetResponse response = createPetResponse();
-
         when(petService.createPet(
                 eq(1L),
                 any(CreatePetRequest.class)
-        )).thenReturn(response);
+        )).thenReturn(createPetResponse());
 
         mockMvc.perform(post("/api/owners/1/pets")
+                .principal(() -> "owner@example.com")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -82,6 +97,7 @@ class PetRestControllerTest {
     @Test
     void createPetShouldRejectInvalidRequest() throws Exception {
         mockMvc.perform(post("/api/owners/1/pets")
+                .principal(() -> "owner@example.com")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -101,7 +117,8 @@ class PetRestControllerTest {
         when(petService.getPetsByOwner(1L))
                 .thenReturn(List.of(createPetResponse()));
 
-        mockMvc.perform(get("/api/owners/1/pets"))
+        mockMvc.perform(get("/api/owners/1/pets")
+                .principal(() -> "owner@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10))
                 .andExpect(jsonPath("$[0].name").value("Mochi"));
@@ -114,7 +131,8 @@ class PetRestControllerTest {
         when(petService.getPetById(10L, 1L))
                 .thenReturn(createPetResponse());
 
-        mockMvc.perform(get("/api/owners/1/pets/10"))
+        mockMvc.perform(get("/api/owners/1/pets/10")
+                .principal(() -> "owner@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.ownerId").value(1));
@@ -131,6 +149,7 @@ class PetRestControllerTest {
         )).thenReturn(createPetResponse());
 
         mockMvc.perform(put("/api/owners/1/pets/10")
+                .principal(() -> "owner@example.com")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -158,10 +177,57 @@ class PetRestControllerTest {
 
     @Test
     void deactivatePetShouldReturnNoContent() throws Exception {
-        mockMvc.perform(delete("/api/owners/1/pets/10"))
+        mockMvc.perform(delete("/api/owners/1/pets/10")
+                .principal(() -> "owner@example.com"))
                 .andExpect(status().isNoContent());
 
         verify(petService).deactivatePet(10L, 1L);
+    }
+
+    @Test
+    void getPetsByOwnerShouldRejectDifferentOwner() throws Exception {
+        mockMvc.perform(get("/api/owners/2/pets")
+                .principal(() -> "owner@example.com"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(petService);
+    }
+
+    @Test
+    void getPetsByOwnerShouldRejectMissingPrincipal() throws Exception {
+        mockMvc.perform(get("/api/owners/1/pets"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(currentUserService, petService);
+    }
+
+    @Test
+    void getPetsByOwnerShouldRejectUnknownUser() throws Exception {
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenThrow(new ResourceNotFoundException(
+                        "User", "owner@example.com"));
+
+        mockMvc.perform(get("/api/owners/1/pets")
+                .principal(() -> "owner@example.com"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(petService);
+    }
+
+    @Test
+    void getPetsByOwnerShouldRejectInactiveUser() throws Exception {
+        User inactiveOwner = new User();
+        inactiveOwner.setId(1L);
+        inactiveOwner.setActive(false);
+
+        when(currentUserService.getByEmail("owner@example.com"))
+                .thenReturn(inactiveOwner);
+
+        mockMvc.perform(get("/api/owners/1/pets")
+                .principal(() -> "owner@example.com"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(petService);
     }
 
     private PetResponse createPetResponse() {
@@ -177,7 +243,9 @@ class PetRestControllerTest {
                 "Morning and evening",
                 "Afraid of loud noises",
                 1L,
-                true
+                "Karn Jaidee",
+                true,
+                null
         );
     }
 }

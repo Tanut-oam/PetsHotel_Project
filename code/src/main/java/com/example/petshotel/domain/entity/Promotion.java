@@ -43,4 +43,16 @@ public class Promotion {
     @Column(nullable = false)
     private Boolean active;
 
+    public boolean isAvailableOn(LocalDate date) {
+        if (date == null
+                || !Boolean.TRUE.equals(active)
+                || startDate == null
+                || endDate == null) {
+            return false;
+        }
+
+        return !date.isBefore(startDate)
+                && !date.isAfter(endDate);
+    }
+
 }

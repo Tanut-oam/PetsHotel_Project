@@ -1,0 +1,78 @@
+@startuml sequence-search-room
+title PetsHotel - Search Available Rooms (UC-03, Web Form)
+
+skinparam defaultFontName "Tahoma"
+skinparam shadowing false
+skinparam maxMessageSize 320
+hide footbox
+autonumber
+
+' REST GET /api/rooms/available ใช้ service และ mapper ชุดเดียวกัน ต่างกันแค่ตอบเป็น JSON
+
+actor "Guest / Customer" as User
+boundary "AvailabilityController" as Page
+control "AvailabilityServiceImpl" as Service
+entity "RoomRepository" as Rooms
+entity "BookingRepository" as Bookings
+control "AvailabilityMapper" as Mapper
+control "RoomMapper" as RoomMap
+
+note over User, Page
+  Precondition: none (public page)
+  Query: checkIn, checkOut, petCount
+end note
+
+User -> Page : GET /rooms/available\n?checkIn&checkOut&petCount
+activate Page
+
+alt all parameters empty (first visit)
+  Page --> User : availability/search (empty form)
+else missing parameter or binding error
+  Page --> User : availability/search\nerror "กรุณากรอกวันที่และจำนวนสัตว์เลี้ยงให้ครบถ้วน"
+else complete form
+  Page -> Service : findAvailableRooms(checkIn, checkOut, petCount)
+  activate Service
+  Service -> Service : validate(checkIn, checkOut, petCount)
+
+  alt invalid dates or petCount < 1
+    Service --> Page : throw IllegalArgumentException
+    Page --> User : availability/search + error message
+  else valid
+    Service -> Rooms : findByStatus(RoomStatus.ACTIVE)
+    Rooms --> Service : List<Room>
+
+    loop each active room
+      Service -> Service : hasSpace(room, checkIn, checkOut, petCount)
+      alt petCount > room.getCapacity()
+        Service -> Service : skip room
+      else capacity ok
+        Service -> Bookings : existsOverlappingBooking(\nroom.getId(), checkIn, checkOut, ACTIVE_STATUSES)
+        Bookings --> Service : boolean
+        opt no overlapping booking
+          Service -> Service : availableRooms.add(room)
+        end
+      end
+    end
+
+    Service --> Page : List<Room> availableRooms
+    deactivate Service
+
+    Page -> Mapper : toResponse(search, rooms)
+    activate Mapper
+    loop each room
+      Mapper -> RoomMap : toResponse(room)
+      RoomMap --> Mapper : RoomResponse
+    end
+    Mapper --> Page : AvailabilityResponse
+    deactivate Mapper
+
+    Page --> User : availability/search\nresult table + "จองห้องนี้"
+  end
+end
+deactivate Page
+
+note over User, Page
+  "จองห้องนี้" → GET /bookings/new?roomId&checkIn&checkOut (UC-05)
+  ACTIVE_STATUSES = PENDING, CONFIRMED, CHECKED_IN
+end note
+@enduml
