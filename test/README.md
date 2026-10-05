@@ -7,17 +7,17 @@
 | รายการ | ผล |
 |---|---:|
 | Test class | 42 |
-| Tests ทั้งหมด | 444 |
-| ผ่าน | 444 |
+| Tests ทั้งหมด | 445 |
+| ผ่าน | 445 |
 | Failures / Errors / Skipped | 0 / 0 / 0 |
-| Line coverage | 84.8% |
-| Branch coverage | 70.9% |
+| Line coverage | 84.7% |
+| Branch coverage | 70.8% |
 
 ## ประเภทการทดสอบ
 
 | ประเภท | Class | Tests |
 |---|---:|---:|
-| Service | 15 | 182 |
+| Service | 15 | 183 |
 | REST Controller | 8 | 94 |
 | Web Controller | 13 | 139 |
 | Repository | 2 | 9 |
@@ -48,4 +48,4 @@ $env:TEST_DB_PASSWORD = '<รหัสผ่าน PostgreSQL>'
 
 เมื่อโค้ดหรือ test เปลี่ยน ต้องสร้างรายงานใหม่และอัปเดตตัวเลขในหน้านี้
 
-_ผลนี้รันกับซอร์สที่ HEAD `3ce3b41` และ JaCoCo 0.8.15_
+_ผลนี้รันกับซอร์สที่ HEAD `b777f62` และ JaCoCo 0.8.15_

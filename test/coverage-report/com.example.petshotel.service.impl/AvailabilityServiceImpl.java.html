@@ -97,26 +97,48 @@ public class AvailabilityServiceImpl implements AvailabilityService {
     }
 
     @Transactional(readOnly = true)
-    @Override
-    public void checkRoomAvailable(
-            Long roomId,
-            LocalDate checkIn,
-            LocalDate checkOut,
-            int petCount) {
+        @Override
+        public void checkRoomAvailable(
+                Long roomId,
+                LocalDate checkIn,
+                LocalDate checkOut,
+                int petCount) {
 
-<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        if (!isRoomAvailable(</span>
+<span class="fc" id="L107">        validate(checkIn, checkOut, petCount);</span>
+
+<span class="fc" id="L109">        Room room = roomRepository.findById(roomId)</span>
+<span class="fc" id="L110">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L111">                        new ResourceNotFoundException(&quot;Room&quot;, roomId)</span>
+                );
+
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        if (room.getStatus() != RoomStatus.ACTIVE) {</span>
+<span class="nc" id="L115">                throw new RoomNotAvailableException(</span>
+                        roomId,
+                        checkIn,
+                        checkOut
+                );
+        }
+
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if (petCount &gt; room.getCapacity()) {</span>
+<span class="nc" id="L123">                throw new IllegalArgumentException(</span>
+                        &quot;ห้องนี้รองรับสัตว์เลี้ยงได้สูงสุด &quot;
+<span class="nc" id="L125">                                + room.getCapacity()</span>
+                                + &quot; ตัว กรุณาลดจำนวนสัตว์เลี้ยงหรือเลือกห้องอื่น&quot;
+                );
+        }
+
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">        if (bookingRepository.existsOverlappingBooking(</span>
                 roomId,
                 checkIn,
                 checkOut,
-                petCount
-        )) {
-<span class="fc" id="L113">            throw new RoomNotAvailableException(</span>
-                    roomId,
-                    checkIn,
-                    checkOut
-            );
+                ACTIVE_STATUSES)) {
+
+<span class="fc" id="L136">                throw RoomNotAvailableException.alreadyBooked(</span>
+                        checkIn,
+                        checkOut
+                );
         }
-<span class="nc" id="L119">    }</span>
+<span class="nc" id="L141">        }</span>
 
     @Transactional(readOnly = true)
     @Override
@@ -126,38 +148,38 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                     LocalDate fromDate,
                     LocalDate toDate) {
 
-<span class="fc" id="L129">        validateCalendarRange(</span>
+<span class="fc" id="L151">        validateCalendarRange(</span>
                 roomId,
                 fromDate,
                 toDate
         );
 
-<span class="fc" id="L135">        roomRepository.findById(roomId)</span>
-<span class="fc" id="L136">                .orElseThrow(() -&gt;</span>
-<span class="nc" id="L137">                        new ResourceNotFoundException(</span>
+<span class="fc" id="L157">        roomRepository.findById(roomId)</span>
+<span class="fc" id="L158">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L159">                        new ResourceNotFoundException(</span>
                                 &quot;Room&quot;,
                                 roomId
                         )
                 );
 
-<span class="fc" id="L143">        List&lt;UnavailableDateRangeResponse&gt; unavailableRanges =</span>
+<span class="fc" id="L165">        List&lt;UnavailableDateRangeResponse&gt; unavailableRanges =</span>
                 bookingRepository
-<span class="fc" id="L145">                        .findOverlappingBookingsByRoom(</span>
+<span class="fc" id="L167">                        .findOverlappingBookingsByRoom(</span>
                                 roomId,
                                 fromDate,
                                 toDate,
                                 ACTIVE_STATUSES
                         )
-<span class="fc" id="L151">                        .stream()</span>
-<span class="fc" id="L152">                        .map(booking -&gt;</span>
-<span class="fc" id="L153">                                new UnavailableDateRangeResponse(</span>
-<span class="fc" id="L154">                                        booking.getCheckInDate(),</span>
-<span class="fc" id="L155">                                        booking.getCheckOutDate()</span>
+<span class="fc" id="L173">                        .stream()</span>
+<span class="fc" id="L174">                        .map(booking -&gt;</span>
+<span class="fc" id="L175">                                new UnavailableDateRangeResponse(</span>
+<span class="fc" id="L176">                                        booking.getCheckInDate(),</span>
+<span class="fc" id="L177">                                        booking.getCheckOutDate()</span>
                                 )
                         )
-<span class="fc" id="L158">                        .toList();</span>
+<span class="fc" id="L180">                        .toList();</span>
 
-<span class="fc" id="L160">        return new RoomAvailabilityCalendarResponse(</span>
+<span class="fc" id="L182">        return new RoomAvailabilityCalendarResponse(</span>
                 roomId,
                 fromDate,
                 toDate,
@@ -176,16 +198,16 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             LocalDate checkOut,
             int petCount) {
 
-<span class="fc bfc" id="L179" title="All 2 branches covered.">        if (room.getStatus() != RoomStatus.ACTIVE) {</span>
-<span class="fc" id="L180">            return false;</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (room.getStatus() != RoomStatus.ACTIVE) {</span>
+<span class="fc" id="L202">            return false;</span>
         }
 
-<span class="fc bfc" id="L183" title="All 2 branches covered.">        if (petCount &gt; room.getCapacity()) {</span>
-<span class="fc" id="L184">            return false;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        if (petCount &gt; room.getCapacity()) {</span>
+<span class="fc" id="L206">            return false;</span>
         }
 
-<span class="fc bfc" id="L187" title="All 2 branches covered.">        return !bookingRepository.existsOverlappingBooking(</span>
-<span class="fc" id="L188">                room.getId(),</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        return !bookingRepository.existsOverlappingBooking(</span>
+<span class="fc" id="L210">                room.getId(),</span>
                 checkIn,
                 checkOut,
                 ACTIVE_STATUSES
@@ -197,59 +219,59 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             LocalDate checkOut,
             int petCount) {
 
-<span class="pc bpc" id="L200" title="1 of 4 branches missed.">        if (checkIn == null || checkOut == null) {</span>
-<span class="fc" id="L201">            throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L222" title="1 of 4 branches missed.">        if (checkIn == null || checkOut == null) {</span>
+<span class="fc" id="L223">            throw new IllegalArgumentException(</span>
                     &quot;วันที่ Check-in และ Check-out ต้องระบุ&quot;
             );
         }
 
-<span class="fc bfc" id="L206" title="All 2 branches covered.">        if (!checkIn.isBefore(checkOut)) {</span>
-<span class="fc" id="L207">            throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (!checkIn.isBefore(checkOut)) {</span>
+<span class="fc" id="L229">            throw new IllegalArgumentException(</span>
                     &quot;วันที่ Check-out ต้องอยู่หลังวันที่ Check-in&quot;
             );
         }
 
-<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (petCount &lt; 1) {</span>
-<span class="fc" id="L213">            throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (petCount &lt; 1) {</span>
+<span class="fc" id="L235">            throw new IllegalArgumentException(</span>
                     &quot;จำนวนสัตว์เลี้ยงต้องอย่างน้อย 1 ตัว&quot;
             );
         }
-<span class="fc" id="L217">    }</span>
+<span class="fc" id="L239">    }</span>
 
     private void validateCalendarRange(
             Long roomId,
             LocalDate fromDate,
             LocalDate toDate) {
 
-<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (roomId == null) {</span>
-<span class="nc" id="L225">            throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">        if (roomId == null) {</span>
+<span class="nc" id="L247">            throw new IllegalArgumentException(</span>
                     &quot;ต้องระบุห้องพัก&quot;
             );
         }
 
-<span class="pc bpc" id="L230" title="2 of 4 branches missed.">        if (fromDate == null || toDate == null) {</span>
-<span class="nc" id="L231">            throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L252" title="2 of 4 branches missed.">        if (fromDate == null || toDate == null) {</span>
+<span class="nc" id="L253">            throw new IllegalArgumentException(</span>
                     &quot;ต้องระบุช่วงวันที่ของปฏิทิน&quot;
             );
         }
 
-<span class="pc bpc" id="L236" title="1 of 2 branches missed.">        if (!fromDate.isBefore(toDate)) {</span>
-<span class="nc" id="L237">            throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">        if (!fromDate.isBefore(toDate)) {</span>
+<span class="nc" id="L259">            throw new IllegalArgumentException(</span>
                     &quot;วันสิ้นสุดปฏิทินต้องอยู่หลังวันเริ่มต้น&quot;
             );
         }
 
-<span class="fc" id="L242">        long requestedDays =</span>
-<span class="fc" id="L243">                ChronoUnit.DAYS.between(</span>
+<span class="fc" id="L264">        long requestedDays =</span>
+<span class="fc" id="L265">                ChronoUnit.DAYS.between(</span>
                         fromDate,
                         toDate
                 );
 
-<span class="fc bfc" id="L248" title="All 2 branches covered.">        if (requestedDays &gt; MAX_CALENDAR_DAYS) {</span>
-<span class="fc" id="L249">            throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">        if (requestedDays &gt; MAX_CALENDAR_DAYS) {</span>
+<span class="fc" id="L271">            throw new IllegalArgumentException(</span>
                     &quot;สามารถดูปฏิทินล่วงหน้าได้ไม่เกิน 1 ปี&quot;
             );
         }
-<span class="fc" id="L253">    }</span>
+<span class="fc" id="L275">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>

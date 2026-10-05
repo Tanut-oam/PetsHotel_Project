@@ -10,7 +10,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.mapper,RevenueBookingMapper,0,103,4,10,0,34,4,5,0,2
 ,com.example.petshotel.mapper,RoomMapper,0,23,0,0,0,10,0,2,0,2
 ,com.example.petshotel.exception,GlobalExceptionHandler,0,131,0,4,0,21,0,13,0,11
-,com.example.petshotel.exception,RoomNotAvailableException,0,8,0,0,0,2,0,1,0,1
+,com.example.petshotel.exception,RoomNotAvailableException,0,29,0,0,0,11,0,4,0,4
 ,com.example.petshotel.exception,DuplicateResourceException,0,4,0,0,0,2,0,1,0,1
 ,com.example.petshotel.exception,PetNotAvailableException,4,35,0,0,1,12,1,4,1,4
 ,com.example.petshotel.exception,ResourceNotFoundException,0,12,0,0,0,4,0,2,0,2
@@ -66,12 +66,12 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.service.impl,BookingServiceImpl,88,876,20,89,20,204,23,65,3,29
 ,com.example.petshotel.service.impl,ExtraServiceServiceImpl,10,134,7,17,1,34,9,12,2,7
 ,com.example.petshotel.service.impl,CustomUserDetailsService,41,6,2,0,8,3,3,1,2,1
-,com.example.petshotel.service.impl,ReceiptServiceImpl,19,123,8,14,4,34,11,6,3,3
+,com.example.petshotel.service.impl,ReceiptServiceImpl,19,140,8,14,4,39,11,6,3,3
 ,com.example.petshotel.service.impl,BookingServiceImpl.PreparedBooking,0,9,0,0,0,1,0,1,0,1
-,com.example.petshotel.service.impl,AvailabilityServiceImpl,22,211,6,24,5,52,7,20,1,11
+,com.example.petshotel.service.impl,AvailabilityServiceImpl,42,232,8,26,9,57,10,20,2,11
 ,com.example.petshotel.service.impl,AuthServiceImpl,0,66,0,2,0,17,0,3,0,2
 ,com.example.petshotel.service.impl,DashboardServiceImpl.new Comparator() {...},0,14,0,0,0,2,0,2,0,2
-,com.example.petshotel.service.impl,PaymentServiceImpl,105,9,12,0,30,4,8,1,2,1
+,com.example.petshotel.service.impl,PaymentServiceImpl,107,9,12,0,30,4,8,1,2,1
 ,com.example.petshotel.service.impl,DashboardServiceImpl,5,547,7,59,1,119,7,38,0,12
 ,com.example.petshotel.service.impl,UserServiceImpl,75,156,12,12,10,30,12,9,2,5
 ,com.example.petshotel.service.impl,LocalFileStorageService,138,130,19,13,37,33,13,9,2,4
