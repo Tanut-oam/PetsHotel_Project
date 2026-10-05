@@ -91,4 +91,4 @@
 - [BookingController.java](../code/src/main/java/com/example/petshotel/controller/web/BookingController.java)
 - [BookingServiceImpl.java](../code/src/main/java/com/example/petshotel/service/impl/BookingServiceImpl.java)
 - [AvailabilityServiceImpl.java](../code/src/main/java/com/example/petshotel/service/impl/AvailabilityServiceImpl.java)
-- [State implementations](../code/src/main/java/com/example/petshotel/state)
+- [State implementations](../code/src/main/java/com/example/petshotel/state) 
