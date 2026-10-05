@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">PaymentServiceImpl.java</span></div><h1>PaymentServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,60 +21,60 @@ public class PaymentServiceImpl implements PaymentService{
     private final BookingRepository bookingRepository;
     private final ReceiptService receiptService;
 
-<span class="fc" id="L23">    public PaymentServiceImpl(BookingRepository bookingRepository,ReceiptService receiptService){</span>
-<span class="fc" id="L24">        this.bookingRepository = bookingRepository;</span>
-<span class="fc" id="L25">        this.receiptService = receiptService;</span>
-<span class="fc" id="L26">    }</span>
+<span class="fc" id="L24">    public PaymentServiceImpl(BookingRepository bookingRepository,ReceiptService receiptService){</span>
+<span class="fc" id="L25">        this.bookingRepository = bookingRepository;</span>
+<span class="fc" id="L26">        this.receiptService = receiptService;</span>
+<span class="fc" id="L27">    }</span>
 
     @Override
     @Transactional
     public PaymentResponse confirmPayment(Long bookingId) {
-<span class="nc" id="L31">        Booking booking = bookingRepository.findByIdForUpdate(bookingId)</span>
-<span class="nc" id="L32">                .orElseThrow(() -&gt;</span>
-<span class="nc" id="L33">                        new ResourceNotFoundException(&quot;Booking&quot;, bookingId));</span>
+<span class="nc" id="L32">        Booking booking = bookingRepository.findByIdForUpdate(bookingId)</span>
+<span class="nc" id="L33">                .orElseThrow(() -&gt;</span>
+<span class="nc" id="L34">                        new ResourceNotFoundException(&quot;Booking&quot;, bookingId));</span>
 
-<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (booking.getPaymentStatus() == PaymentStatus.PAID) {</span>
-<span class="nc" id="L36">            Receipt receipt = receiptService.createReceipt(bookingId);</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        if (booking.getPaymentStatus() == PaymentStatus.PAID) {</span>
+<span class="nc" id="L37">            Receipt receipt = receiptService.createReceipt(bookingId);</span>
 
-<span class="nc" id="L38">            return new PaymentResponse(</span>
-<span class="nc" id="L39">                    booking.getId(),</span>
-<span class="nc" id="L40">                    booking.getPaymentStatus(),</span>
-<span class="nc" id="L41">                    booking.getPaidAmount(),</span>
-<span class="nc" id="L42">                    booking.getPaidAt(),</span>
-<span class="nc" id="L43">                    receipt.getId(),</span>
-<span class="nc" id="L44">                    receipt.getReceiptNumber());</span>
+<span class="nc" id="L39">            return new PaymentResponse(</span>
+<span class="nc" id="L40">                    booking.getId(),</span>
+<span class="nc" id="L41">                    booking.getPaymentStatus(),</span>
+<span class="nc" id="L42">                    booking.getPaidAmount(),</span>
+<span class="nc" id="L43">                    booking.getPaidAt(),</span>
+<span class="nc" id="L44">                    receipt.getId(),</span>
+<span class="nc" id="L45">                    receipt.getReceiptNumber());</span>
         }
 
-<span class="nc" id="L47">        BookingStatus status = booking.getStatus();</span>
+<span class="nc" id="L48">        BookingStatus status = booking.getStatus();</span>
 
-<span class="nc bnc" id="L49" title="All 6 branches missed.">        if (status != BookingStatus.CONFIRMED</span>
+<span class="nc bnc" id="L50" title="All 6 branches missed.">        if (status != BookingStatus.CONFIRMED</span>
                 &amp;&amp; status != BookingStatus.CHECKED_IN
                 &amp;&amp; status != BookingStatus.CHECKED_OUT) {
-<span class="nc" id="L52">            throw new IllegalStateException(</span>
+<span class="nc" id="L53">            throw new IllegalStateException(</span>
                     &quot;Booking cannot receive payment in its current status&quot;);
         }
 
-<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (booking.getTotalPrice() == null</span>
-<span class="nc bnc" id="L57" title="All 2 branches missed.">                || booking.getTotalPrice().signum() &lt; 0) {</span>
-<span class="nc" id="L58">            throw new IllegalStateException(</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (booking.getTotalPrice() == null</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">                || booking.getTotalPrice().signum() &lt; 0) {</span>
+<span class="nc" id="L59">            throw new IllegalStateException(</span>
                     &quot;Booking has an invalid total price&quot;);
         }
 
-<span class="nc" id="L62">        booking.setPaymentStatus(PaymentStatus.PAID);</span>
-<span class="nc" id="L63">        booking.setPaidAmount(booking.getTotalPrice());</span>
-<span class="nc" id="L64">        booking.setPaidAt(LocalDateTime.now());</span>
+<span class="nc" id="L63">        booking.setPaymentStatus(PaymentStatus.PAID);</span>
+<span class="nc" id="L64">        booking.setPaidAmount(booking.getTotalPrice());</span>
+<span class="nc" id="L65">        booking.setPaidAt(LocalDateTime.now(ZoneId.of(&quot;Asia/Bangkok&quot;)));</span>
 
-<span class="nc" id="L66">        bookingRepository.save(booking);</span>
+<span class="nc" id="L67">        bookingRepository.save(booking);</span>
 
-<span class="nc" id="L68">        Receipt receipt = receiptService.createReceipt(bookingId);</span>
+<span class="nc" id="L69">        Receipt receipt = receiptService.createReceipt(bookingId);</span>
 
-<span class="nc" id="L70">        return new PaymentResponse(</span>
-<span class="nc" id="L71">                booking.getId(),</span>
-<span class="nc" id="L72">                booking.getPaymentStatus(),</span>
-<span class="nc" id="L73">                booking.getPaidAmount(),</span>
-<span class="nc" id="L74">                booking.getPaidAt(),</span>
-<span class="nc" id="L75">                receipt.getId(),</span>
-<span class="nc" id="L76">                receipt.getReceiptNumber());</span>
+<span class="nc" id="L71">        return new PaymentResponse(</span>
+<span class="nc" id="L72">                booking.getId(),</span>
+<span class="nc" id="L73">                booking.getPaymentStatus(),</span>
+<span class="nc" id="L74">                booking.getPaidAmount(),</span>
+<span class="nc" id="L75">                booking.getPaidAt(),</span>
+<span class="nc" id="L76">                receipt.getId(),</span>
+<span class="nc" id="L77">                receipt.getReceiptNumber());</span>
     }
 
 }
