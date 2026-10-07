@@ -330,6 +330,7 @@ package "Main Domain Classes" as DomainClasses #FFFFFF {
     class Receipt <<Entity>> {
         -id: Long
         -receiptNumber: String
+        -customerName: String
         -issuedAt: LocalDateTime
         -roomAmount: BigDecimal
         -serviceAmount: BigDecimal
