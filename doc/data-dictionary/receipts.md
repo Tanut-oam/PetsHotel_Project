@@ -6,6 +6,7 @@
 |---|---|---|---|---|---|
 | `id` | BIGINT | ไม่ได้ | Primary Key, สร้างค่าแบบ IDENTITY | รหัสใบเสร็จ | `1` |
 | `receipt_number` | VARCHAR(255) | ไม่ได้ | UNIQUE | เลขที่ใบเสร็จ สร้างจาก `REC-` ตามด้วย UUID | `REC-550e8400-e29b-41d4-a716-446655440000` |
+| `customer_name` | VARCHAR(255) | ได้ | — | ชื่อและนามสกุลลูกค้า ณ วันที่ออกใบเสร็จ เก็บเป็น snapshot เพื่อไม่เปลี่ยนตามข้อมูลโปรไฟล์ภายหลัง | `นาเดีย คิดอ่าน` |
 | `issued_at` | TIMESTAMP WITHOUT TIME ZONE | ไม่ได้ | — | วันเวลาที่ออกใบเสร็จ | `2026-10-04 15:30:00` |
 | `room_amount` | NUMERIC(10,2) | ได้ | ทศนิยม 2 ตำแหน่ง | ค่าห้องพักที่บันทึกไว้ในการจอง หน่วยเป็นบาท | `1500.00` |
 | `service_amount` | NUMERIC(10,2) | ได้ | ทศนิยม 2 ตำแหน่ง | ค่าบริการเสริมที่บันทึกไว้ในการจอง หน่วยเป็นบาท | `500.00` |
@@ -29,7 +30,10 @@
 - หากพบใบเสร็จของการจองอยู่แล้ว Service จะคืนใบเสร็จเดิม โดยไม่สร้างใบใหม่และไม่เปลี่ยนเลขที่หรือวันเวลาที่ออกใบเสร็จ
 - หากต้องสร้างใบเสร็จใหม่ การจองต้องมี `roomAmount`, `serviceAmount`, `surchargeAmount` และ `discountAmount` ครบ
 - แม้ Entity อนุญาตให้จำนวนเงินทั้งสี่ช่องข้างต้นเป็น `NULL` แต่ขั้นตอนสร้างใบเสร็จผ่าน Service ต้องมีข้อมูลครบ โดยค่าที่ไม่มีค่าใช้จ่ายสามารถเป็น 0 ได้
-- เลขที่ใบเสร็จสร้างด้วย `"REC-" + UUID.randomUUID()` และวันเวลาที่ออกกำหนดด้วย `LocalDateTime.now()`
+- เลขที่ใบเสร็จสร้างด้วย `"REC-" + UUID.randomUUID()` และวันเวลาที่ออกกำหนดด้วย `LocalDateTime.now(ZoneId.of("Asia/Bangkok"))`
+- เมื่อสร้างใบเสร็จใหม่ Service นำชื่อและนามสกุลจากผู้ใช้เจ้าของการจองมาตัดช่องว่างหัวท้าย แล้วบันทึกใน `customer_name` เป็นชื่อ ณ วันที่ออกใบเสร็จ การแก้ชื่อในโปรไฟล์ภายหลังไม่เปลี่ยนชื่อนี้โดยอัตโนมัติ
+- `Receipt.customerName` กำหนด `updatable = false` เพื่อไม่รวมคอลัมน์นี้ในคำสั่ง UPDATE ที่ JPA สร้างสำหรับ Entity นี้
+- คอลัมน์ `customer_name` เพิ่มผ่าน Flyway `V3__add_receipt_customer_name.sql` และอนุญาตให้เป็น NULL โดย migration นี้ไม่ได้เติมชื่อย้อนหลังให้ใบเสร็จเดิม
 - Service คัดลอกค่าห้อง บริการเสริม ค่าธรรมเนียมเพิ่มเติม และส่วนลดจากข้อมูลราคาที่บันทึกไว้ในการจอง
 - `total_amount` กำหนดจาก `Booking.paidAmount` โดย Service ไม่คำนวณราคาการจองใหม่ขณะออกใบเสร็จ
 - การแก้ราคาห้อง บริการเสริม หรือโปรโมชันภายหลังไม่เปลี่ยนจำนวนเงินที่คัดลอกไว้ในใบเสร็จโดยอัตโนมัติ
@@ -55,5 +59,9 @@
 
 ## แหล่งอ้างอิงในโค้ด
 
-`Receipt`, `Booking`, `PaymentStatus`, `ReceiptServiceImpl`,
+`Receipt`, `Booking`, `User`, `PaymentStatus`, `ReceiptServiceImpl`,
 `PaymentServiceImpl`, `ReceiptRepository`, `BookingRepository`
+
+โครงสร้างตารางอ้างอิงจาก
+`code/src/main/resources/db/migration/V1__create_tables.sql`
+และ `code/src/main/resources/db/migration/V3__add_receipt_customer_name.sql`
