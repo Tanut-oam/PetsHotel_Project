@@ -1,5 +1,17 @@
 package com.example.petshotel.controller.api;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,13 +30,6 @@ import com.example.petshotel.exception.ResourceNotFoundException;
 import com.example.petshotel.mapper.PromotionMapper;
 import com.example.petshotel.service.PromotionService;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 class PromotionRestControllerTest {
 
     private PromotionService promotionService;
@@ -39,7 +44,9 @@ class PromotionRestControllerTest {
                 "discountValue": 10,
                 "startDate": "2026-10-01",
                 "endDate": "2026-10-31",
-                "active": true
+                "active": true,
+                "description": "Stay at least 3 nights",
+                "minimumNights": 3
             }
             """;
 
@@ -65,14 +72,31 @@ class PromotionRestControllerTest {
         promotion.setStartDate(LocalDate.of(2026, 10, 1));
         promotion.setEndDate(LocalDate.of(2026, 10, 31));
         promotion.setActive(true);
+        promotion.setDescription("Stay at least 3 nights");
+        promotion.setMinimumNights(3);
 
-        validRequest = new CreatePromotionRequest(
+        validRequest = request(
                 "Save 10%",
+                "10",
+                "Stay at least 3 nights",
+                3);
+    }
+
+    private CreatePromotionRequest request(
+            String name,
+            String value,
+            String description,
+            Integer minimumNights) {
+
+        return new CreatePromotionRequest(
+                name,
                 PromotionType.PERCENTAGE,
-                new BigDecimal("10"),
+                new BigDecimal(value),
                 LocalDate.of(2026, 10, 1),
                 LocalDate.of(2026, 10, 31),
-                true);
+                true,
+                description,
+                minimumNights);
     }
 
     @Test
@@ -86,7 +110,10 @@ class PromotionRestControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].name").value("Save 10%"))
                 .andExpect(jsonPath("$[0].type").value("PERCENTAGE"))
-                .andExpect(jsonPath("$[0].value").value(10));
+                .andExpect(jsonPath("$[0].value").value(10))
+                .andExpect(jsonPath("$[0].description")
+                        .value("Stay at least 3 nights"))
+                .andExpect(jsonPath("$[0].minimumNights").value(3));
 
         verify(promotionService).getAllPromotions();
     }
@@ -117,7 +144,10 @@ class PromotionRestControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Save 10%"))
                 .andExpect(jsonPath("$.startDate").value("2026-10-01"))
-                .andExpect(jsonPath("$.endDate").value("2026-10-31"));
+                .andExpect(jsonPath("$.endDate").value("2026-10-31"))
+                .andExpect(jsonPath("$.description")
+                        .value("Stay at least 3 nights"))
+                .andExpect(jsonPath("$.minimumNights").value(3));
 
         verify(promotionService).getPromotionById(1L);
     }
@@ -128,12 +158,15 @@ class PromotionRestControllerTest {
                 .thenReturn(promotion);
 
         mockMvc.perform(post("/api/promotions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(VALID_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Save 10%"))
-                .andExpect(jsonPath("$.value").value(10));
+                .andExpect(jsonPath("$.value").value(10))
+                .andExpect(jsonPath("$.description")
+                        .value("Stay at least 3 nights"))
+                .andExpect(jsonPath("$.minimumNights").value(3));
 
         verify(promotionService).createPromotion(validRequest);
     }
@@ -147,34 +180,71 @@ class PromotionRestControllerTest {
                     "discountValue": 20,
                     "startDate": "2026-10-01",
                     "endDate": "2026-10-31",
-                    "active": true
+                    "active": true,
+                    "description": "Stay at least 5 nights",
+                    "minimumNights": 5
                 }
                 """;
 
-        CreatePromotionRequest updateRequest =
-                new CreatePromotionRequest(
-                        "Save 20%",
-                        PromotionType.PERCENTAGE,
-                        new BigDecimal("20"),
-                        LocalDate.of(2026, 10, 1),
-                        LocalDate.of(2026, 10, 31),
-                        true);
+        CreatePromotionRequest updateRequest = request(
+                "Save 20%",
+                "20",
+                "Stay at least 5 nights",
+                5);
 
         promotion.setName("Save 20%");
         promotion.setValue(new BigDecimal("20"));
+        promotion.setDescription("Stay at least 5 nights");
+        promotion.setMinimumNights(5);
 
         when(promotionService.updatePromotion(1L, updateRequest))
                 .thenReturn(promotion);
 
         mockMvc.perform(put("/api/promotions/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(updateJson))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Save 20%"))
-                .andExpect(jsonPath("$.value").value(20));
+                .andExpect(jsonPath("$.value").value(20))
+                .andExpect(jsonPath("$.description")
+                        .value("Stay at least 5 nights"))
+                .andExpect(jsonPath("$.minimumNights").value(5));
 
         verify(promotionService).updatePromotion(1L, updateRequest);
+    }
+
+    @Test
+    void createsPromotionWhenOptionalFieldsAreOmitted()
+            throws Exception {
+
+        String json = """
+                {
+                    "name": "Save 10%",
+                    "type": "PERCENTAGE",
+                    "discountValue": 10,
+                    "startDate": "2026-10-01",
+                    "endDate": "2026-10-31",
+                    "active": true
+                }
+                """;
+
+        CreatePromotionRequest expected =
+                request("Save 10%", "10", null, null);
+
+        promotion.setDescription(null);
+        promotion.setMinimumNights(null);
+
+        when(promotionService.createPromotion(expected))
+                .thenReturn(promotion);
+
+        mockMvc.perform(post("/api/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(promotionService).createPromotion(expected);
     }
 
     @Test
@@ -189,12 +259,14 @@ class PromotionRestControllerTest {
     @Test
     void getMissingPromotionShouldReturnNotFound() throws Exception {
         when(promotionService.getPromotionById(99L))
-                .thenThrow(new ResourceNotFoundException("Promotion", 99L));
+                .thenThrow(
+                        new ResourceNotFoundException("Promotion", 99L));
 
         mockMvc.perform(get("/api/promotions/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.path").value("/api/promotions/99"));
+                .andExpect(jsonPath("$.path")
+                        .value("/api/promotions/99"));
     }
 
     @Test
@@ -213,8 +285,8 @@ class PromotionRestControllerTest {
                 """;
 
         mockMvc.perform(post("/api/promotions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidJson))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.fieldErrors.name").exists());
@@ -238,75 +310,104 @@ class PromotionRestControllerTest {
                 """;
 
         CreatePromotionRequest invalidRequest =
-                new CreatePromotionRequest(
-                        "Invalid discount",
-                        PromotionType.PERCENTAGE,
-                        new BigDecimal("150"),
-                        LocalDate.of(2026, 10, 1),
-                        LocalDate.of(2026, 10, 31),
-                        true);
+                request("Invalid discount", "150", null, null);
 
         when(promotionService.createPromotion(invalidRequest))
                 .thenThrow(new IllegalArgumentException(
                         "Percentage discount must not exceed 100"));
 
         mockMvc.perform(post("/api/promotions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidJson))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value(
                         "Percentage discount must not exceed 100"));
 
         verify(promotionService).createPromotion(invalidRequest);
-}
-        @Test
-        void createPromotionWithTooManyDecimalPlacesShouldReturnBadRequest()
-                throws Exception {
+    }
+
+    @Test
+    void createPromotionWithTooManyDecimalPlacesShouldReturnBadRequest()
+            throws Exception {
 
         String invalidJson = """
                 {
-                        "name": "Invalid fixed discount",
-                        "type": "FIXED_AMOUNT",
-                        "discountValue": 10.123,
-                        "startDate": "2026-10-01",
-                        "endDate": "2026-10-31",
-                        "active": true
+                    "name": "Invalid fixed discount",
+                    "type": "FIXED_AMOUNT",
+                    "discountValue": 10.123,
+                    "startDate": "2026-10-01",
+                    "endDate": "2026-10-31",
+                    "active": true
                 }
                 """;
 
         mockMvc.perform(post("/api/promotions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidJson))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.fieldErrors.discountValue").exists());
+                .andExpect(jsonPath("$.fieldErrors.discountValue")
+                        .exists());
 
         verifyNoInteractions(promotionService);
-        }
+    }
 
-        @Test
-        void updatePromotionWithTooManyIntegerDigitsShouldReturnBadRequest()
-                throws Exception {
+    @Test
+    void updatePromotionWithTooManyIntegerDigitsShouldReturnBadRequest()
+            throws Exception {
 
         String invalidJson = """
                 {
-                        "name": "Invalid fixed discount",
-                        "type": "FIXED_AMOUNT",
-                        "discountValue": 999999999,
-                        "startDate": "2026-10-01",
-                        "endDate": "2026-10-31",
-                        "active": true
+                    "name": "Invalid fixed discount",
+                    "type": "FIXED_AMOUNT",
+                    "discountValue": 999999999,
+                    "startDate": "2026-10-01",
+                    "endDate": "2026-10-31",
+                    "active": true
                 }
                 """;
 
         mockMvc.perform(put("/api/promotions/1")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidJson))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.fieldErrors.discountValue").exists());
+                .andExpect(jsonPath("$.fieldErrors.discountValue")
+                        .exists());
 
         verifyNoInteractions(promotionService);
-        }
+    }
+
+    @Test
+    void rejectsZeroMinimumNightsWhenCreating() throws Exception {
+        String invalidJson = VALID_JSON.replace(
+                "\"minimumNights\": 3",
+                "\"minimumNights\": 0");
+
+        mockMvc.perform(post("/api/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.minimumNights")
+                        .exists());
+
+        verifyNoInteractions(promotionService);
+    }
+
+    @Test
+    void rejectsNegativeMinimumNightsWhenUpdating() throws Exception {
+        String invalidJson = VALID_JSON.replace(
+                "\"minimumNights\": 3",
+                "\"minimumNights\": -1");
+
+        mockMvc.perform(put("/api/promotions/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.minimumNights")
+                        .exists());
+
+        verifyNoInteractions(promotionService);
+    }
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">DashboardServiceImpl.java</span></div><h1>DashboardServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="th"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.service.impl</a> &gt; <span class="el_source">DashboardServiceImpl.java</span></div><h1>DashboardServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.petshotel.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -83,127 +83,136 @@ public class DashboardServiceImpl implements DashboardService{
     @Override
     @Transactional(readOnly = true)
     public long getBookingsThisMonth() {
-<span class="fc" id="L86">        LocalDate today = LocalDate.now();</span>
-<span class="fc" id="L87">        long count = 0;</span>
+<span class="fc" id="L86">        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);</span>
+<span class="fc" id="L87">        LocalDate nextMonthStart = monthStart.plusMonths(1);</span>
+<span class="fc" id="L88">        long count = 0;</span>
 
-<span class="fc bfc" id="L89" title="All 2 branches covered.">        for (Booking booking : bookingRepository.findAll()) {</span>
-<span class="fc bfc" id="L90" title="All 2 branches covered.">            if (booking.getStatus() != BookingStatus.CANCELLED</span>
-<span class="fc bfc" id="L91" title="All 2 branches covered.">                    &amp;&amp; booking.getCreatedAt() != null</span>
-<span class="fc bfc" id="L92" title="All 2 branches covered.">                    &amp;&amp; booking.getCreatedAt().getYear() == today.getYear()</span>
-<span class="fc bfc" id="L93" title="All 2 branches covered.">                    &amp;&amp; booking.getCreatedAt().getMonth() == today.getMonth()) {</span>
-<span class="fc" id="L94">                count++;</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        for (Booking booking : bookingRepository.findAll()) {</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">            if (booking.getStatus() == BookingStatus.CANCELLED) {</span>
+<span class="fc" id="L92">                continue;</span>
             }
-<span class="fc" id="L96">        }</span>
 
-<span class="fc" id="L98">        return count;</span>
+<span class="fc" id="L95">            LocalDate checkIn = booking.getCheckInDate();</span>
+<span class="fc" id="L96">            LocalDate checkOut = booking.getCheckOutDate();</span>
+
+<span class="fc bfc" id="L98" title="All 4 branches covered.">            if (checkIn != null</span>
+                    &amp;&amp; checkOut != null
+<span class="fc bfc" id="L100" title="All 2 branches covered.">                    &amp;&amp; checkOut.isAfter(checkIn)</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">                    &amp;&amp; checkIn.isBefore(nextMonthStart)</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">                    &amp;&amp; checkOut.isAfter(monthStart)) {</span>
+<span class="fc" id="L103">                count++;</span>
+            }
+<span class="fc" id="L105">        }</span>
+
+<span class="fc" id="L107">        return count;</span>
     }
 
     @Override 
     @Transactional(readOnly = true)
     public long getCheckedInPets(){
-<span class="fc" id="L104">        long count = 0;</span>
+<span class="fc" id="L113">        long count = 0;</span>
 
-<span class="fc bfc" id="L106" title="All 2 branches covered.">        for(Booking booking : bookingRepository.findAll()){</span>
-<span class="fc bfc" id="L107" title="All 2 branches covered.">            if (booking.getStatus() == BookingStatus.CHECKED_IN) {</span>
-<span class="fc" id="L108">                count += booking.getBookingPets().size();</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        for(Booking booking : bookingRepository.findAll()){</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">            if (booking.getStatus() == BookingStatus.CHECKED_IN) {</span>
+<span class="fc" id="L117">                count += booking.getBookingPets().size();</span>
             }
-<span class="fc" id="L110">        }</span>
-<span class="fc" id="L111">        return count;</span>
+<span class="fc" id="L119">        }</span>
+<span class="fc" id="L120">        return count;</span>
     }
 
     @Override 
     @Transactional(readOnly = true)
     public String getTopRoom(){
-<span class="fc" id="L117">        Map&lt;String, Long&gt; roomBooking = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L126">        Map&lt;String, Long&gt; roomBooking = new HashMap&lt;&gt;();</span>
 
-<span class="fc bfc" id="L119" title="All 2 branches covered.">        for(Booking booking : bookingRepository.findAll()){</span>
-<span class="fc bfc" id="L120" title="All 2 branches covered.">            if (booking.getStatus() != BookingStatus.CANCELLED</span>
-<span class="pc bpc" id="L121" title="1 of 2 branches missed.">                &amp;&amp; booking.getRoom() != null) {</span>
-<span class="fc" id="L122">                String roomNumber = booking.getRoom().getRoomNumber();</span>
-<span class="fc" id="L123">                Long previousCount = roomBooking.get(roomNumber);</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        for(Booking booking : bookingRepository.findAll()){</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">            if (booking.getStatus() != BookingStatus.CANCELLED</span>
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">                &amp;&amp; booking.getRoom() != null) {</span>
+<span class="fc" id="L131">                String roomNumber = booking.getRoom().getRoomNumber();</span>
+<span class="fc" id="L132">                Long previousCount = roomBooking.get(roomNumber);</span>
 
-<span class="fc bfc" id="L125" title="All 2 branches covered.">                if (previousCount == null) {</span>
-<span class="fc" id="L126">                    roomBooking.put(roomNumber, 1L);</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                if (previousCount == null) {</span>
+<span class="fc" id="L135">                    roomBooking.put(roomNumber, 1L);</span>
                 } else {
-<span class="fc" id="L128">                    roomBooking.put(roomNumber, previousCount + 1L);</span>
+<span class="fc" id="L137">                    roomBooking.put(roomNumber, previousCount + 1L);</span>
                 }
             }
-<span class="fc" id="L131">        }</span>
+<span class="fc" id="L140">        }</span>
 
-<span class="fc" id="L133">        String topRoom = null;</span>
-<span class="fc" id="L134">        long highestCount = 0;</span>
+<span class="fc" id="L142">        String topRoom = null;</span>
+<span class="fc" id="L143">        long highestCount = 0;</span>
 
-<span class="fc bfc" id="L136" title="All 2 branches covered.">        for(Map.Entry&lt;String, Long&gt; entry : roomBooking.entrySet()){</span>
-<span class="fc bfc" id="L137" title="All 2 branches covered.">            if (entry.getValue() &gt; highestCount </span>
-<span class="pc bpc" id="L138" title="1 of 4 branches missed.">                    || ( entry.getValue() == highestCount</span>
-<span class="pc bpc" id="L139" title="1 of 2 branches missed.">                        &amp;&amp; (topRoom == null || entry.getKey().compareTo(topRoom)&lt; 0 ))) {</span>
-<span class="fc" id="L140">                topRoom = entry.getKey();</span>
-<span class="fc" id="L141">                highestCount = entry.getValue();</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        for(Map.Entry&lt;String, Long&gt; entry : roomBooking.entrySet()){</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">            if (entry.getValue() &gt; highestCount </span>
+<span class="pc bpc" id="L147" title="1 of 4 branches missed.">                    || ( entry.getValue() == highestCount</span>
+<span class="pc bpc" id="L148" title="1 of 2 branches missed.">                        &amp;&amp; (topRoom == null || entry.getKey().compareTo(topRoom)&lt; 0 ))) {</span>
+<span class="fc" id="L149">                topRoom = entry.getKey();</span>
+<span class="fc" id="L150">                highestCount = entry.getValue();</span>
             }   
-<span class="fc" id="L143">        }</span>
-<span class="fc" id="L144">        return  topRoom;</span>
+<span class="fc" id="L152">        }</span>
+<span class="fc" id="L153">        return  topRoom;</span>
     }
 
     @Override 
     @Transactional(readOnly = true)
     public long getTotalBookings() {
-<span class="fc" id="L150">        return bookingRepository.count();</span>
+<span class="fc" id="L159">        return bookingRepository.count();</span>
     }
 
     @Override 
     @Transactional(readOnly = true)
     public long getAvailableRoomCountToday(){
-<span class="fc" id="L156">        LocalDate today = LocalDate.now();</span>
-<span class="fc" id="L157">        return availabilityService.findAvailableRooms(today, today.plusDays(1), 1).size();</span>
+<span class="fc" id="L165">        LocalDate today = LocalDate.now();</span>
+<span class="fc" id="L166">        return availabilityService.findAvailableRooms(today, today.plusDays(1), 1).size();</span>
     }
 
     @Override 
     @Transactional(readOnly = true)
     public long getTotalPets() {
-<span class="fc" id="L163">        return petRepository.count();</span>
+<span class="fc" id="L172">        return petRepository.count();</span>
     }
 
     @Override 
     @Transactional(readOnly = true)
     public List&lt;RecentBookingResponse&gt; getRecentBookings(){
-<span class="fc" id="L169">        PageRequest pageRequest = PageRequest.of(</span>
-<span class="fc" id="L170">            0, 5, Sort.by(Sort.Order.desc(&quot;createdAt&quot;),</span>
-<span class="fc" id="L171">                Sort.Order.desc(&quot;id&quot;)));</span>
-<span class="fc" id="L172">        List&lt;Booking&gt; bookings = bookingRepository.findAll(pageRequest).getContent();</span>
-<span class="fc" id="L173">        List&lt;RecentBookingResponse&gt; responses = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L174" title="All 2 branches covered.">        for(Booking booking : bookings){</span>
-<span class="fc" id="L175">            responses.add(recentBookingMapper.toResponse(booking));</span>
-<span class="fc" id="L176">        }</span>
-<span class="fc" id="L177">        return responses;</span>
+<span class="fc" id="L178">        PageRequest pageRequest = PageRequest.of(</span>
+<span class="fc" id="L179">            0, 5, Sort.by(Sort.Order.desc(&quot;createdAt&quot;),</span>
+<span class="fc" id="L180">                Sort.Order.desc(&quot;id&quot;)));</span>
+<span class="fc" id="L181">        List&lt;Booking&gt; bookings = bookingRepository.findAll(pageRequest).getContent();</span>
+<span class="fc" id="L182">        List&lt;RecentBookingResponse&gt; responses = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">        for(Booking booking : bookings){</span>
+<span class="fc" id="L184">            responses.add(recentBookingMapper.toResponse(booking));</span>
+<span class="fc" id="L185">        }</span>
+<span class="fc" id="L186">        return responses;</span>
     }
 
     @Override
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard() {
-<span class="fc" id="L183">        return getDashboard(LocalDate.now().getYear());</span>
+<span class="fc" id="L192">        return getDashboard(LocalDate.now().getYear());</span>
     }
 
     @Override
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard(int year) {
-<span class="fc" id="L189">        List&lt;MonthlyRevenueResponse&gt; monthlyRevenue =</span>
-<span class="fc" id="L190">                getMonthlyRevenue(year);</span>
+<span class="fc" id="L198">        List&lt;MonthlyRevenueResponse&gt; monthlyRevenue =</span>
+<span class="fc" id="L199">                getMonthlyRevenue(year);</span>
 
-<span class="fc" id="L192">        BigDecimal yearlyRevenue = BigDecimal.ZERO;</span>
+<span class="fc" id="L201">        BigDecimal yearlyRevenue = BigDecimal.ZERO;</span>
 
-<span class="fc bfc" id="L194" title="All 2 branches covered.">        for (MonthlyRevenueResponse month : monthlyRevenue) {</span>
-<span class="fc" id="L195">            yearlyRevenue = yearlyRevenue.add(month.totalAmount());</span>
-<span class="fc" id="L196">        }</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        for (MonthlyRevenueResponse month : monthlyRevenue) {</span>
+<span class="fc" id="L204">            yearlyRevenue = yearlyRevenue.add(month.totalAmount());</span>
+<span class="fc" id="L205">        }</span>
 
-<span class="fc" id="L198">        return new DashboardResponse(</span>
-<span class="fc" id="L199">                getRevenueThisMonth(),</span>
-<span class="fc" id="L200">                getBookingsThisMonth(),</span>
-<span class="fc" id="L201">                getCheckedInPets(),</span>
-<span class="fc" id="L202">                getTopRoom(),</span>
-<span class="fc" id="L203">                getTotalBookings(),</span>
-<span class="fc" id="L204">                getAvailableRoomCountToday(),</span>
-<span class="fc" id="L205">                getTotalPets(),</span>
-<span class="fc" id="L206">                getRecentBookings(),</span>
+<span class="fc" id="L207">        return new DashboardResponse(</span>
+<span class="fc" id="L208">                getRevenueThisMonth(),</span>
+<span class="fc" id="L209">                getBookingsThisMonth(),</span>
+<span class="fc" id="L210">                getCheckedInPets(),</span>
+<span class="fc" id="L211">                getTopRoom(),</span>
+<span class="fc" id="L212">                getTotalBookings(),</span>
+<span class="fc" id="L213">                getAvailableRoomCountToday(),</span>
+<span class="fc" id="L214">                getTotalPets(),</span>
+<span class="fc" id="L215">                getRecentBookings(),</span>
                 year,
                 monthlyRevenue,
                 yearlyRevenue
@@ -213,79 +222,79 @@ public class DashboardServiceImpl implements DashboardService{
     @Override
     @Transactional(readOnly = true)
     public List&lt;MonthlyRevenueResponse&gt; getMonthlyRevenue(int year) {
-<span class="pc bpc" id="L216" title="2 of 4 branches missed.">        if (year &lt; 1 || year &gt; 9999) {</span>
-<span class="nc" id="L217">            throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L225" title="2 of 4 branches missed.">        if (year &lt; 1 || year &gt; 9999) {</span>
+<span class="nc" id="L226">            throw new IllegalArgumentException(</span>
                     &quot;Year must be between 1 and 9999&quot;);
         }
 
-<span class="fc" id="L221">        String[] monthNames = {</span>
+<span class="fc" id="L230">        String[] monthNames = {</span>
                 &quot;มกราคม&quot;, &quot;กุมภาพันธ์&quot;, &quot;มีนาคม&quot;,
                 &quot;เมษายน&quot;, &quot;พฤษภาคม&quot;, &quot;มิถุนายน&quot;,
                 &quot;กรกฎาคม&quot;, &quot;สิงหาคม&quot;, &quot;กันยายน&quot;,
                 &quot;ตุลาคม&quot;, &quot;พฤศจิกายน&quot;, &quot;ธันวาคม&quot;
         };
 
-<span class="fc" id="L228">        BigDecimal[] monthlyTotals = new BigDecimal[12];</span>
+<span class="fc" id="L237">        BigDecimal[] monthlyTotals = new BigDecimal[12];</span>
 
-<span class="fc" id="L230">        List&lt;List&lt;RevenueBookingResponse&gt;&gt; monthlyBookings =</span>
+<span class="fc" id="L239">        List&lt;List&lt;RevenueBookingResponse&gt;&gt; monthlyBookings =</span>
                 new ArrayList&lt;&gt;();
 
-<span class="fc bfc" id="L233" title="All 2 branches covered.">        for (int index = 0; index &lt; 12; index++) {</span>
-<span class="fc" id="L234">            monthlyTotals[index] = BigDecimal.ZERO;</span>
-<span class="fc" id="L235">            monthlyBookings.add(new ArrayList&lt;&gt;());</span>
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        for (int index = 0; index &lt; 12; index++) {</span>
+<span class="fc" id="L243">            monthlyTotals[index] = BigDecimal.ZERO;</span>
+<span class="fc" id="L244">            monthlyBookings.add(new ArrayList&lt;&gt;());</span>
         }
 
-<span class="fc bfc" id="L238" title="All 2 branches covered.">        for (Receipt receipt : receiptRepository.findAll()) {</span>
-<span class="fc" id="L239">            Booking booking = receipt.getBooking();</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">        for (Receipt receipt : receiptRepository.findAll()) {</span>
+<span class="fc" id="L248">            Booking booking = receipt.getBooking();</span>
 
-<span class="pc bpc" id="L241" title="1 of 2 branches missed.">            if (booking == null</span>
-<span class="fc bfc" id="L242" title="All 2 branches covered.">                    || booking.getPaymentStatus() != PaymentStatus.PAID</span>
-<span class="fc bfc" id="L243" title="All 2 branches covered.">                    || booking.getPaidAt() == null) {</span>
-<span class="fc" id="L244">                continue;</span>
+<span class="pc bpc" id="L250" title="1 of 2 branches missed.">            if (booking == null</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">                    || booking.getPaymentStatus() != PaymentStatus.PAID</span>
+<span class="fc bfc" id="L252" title="All 2 branches covered.">                    || booking.getPaidAt() == null) {</span>
+<span class="fc" id="L253">                continue;</span>
             }
 
-<span class="fc" id="L247">            LocalDate paidDate = booking.getPaidAt().toLocalDate();</span>
+<span class="fc" id="L256">            LocalDate paidDate = booking.getPaidAt().toLocalDate();</span>
 
-<span class="fc bfc" id="L249" title="All 2 branches covered.">            if (paidDate.getYear() != year) {</span>
-<span class="fc" id="L250">                continue;</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">            if (paidDate.getYear() != year) {</span>
+<span class="fc" id="L259">                continue;</span>
             }
 
-<span class="fc" id="L253">            int monthIndex = paidDate.getMonthValue() - 1;</span>
+<span class="fc" id="L262">            int monthIndex = paidDate.getMonthValue() - 1;</span>
 
-<span class="fc" id="L255">            monthlyTotals[monthIndex] = monthlyTotals[monthIndex]</span>
-<span class="fc" id="L256">                    .add(receipt.getTotalAmount());</span>
+<span class="fc" id="L264">            monthlyTotals[monthIndex] = monthlyTotals[monthIndex]</span>
+<span class="fc" id="L265">                    .add(receipt.getTotalAmount());</span>
 
-<span class="fc" id="L258">            RevenueBookingResponse response =</span>
-<span class="fc" id="L259">                    revenueBookingMapper.toResponse(receipt);</span>
+<span class="fc" id="L267">            RevenueBookingResponse response =</span>
+<span class="fc" id="L268">                    revenueBookingMapper.toResponse(receipt);</span>
 
-<span class="fc" id="L261">            monthlyBookings.get(monthIndex).add(response);</span>
-<span class="fc" id="L262">        }</span>
+<span class="fc" id="L270">            monthlyBookings.get(monthIndex).add(response);</span>
+<span class="fc" id="L271">        }</span>
 
-<span class="fc" id="L264">        List&lt;MonthlyRevenueResponse&gt; months = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L273">        List&lt;MonthlyRevenueResponse&gt; months = new ArrayList&lt;&gt;();</span>
 
-<span class="fc bfc" id="L266" title="All 2 branches covered.">        for (int index = 0; index &lt; 12; index++) {</span>
-<span class="fc" id="L267">            List&lt;RevenueBookingResponse&gt; bookingsOfMonth =</span>
-<span class="fc" id="L268">                    monthlyBookings.get(index);</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">        for (int index = 0; index &lt; 12; index++) {</span>
+<span class="fc" id="L276">            List&lt;RevenueBookingResponse&gt; bookingsOfMonth =</span>
+<span class="fc" id="L277">                    monthlyBookings.get(index);</span>
 
-<span class="fc" id="L270">            bookingsOfMonth.sort(new Comparator&lt;RevenueBookingResponse&gt;() {</span>
+<span class="fc" id="L279">            bookingsOfMonth.sort(new Comparator&lt;RevenueBookingResponse&gt;() {</span>
                 @Override
                 public int compare(
                         RevenueBookingResponse first,
                         RevenueBookingResponse second) {
 
-<span class="fc" id="L276">                    return first.paidAt().compareTo(second.paidAt());</span>
+<span class="fc" id="L285">                    return first.paidAt().compareTo(second.paidAt());</span>
                 }
             });
 
-<span class="fc" id="L280">            months.add(new MonthlyRevenueResponse(</span>
+<span class="fc" id="L289">            months.add(new MonthlyRevenueResponse(</span>
                     index + 1,
                     monthNames[index],
                     monthlyTotals[index],
-<span class="fc" id="L284">                    List.copyOf(bookingsOfMonth)</span>
+<span class="fc" id="L293">                    List.copyOf(bookingsOfMonth)</span>
             ));
         }
 
-<span class="fc" id="L288">        return months;</span>
+<span class="fc" id="L297">        return months;</span>
     }
 
 

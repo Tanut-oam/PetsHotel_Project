@@ -83,14 +83,23 @@ public class DashboardServiceImpl implements DashboardService{
     @Override
     @Transactional(readOnly = true)
     public long getBookingsThisMonth() {
-        LocalDate today = LocalDate.now();
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
         long count = 0;
 
         for (Booking booking : bookingRepository.findAll()) {
-            if (booking.getStatus() != BookingStatus.CANCELLED
-                    && booking.getCreatedAt() != null
-                    && booking.getCreatedAt().getYear() == today.getYear()
-                    && booking.getCreatedAt().getMonth() == today.getMonth()) {
+            if (booking.getStatus() == BookingStatus.CANCELLED) {
+                continue;
+            }
+
+            LocalDate checkIn = booking.getCheckInDate();
+            LocalDate checkOut = booking.getCheckOutDate();
+
+            if (checkIn != null
+                    && checkOut != null
+                    && checkOut.isAfter(checkIn)
+                    && checkIn.isBefore(nextMonthStart)
+                    && checkOut.isAfter(monthStart)) {
                 count++;
             }
         }
