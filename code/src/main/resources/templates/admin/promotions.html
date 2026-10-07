@@ -17,33 +17,33 @@
       <div class="section-title">
         <h1>โปรโมชัน</h1>
         <a class="btn btn-primary"
-            data-open-form
-            th:href="@{/admin/promotions(create=true)}">
-            + เพิ่มโปรโมชัน
+           data-open-form
+           th:href="@{/admin/promotions(create=true)}">
+          + เพิ่มโปรโมชัน
         </a>
       </div>
 
-        <div th:if="${message}"
-            class="flash-notice flash-success"
-            role="status">
+      <div th:if="${message}"
+           class="flash-notice flash-success"
+           role="status">
         <span class="flash-icon" aria-hidden="true">✓</span>
         <span th:text="${message}"></span>
-        </div>
+      </div>
 
-        <div th:if="${error}"
-            class="flash-notice flash-error"
-            role="alert">
+      <div th:if="${error}"
+           class="flash-notice flash-error"
+           role="alert">
         <span class="flash-icon" aria-hidden="true">!</span>
         <span th:text="${error}"></span>
-        </div>
+      </div>
 
-        <div id="list-filters" hidden>
+      <div id="list-filters" hidden>
         <div class="toolbar">
           <label class="field">
             ค้นหาชื่อ
             <input id="list-search"
-                  type="search"
-                  placeholder="พิมพ์ชื่อที่ต้องการค้นหา">
+                   type="search"
+                   placeholder="พิมพ์ชื่อที่ต้องการค้นหา">
           </label>
 
           <label class="field">
@@ -81,9 +81,9 @@
             </tr>
 
             <tr th:each="promotion : ${promotions}"
-              data-filter-row
-              th:attr="data-name=${promotion.name},
-                      data-status=${promotion.active == true ? 'ACTIVE' : 'INACTIVE'}">
+                data-filter-row
+                th:attr="data-name=${promotion.name},
+                         data-status=${promotion.active == true ? 'ACTIVE' : 'INACTIVE'}">
               <td th:text="${promotion.name}">ชื่อโปรโมชัน</td>
 
               <td>
@@ -102,19 +102,20 @@
                 31/12/2026
               </td>
 
-            <td>
-            <span th:if="${promotion.active}" class="badge">
-                เปิดใช้
-            </span>
-            <span th:unless="${promotion.active}" class="badge badge-danger">
-                ปิดใช้
-            </span>
-            </td>
+              <td>
+                <span th:if="${promotion.active}" class="badge">
+                  เปิดใช้
+                </span>
+                <span th:unless="${promotion.active}"
+                      class="badge badge-danger">
+                  ปิดใช้
+                </span>
+              </td>
 
               <td>
                 <a class="btn btn-small"
-                    th:href="@{/admin/promotions(editId=${promotion.id})}">
-                    แก้ไข
+                   th:href="@{/admin/promotions(editId=${promotion.id})}">
+                  แก้ไข
                 </a>
               </td>
             </tr>
@@ -123,65 +124,84 @@
       </div>
 
       <p id="filter-empty"
-        class="muted"
-        role="status"
-        hidden>
+         class="muted"
+         role="status"
+         hidden>
         ไม่พบรายการที่ตรงกับชื่อและสถานะที่เลือก
       </p>
 
-
       <dialog class="admin-form-dialog"
-        aria-labelledby="promotion-dialog-title">
+              aria-labelledby="promotion-dialog-title">
 
         <form id="promotion-form"
-                class="admin-dialog-form"
-                th:action="@{/admin/promotions}"
-                th:object="${promotionForm}"
-                th:attr="data-auto-open=${editingId != null or #fields.hasAnyErrors()}"
-                method="post">
+              class="admin-dialog-form"
+              th:action="@{/admin/promotions}"
+              th:object="${promotionForm}"
+              th:attr="data-auto-open=${editingId != null or #fields.hasAnyErrors()}"
+              method="post">
 
-            <h2 id="promotion-dialog-title"
-                th:text="${editingId == null ? 'เพิ่มโปรโมชัน' : 'แก้ไขโปรโมชัน'}">
+          <h2 id="promotion-dialog-title"
+              th:text="${editingId == null ? 'เพิ่มโปรโมชัน' : 'แก้ไขโปรโมชัน'}">
             เพิ่มโปรโมชัน
-            </h2>
+          </h2>
 
-            <input th:if="${editingId != null}"
-                type="hidden"
-                name="id"
-                th:value="${editingId}">
+          <input th:if="${editingId != null}"
+                 type="hidden"
+                 name="id"
+                 th:value="${editingId}">
 
-            <div class="admin-form-errors"
-                th:if="${#fields.hasAnyErrors()}"
-                role="alert">
+          <div class="admin-form-errors"
+               th:if="${#fields.hasAnyErrors()}"
+               role="alert">
             <ul>
-                <li th:each="formError : ${#fields.allErrors()}"
-                    th:text="${formError}">
+              <li th:each="formError : ${#fields.allErrors()}"
+                  th:text="${formError}">
                 ข้อมูลไม่ถูกต้อง
-                </li>
+              </li>
             </ul>
-            </div>
+          </div>
 
-            <div class="grid cols-2">
+          <div class="grid cols-2">
             <label class="field">
-                ชื่อโปรโมชัน
-                <input th:field="*{name}" required autofocus>
+              ชื่อโปรโมชัน
+              <input th:field="*{name}" required autofocus>
             </label>
 
             <label class="field">
-                ประเภทส่วนลด
-                <select th:field="*{type}" required>
+              ประเภทส่วนลด
+              <select th:field="*{type}" required>
                 <option value="PERCENTAGE">เปอร์เซ็นต์</option>
                 <option value="FIXED_AMOUNT">จำนวนเงิน</option>
-                </select>
+              </select>
             </label>
 
             <label class="field">
-                มูลค่าส่วนลด
-                <input type="number"
-                    th:field="*{discountValue}"
-                    min="0.01"
-                    step="0.01"
-                    required>
+              มูลค่าส่วนลด
+              <input type="number"
+                     th:field="*{discountValue}"
+                     min="0.01"
+                     step="0.01"
+                     required>
+            </label>
+
+            <label class="field">
+              จำนวนคืนขั้นต่ำ (ไม่บังคับ)
+              <input type="number"
+                     th:field="*{minimumNights}"
+                     min="1"
+                     step="1"
+                     placeholder="เช่น 3"
+                     aria-describedby="minimum-nights-help">
+              <small id="minimum-nights-help" class="muted">
+                เว้นว่างหากไม่กำหนดจำนวนคืนขั้นต่ำ
+              </small>
+            </label>
+
+            <label class="field admin-dialog-full">
+              รายละเอียดโปรโมชัน (ไม่บังคับ)
+              <textarea th:field="*{description}"
+                        rows="3"
+                        placeholder="เช่น ส่วนลดสำหรับการเข้าพักอย่างน้อย 3 คืน"></textarea>
             </label>
 
             <div class="admin-dialog-full">
@@ -191,33 +211,33 @@
                   *{startDate},
                   *{endDate}
                 )
-              }">
-              </div>
+              }"></div>
             </div>
 
             <label class="admin-dialog-check">
-                <input type="checkbox" th:field="*{active}">
-                เปิดใช้โปรโมชัน
+              <input type="checkbox" th:field="*{active}">
+              เปิดใช้โปรโมชัน
             </label>
-            </div>
+          </div>
 
-            <div class="admin-dialog-actions">
+          <div class="admin-dialog-actions">
             <button class="btn"
                     type="button"
                     data-close-form>
-                ยกเลิก
+              ยกเลิก
             </button>
 
             <button class="btn btn-primary" type="submit">
-                บันทึก
+              บันทึก
             </button>
-            </div>
+          </div>
         </form>
-        </dialog>
+      </dialog>
     </main>
-</div>
-    <script th:src="@{/js/admin-form-dialog.js}" defer></script>
-    <script th:src="@{/js/admin-list-filter.js}" defer></script>
-    <script th:src="@{/js/promotion-date-picker.js}" defer></script>
+  </div>
+
+  <script th:src="@{/js/admin-form-dialog.js}" defer></script>
+  <script th:src="@{/js/admin-list-filter.js}" defer></script>
+  <script th:src="@{/js/promotion-date-picker.js}" defer></script>
 </body>
 </html>

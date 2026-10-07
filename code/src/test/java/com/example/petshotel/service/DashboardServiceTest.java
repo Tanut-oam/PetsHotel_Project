@@ -124,6 +124,18 @@ public class DashboardServiceTest {
         return booking;
     }
 
+        private Booking bookingForStay(
+                LocalDate checkIn,
+                LocalDate checkOut,
+                BookingStatus status) {
+
+        Booking booking = booking(null, status, "A101", 0);
+        booking.setCheckInDate(checkIn);
+        booking.setCheckOutDate(checkOut);
+
+        return booking;
+        }
+
 
 
     @Test
@@ -231,6 +243,9 @@ public class DashboardServiceTest {
         LocalDate today = LocalDate.now();
         Booking latestBooking = recentBooking(today);
 
+        latestBooking.setCheckInDate(today);
+        latestBooking.setCheckOutDate(today.plusDays(1));
+
         when(receiptRepository.findAll())
         .thenReturn(List.of(
                 receipt("1500.00", today, PaymentStatus.PAID)));
@@ -329,24 +344,121 @@ public class DashboardServiceTest {
         assertEquals(Sort.Direction.DESC, orders.get(1).getDirection());
     }
 
-    @Test
-    void countsOnlyBookingsCreatedInCurrentMonthAndYear() {
-        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        @Test
+        void countsBookingsWithStaysOverlappingCurrentMonth() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
 
         when(bookingRepository.findAll()).thenReturn(List.of(
-                booking(thisMonth, BookingStatus.CONFIRMED, "A101", 0),
-                booking(thisMonth, BookingStatus.CANCELLED, "A102", 0),
-                booking(thisMonth.minusMonths(1),
-                        BookingStatus.CONFIRMED, "A103", 0),
-                booking(thisMonth.minusYears(1),
-                        BookingStatus.CONFIRMED, "A104", 0),
-                booking(null, BookingStatus.CONFIRMED, "A105", 0)
+                // พักภายในเดือนนี้
+                bookingForStay(
+                        monthStart.plusDays(5),
+                        monthStart.plusDays(7),
+                        BookingStatus.CONFIRMED),
+
+                // เริ่มเดือนก่อน แต่พักต่อถึงเดือนนี้
+                bookingForStay(
+                        monthStart.minusDays(2),
+                        monthStart.plusDays(2),
+                        BookingStatus.CONFIRMED),
+
+                // เริ่มเดือนนี้ และพักต่อถึงเดือนหน้า
+                bookingForStay(
+                        nextMonthStart.minusDays(2),
+                        nextMonthStart.plusDays(2),
+                        BookingStatus.CONFIRMED),
+
+                // ช่วงพักครอบคลุมเดือนนี้ทั้งหมด
+                bookingForStay(
+                        monthStart.minusDays(2),
+                        nextMonthStart.plusDays(2),
+                        BookingStatus.CHECKED_IN)
         ));
 
-        long result = dashboardService.getBookingsThisMonth();
+        assertEquals(4L, dashboardService.getBookingsThisMonth());
+        }
 
-        assertEquals(1L, result);
-    }
+        @Test
+        void excludesStaysEndingAtMonthStartOrStartingNextMonth() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
+
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                // เช็กเอาต์วันแรกของเดือน ไม่มีคืนพักในเดือนนี้
+                bookingForStay(
+                        monthStart.minusDays(3),
+                        monthStart,
+                        BookingStatus.CHECKED_OUT),
+
+                // เช็กอินเดือนหน้า ไม่มีคืนพักในเดือนนี้
+                bookingForStay(
+                        nextMonthStart,
+                        nextMonthStart.plusDays(2),
+                        BookingStatus.CONFIRMED)
+        ));
+
+        assertEquals(0L, dashboardService.getBookingsThisMonth());
+        }
+
+        @Test
+        void excludesCancelledBookingsAndInvalidStayDates() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                // ยกเลิกแล้ว แม้ช่วงพักอยู่ในเดือนนี้
+                bookingForStay(
+                        monthStart,
+                        monthStart.plusDays(2),
+                        BookingStatus.CANCELLED),
+
+                // ไม่มีวันเช็กอิน
+                bookingForStay(
+                        null,
+                        monthStart.plusDays(2),
+                        BookingStatus.CONFIRMED),
+
+                // ไม่มีวันเช็กเอาต์
+                bookingForStay(
+                        monthStart,
+                        null,
+                        BookingStatus.CONFIRMED),
+
+                // วันเข้าและวันออกตรงกัน ไม่มีคืนพัก
+                bookingForStay(
+                        monthStart,
+                        monthStart,
+                        BookingStatus.CONFIRMED),
+
+                // วันออกอยู่ก่อนวันเข้า
+                bookingForStay(
+                        monthStart.plusDays(2),
+                        monthStart,
+                        BookingStatus.CONFIRMED)
+        ));
+
+        assertEquals(0L, dashboardService.getBookingsThisMonth());
+        }
+
+        @Test
+        void countsPendingBookingOnceRegardlessOfCreationDateAndPetCount() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+
+        // สร้างเดือนก่อน มีสัตว์ 3 ตัว และพักเดือนนี้ 5 คืน
+        Booking pendingBooking = booking(
+                monthStart.minusMonths(1),
+                BookingStatus.PENDING,
+                "A101",
+                3);
+
+        pendingBooking.setCheckInDate(monthStart.plusDays(1));
+        pendingBooking.setCheckOutDate(monthStart.plusDays(6));
+
+        when(bookingRepository.findAll())
+                .thenReturn(List.of(pendingBooking));
+
+        // นับเป็นหนึ่งรายการ ไม่ใช่จำนวนสัตว์หรือจำนวนคืน
+        assertEquals(1L, dashboardService.getBookingsThisMonth());
+        }
 
     @Test
     void groupsPaidRevenueByMonthForSelectedYear() {

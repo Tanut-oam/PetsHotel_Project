@@ -8,7 +8,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import com.example.petshotel.domain.enums.PromotionType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -69,6 +68,22 @@ public record CreatePromotionRequest(
             + "โปรโมชันจะใช้งานได้เมื่ออยู่ในช่วงวันที่กำหนดด้วย",
         example = "true"
     )
-    boolean active
+    boolean active,
+
+    @Schema(
+        description = "รายละเอียดโปรโมชัน ไม่บังคับกรอก "
+            + "เว้นว่างหรือส่ง null หมายถึงไม่กำหนดรายละเอียด",
+        example = "ส่วนลดสำหรับการเข้าพักอย่างน้อย 3 คืน"
+    )
+    String description,
+
+    @Schema(
+        description = "จำนวนคืนขั้นต่ำ ไม่บังคับกรอก "
+            + "หากระบุต้องเป็นจำนวนเต็มตั้งแต่ 1 "
+            + "null หมายถึงไม่กำหนดขั้นต่ำ",
+        example = "3"
+    )
+    @Positive(message = "Minimum nights must be at least 1")
+    Integer minimumNights
 
 ) {}

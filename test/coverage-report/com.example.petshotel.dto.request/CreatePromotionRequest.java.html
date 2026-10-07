@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreatePromotionRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.dto.request</a> &gt; <span class="el_source">CreatePromotionRequest.java</span></div><h1>CreatePromotionRequest.java</h1><pre class="source lang-java linenums">package com.example.petshotel.dto.request;
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="th"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreatePromotionRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report"></a> &gt; <a href="index.source.html" class="el_package">com.example.petshotel.dto.request</a> &gt; <span class="el_source">CreatePromotionRequest.java</span></div><h1>CreatePromotionRequest.java</h1><pre class="source lang-java linenums">package com.example.petshotel.dto.request;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,14 +8,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import com.example.petshotel.domain.enums.PromotionType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @Schema(description = &quot;ข้อมูลสำหรับเพิ่มหรือแก้ไขโปรโมชัน&quot;)
-<span class="fc" id="L18">public record CreatePromotionRequest(</span>
+<span class="fc" id="L17">public record CreatePromotionRequest(</span>
 
     @Schema(
         description = &quot;ชื่อโปรโมชัน&quot;,
@@ -69,7 +68,23 @@ import jakarta.validation.constraints.Positive;
             + &quot;โปรโมชันจะใช้งานได้เมื่ออยู่ในช่วงวันที่กำหนดด้วย&quot;,
         example = &quot;true&quot;
     )
-    boolean active
+    boolean active,
+
+    @Schema(
+        description = &quot;รายละเอียดโปรโมชัน ไม่บังคับกรอก &quot;
+            + &quot;เว้นว่างหรือส่ง null หมายถึงไม่กำหนดรายละเอียด&quot;,
+        example = &quot;ส่วนลดสำหรับการเข้าพักอย่างน้อย 3 คืน&quot;
+    )
+    String description,
+
+    @Schema(
+        description = &quot;จำนวนคืนขั้นต่ำ ไม่บังคับกรอก &quot;
+            + &quot;หากระบุต้องเป็นจำนวนเต็มตั้งแต่ 1 &quot;
+            + &quot;null หมายถึงไม่กำหนดขั้นต่ำ&quot;,
+        example = &quot;3&quot;
+    )
+    @Positive(message = &quot;Minimum nights must be at least 1&quot;)
+    Integer minimumNights
 
 ) {}
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.15.202606040825</span></div></body></html>
