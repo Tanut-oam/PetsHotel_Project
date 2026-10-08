@@ -52,10 +52,7 @@ public class DashboardControllerTest {
                 new BigDecimal("1500.00"),
                 1L,
                 2L,
-                "A101",
-                1L,
                 2L,
-                8L,
                 List.of(recentBooking),
                 currentYear,
                 List.of(),
@@ -77,9 +74,14 @@ public class DashboardControllerTest {
         int currentYear = LocalDate.now().getYear();
 
         DashboardResponse dashboard = new DashboardResponse(
-                BigDecimal.ZERO, 0L, 0L, null,
-                0L, 0L, 0L, List.of(),
-                currentYear, List.of(), BigDecimal.ZERO);
+                BigDecimal.ZERO,
+                0L,
+                0L,
+                0L,
+                List.of(),
+                currentYear,
+                List.of(),
+                BigDecimal.ZERO);
 
         when(dashboardService.getDashboard(currentYear))
                 .thenReturn(dashboard);
@@ -95,9 +97,14 @@ public class DashboardControllerTest {
     @Test
     void showsDashboardForSelectedYear() throws Exception {
         DashboardResponse dashboard = new DashboardResponse(
-                BigDecimal.ZERO, 0L, 0L, null,
-                0L, 0L, 0L, List.of(),
-                2025, List.of(), BigDecimal.ZERO);
+                BigDecimal.ZERO,
+                0L,
+                0L,
+                0L,
+                List.of(),
+                2025,
+                List.of(),
+                BigDecimal.ZERO);
 
         when(dashboardService.getDashboard(2025))
                 .thenReturn(dashboard);

@@ -176,9 +176,9 @@ Repository test ใช้ PostgreSQL จริง ต้องตั้ง `TEST
 
 | รายการ | ผล |
 | :--- | :---: |
-| Tests ทั้งหมด | 460 (ผ่านทั้งหมด) |
-| Line coverage | 84.8% |
-| Branch coverage | 71.2% |
+| Tests ทั้งหมด | 458 (ผ่านทั้งหมด) |
+| Line coverage | 84.7% |
+| Branch coverage | 70.9% |
 
 รายละเอียดและวิธีสร้างรายงานใหม่อยู่ใน [test/README.md](test/README.md)
 
