@@ -3,9 +3,7 @@ package com.example.petshotel.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Comparator;
 
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +18,6 @@ import com.example.petshotel.dto.response.DashboardResponse;
 import com.example.petshotel.dto.response.RecentBookingResponse;
 import com.example.petshotel.mapper.RecentBookingMapper;
 import com.example.petshotel.repository.BookingRepository;
-import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.AvailabilityService;
 import com.example.petshotel.service.DashboardService;
@@ -33,19 +30,16 @@ import com.example.petshotel.mapper.RevenueBookingMapper;
 public class DashboardServiceImpl implements DashboardService{
     private final ReceiptRepository receiptRepository;
     private final BookingRepository bookingRepository;
-    private final PetRepository petRepository;
     private final AvailabilityService availabilityService;
     private final RecentBookingMapper recentBookingMapper;
     private final RevenueBookingMapper revenueBookingMapper;
 
     public DashboardServiceImpl(ReceiptRepository receiptRepository, BookingRepository bookingRepository,
-        PetRepository petRepository,
         AvailabilityService availabilityService,
         RecentBookingMapper recentBookingMapper,
         RevenueBookingMapper revenueBookingMapper) {
         this.receiptRepository = receiptRepository;
         this.bookingRepository = bookingRepository;
-        this.petRepository = petRepository;
         this.availabilityService = availabilityService;
         this.recentBookingMapper = recentBookingMapper;
         this.revenueBookingMapper = revenueBookingMapper;
@@ -122,54 +116,9 @@ public class DashboardServiceImpl implements DashboardService{
 
     @Override 
     @Transactional(readOnly = true)
-    public String getTopRoom(){
-        Map<String, Long> roomBooking = new HashMap<>();
-
-        for(Booking booking : bookingRepository.findAll()){
-            if (booking.getStatus() != BookingStatus.CANCELLED
-                && booking.getRoom() != null) {
-                String roomNumber = booking.getRoom().getRoomNumber();
-                Long previousCount = roomBooking.get(roomNumber);
-
-                if (previousCount == null) {
-                    roomBooking.put(roomNumber, 1L);
-                } else {
-                    roomBooking.put(roomNumber, previousCount + 1L);
-                }
-            }
-        }
-
-        String topRoom = null;
-        long highestCount = 0;
-
-        for(Map.Entry<String, Long> entry : roomBooking.entrySet()){
-            if (entry.getValue() > highestCount 
-                    || ( entry.getValue() == highestCount
-                        && (topRoom == null || entry.getKey().compareTo(topRoom)< 0 ))) {
-                topRoom = entry.getKey();
-                highestCount = entry.getValue();
-            }   
-        }
-        return  topRoom;
-    }
-
-    @Override 
-    @Transactional(readOnly = true)
-    public long getTotalBookings() {
-        return bookingRepository.count();
-    }
-
-    @Override 
-    @Transactional(readOnly = true)
     public long getAvailableRoomCountToday(){
         LocalDate today = LocalDate.now();
         return availabilityService.findAvailableRooms(today, today.plusDays(1), 1).size();
-    }
-
-    @Override 
-    @Transactional(readOnly = true)
-    public long getTotalPets() {
-        return petRepository.count();
     }
 
     @Override 
@@ -188,12 +137,6 @@ public class DashboardServiceImpl implements DashboardService{
 
     @Override
     @Transactional(readOnly = true)
-    public DashboardResponse getDashboard() {
-        return getDashboard(LocalDate.now().getYear());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public DashboardResponse getDashboard(int year) {
         List<MonthlyRevenueResponse> monthlyRevenue =
                 getMonthlyRevenue(year);
@@ -208,10 +151,7 @@ public class DashboardServiceImpl implements DashboardService{
                 getRevenueThisMonth(),
                 getBookingsThisMonth(),
                 getCheckedInPets(),
-                getTopRoom(),
-                getTotalBookings(),
                 getAvailableRoomCountToday(),
-                getTotalPets(),
                 getRecentBookings(),
                 year,
                 monthlyRevenue,

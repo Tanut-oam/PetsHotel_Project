@@ -72,7 +72,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.service.impl,AuthServiceImpl,0,66,0,2,0,17,0,3,0,2
 ,com.example.petshotel.service.impl,DashboardServiceImpl.new Comparator() {...},0,14,0,0,0,2,0,2,0,2
 ,com.example.petshotel.service.impl,PaymentServiceImpl,107,9,12,0,30,4,8,1,2,1
-,com.example.petshotel.service.impl,DashboardServiceImpl,5,561,7,63,1,124,7,40,0,12
+,com.example.petshotel.service.impl,DashboardServiceImpl,5,439,4,48,1,97,4,30,0,8
 ,com.example.petshotel.service.impl,UserServiceImpl,75,156,12,12,10,30,12,9,2,5
 ,com.example.petshotel.service.impl,LocalFileStorageService,138,130,19,13,37,33,13,9,2,4
 ,com.example.petshotel.service.impl,CurrentUserServiceImpl,0,21,0,0,0,5,0,3,0,3
@@ -92,7 +92,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.dto.response,BookingPriceResponse,0,18,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,ReportBookingSummary,0,12,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,PetResponse,0,45,0,0,0,1,0,1,0,1
-,com.example.petshotel.dto.response,DashboardResponse,0,36,0,0,0,1,0,1,0,1
+,com.example.petshotel.dto.response,DashboardResponse,0,27,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,PromotionResponse,0,30,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,RecentBookingResponse,0,18,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,MonthlyRevenueResponse,0,15,0,0,0,1,0,1,0,1
