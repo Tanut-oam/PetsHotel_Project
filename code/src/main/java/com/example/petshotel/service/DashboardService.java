@@ -11,12 +11,8 @@ public interface DashboardService {
     BigDecimal getRevenueThisMonth();
     long getBookingsThisMonth();
     long getCheckedInPets();
-    String getTopRoom();
-    long getTotalBookings();
     long getAvailableRoomCountToday();
-    long getTotalPets();
     List<RecentBookingResponse> getRecentBookings();
     List<MonthlyRevenueResponse> getMonthlyRevenue(int year);
-    DashboardResponse getDashboard();
     DashboardResponse getDashboard(int year);   
 }

@@ -60,6 +60,8 @@ class AdminPromotionPageControllerTest {
         promotion.setStartDate(LocalDate.of(2026, 10, 1));
         promotion.setEndDate(LocalDate.of(2026, 10, 31));
         promotion.setActive(true);
+        promotion.setDescription("Stay at least 3 nights");
+        promotion.setMinimumNights(3);
 
         when(promotionService.getAllPromotions())
                 .thenReturn(List.of(promotion));
@@ -70,13 +72,14 @@ class AdminPromotionPageControllerTest {
             String discountValue,
             boolean active) {
 
-        MockHttpServletRequestBuilder request = post("/admin/promotions")
-                .param("name", name)
-                .param("type", "PERCENTAGE")
-                .param("discountValue", discountValue)
-                .param("startDate", "2026-10-01")
-                .param("endDate", "2026-10-31")
-                .param("_active", "on");
+        MockHttpServletRequestBuilder request =
+                post("/admin/promotions")
+                        .param("name", name)
+                        .param("type", "PERCENTAGE")
+                        .param("discountValue", discountValue)
+                        .param("startDate", "2026-10-01")
+                        .param("endDate", "2026-10-31")
+                        .param("_active", "on");
 
         if (active) {
             request.param("active", "true");
@@ -90,24 +93,40 @@ class AdminPromotionPageControllerTest {
             String discountValue,
             boolean active) {
 
+        return expectedRequest(
+                name, discountValue, active, null, null);
+    }
+
+    private CreatePromotionRequest expectedRequest(
+            String name,
+            String discountValue,
+            boolean active,
+            String description,
+            Integer minimumNights) {
+
         return new CreatePromotionRequest(
                 name,
                 PromotionType.PERCENTAGE,
                 new BigDecimal(discountValue),
                 LocalDate.of(2026, 10, 1),
                 LocalDate.of(2026, 10, 31),
-                active);
+                active,
+                description,
+                minimumNights);
     }
 
     @Test
     void showsPromotionsWithEmptyCreateForm() throws Exception {
-        CreatePromotionRequest emptyForm = new CreatePromotionRequest(
-                "",
-                PromotionType.PERCENTAGE,
-                null,
-                null,
-                null,
-                true);
+        CreatePromotionRequest emptyForm =
+                new CreatePromotionRequest(
+                        "",
+                        PromotionType.PERCENTAGE,
+                        null,
+                        null,
+                        null,
+                        true,
+                        null,
+                        null);
 
         mockMvc.perform(get("/admin/promotions"))
                 .andExpect(status().isOk())
@@ -115,7 +134,8 @@ class AdminPromotionPageControllerTest {
                 .andExpect(model().attribute(
                         "promotions",
                         List.of(promotionMapper.toResponse(promotion))))
-                .andExpect(model().attribute("promotionForm", emptyForm));
+                .andExpect(model().attribute(
+                        "promotionForm", emptyForm));
 
         verify(promotionService).getAllPromotions();
         verify(promotionService, never()).getPromotionById(anyLong());
@@ -133,56 +153,94 @@ class AdminPromotionPageControllerTest {
                 .andExpect(model().attribute("editingId", 1L))
                 .andExpect(model().attribute(
                         "promotionForm",
-                        expectedRequest("Save 10%", "10.00", true)));
+                        expectedRequest(
+                                "Save 10%",
+                                "10.00",
+                                true,
+                                "Stay at least 3 nights",
+                                3)));
 
         verify(promotionService).getPromotionById(1L);
     }
 
     @Test
     void createsPromotionFromForm() throws Exception {
-        CreatePromotionRequest expected =
-                expectedRequest("Save 10%", "10.00", true);
+        CreatePromotionRequest expected = expectedRequest(
+                "Save 10%",
+                "10.00",
+                true,
+                "Stay at least 3 nights",
+                3);
 
-        mockMvc.perform(form("Save 10%", "10.00", true))
+        mockMvc.perform(form("Save 10%", "10.00", true)
+                        .param("description", "Stay at least 3 nights")
+                        .param("minimumNights", "3"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/promotions"))
                 .andExpect(flash().attribute(
-                        "message",
-                        "เพิ่มโปรโมชันสำเร็จ"));
+                        "message", "เพิ่มโปรโมชันสำเร็จ"));
 
         verify(promotionService).createPromotion(expected);
-        verify(promotionService, never())
-                .updatePromotion(anyLong(), any(CreatePromotionRequest.class));
+        verify(promotionService, never()).updatePromotion(
+                anyLong(), any(CreatePromotionRequest.class));
     }
 
     @Test
     void updatesPromotionFromForm() throws Exception {
-        CreatePromotionRequest expected =
-                expectedRequest("Save 20%", "20.00", true);
+        CreatePromotionRequest expected = expectedRequest(
+                "Save 20%",
+                "20.00",
+                true,
+                "Stay at least 5 nights",
+                5);
 
         mockMvc.perform(form("Save 20%", "20.00", true)
-                        .param("id", "1"))
+                        .param("id", "1")
+                        .param("description", "Stay at least 5 nights")
+                        .param("minimumNights", "5"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/promotions"))
                 .andExpect(flash().attribute(
-                        "message",
-                        "แก้ไขโปรโมชันสำเร็จ"));
+                        "message", "แก้ไขโปรโมชันสำเร็จ"));
 
         verify(promotionService).updatePromotion(1L, expected);
-        verify(promotionService, never())
-                .createPromotion(any(CreatePromotionRequest.class));
+        verify(promotionService, never()).createPromotion(
+                any(CreatePromotionRequest.class));
+    }
+
+    @Test
+    void createsPromotionWhenOptionalFieldsAreOmitted() throws Exception {
+        mockMvc.perform(form("Save 10%", "10.00", true))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/promotions"));
+
+        verify(promotionService).createPromotion(
+                expectedRequest("Save 10%", "10.00", true));
+    }
+
+    @Test
+    void acceptsBlankOptionalFieldsWhenUpdating() throws Exception {
+        mockMvc.perform(form("Save 10%", "10.00", true)
+                        .param("id", "1")
+                        .param("description", "")
+                        .param("minimumNights", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/promotions"));
+
+        verify(promotionService).updatePromotion(
+                1L,
+                expectedRequest(
+                        "Save 10%", "10.00", true, "", null));
     }
 
     @Test
     void uncheckedCheckboxMakesPromotionInactive() throws Exception {
-        CreatePromotionRequest expected =
-                expectedRequest("Save 10%", "10.00", false);
-
         mockMvc.perform(form("Save 10%", "10.00", false))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/promotions"));
 
-        verify(promotionService).createPromotion(expected);
+        verify(promotionService).createPromotion(
+                expectedRequest("Save 10%", "10.00", false));
     }
 
     @Test
@@ -191,16 +249,12 @@ class AdminPromotionPageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/promotions"))
                 .andExpect(model().attributeHasFieldErrors(
-                        "promotionForm",
-                        "name"))
+                        "promotionForm", "name"))
                 .andExpect(model().attribute(
                         "promotionForm",
                         expectedRequest("", "10.00", true)));
 
-        verify(promotionService, never())
-                .createPromotion(any(CreatePromotionRequest.class));
-        verify(promotionService, never())
-                .updatePromotion(anyLong(), any(CreatePromotionRequest.class));
+        verifyNoSave();
     }
 
     @Test
@@ -215,40 +269,78 @@ class AdminPromotionPageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/promotions"))
                 .andExpect(model().attributeHasFieldErrors(
-                        "promotionForm",
-                        "startDate"));
+                        "promotionForm", "startDate"));
 
-        verify(promotionService, never())
-                .createPromotion(any(CreatePromotionRequest.class));
-        verify(promotionService, never())
-                .updatePromotion(anyLong(), any(CreatePromotionRequest.class));
+        verifyNoSave();
+    }
+
+    @Test
+    void rejectsZeroMinimumNightsWithoutSaving() throws Exception {
+        mockMvc.perform(form("Save 10%", "10.00", true)
+                        .param("minimumNights", "0"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/promotions"))
+                .andExpect(model().attributeHasFieldErrors(
+                        "promotionForm", "minimumNights"));
+
+        verifyNoSave();
+    }
+
+    @Test
+    void rejectsNegativeMinimumNightsWhenUpdating() throws Exception {
+        mockMvc.perform(form("Save 10%", "10.00", true)
+                        .param("id", "1")
+                        .param("minimumNights", "-1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/promotions"))
+                .andExpect(model().attribute("editingId", 1L))
+                .andExpect(model().attributeHasFieldErrors(
+                        "promotionForm", "minimumNights"));
+
+        verifyNoSave();
+        verify(promotionService, never()).getPromotionById(anyLong());
+    }
+
+    @Test
+    void rejectsNonIntegerMinimumNightsWithoutSaving() throws Exception {
+        mockMvc.perform(form("Save 10%", "10.00", true)
+                        .param("minimumNights", "1.5"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/promotions"))
+                .andExpect(model().attributeHasFieldErrors(
+                        "promotionForm", "minimumNights"));
+
+        verifyNoSave();
     }
 
     @Test
     void keepsEditFormWhenServiceRejectsDiscount() throws Exception {
-        CreatePromotionRequest invalidRequest =
-                expectedRequest("Save 150%", "150.00", true);
+        CreatePromotionRequest invalidRequest = expectedRequest(
+                "Save 150%",
+                "150.00",
+                true,
+                "Keep these entered values",
+                3);
 
         when(promotionService.updatePromotion(1L, invalidRequest))
                 .thenThrow(new IllegalArgumentException(
                         "Percentage discount must not exceed 100"));
 
         mockMvc.perform(form("Save 150%", "150.00", true)
-                        .param("id", "1"))
+                        .param("id", "1")
+                        .param("description", "Keep these entered values")
+                        .param("minimumNights", "3"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("admin/promotions"))
                 .andExpect(model().attributeHasErrors("promotionForm"))
                 .andExpect(model().attribute("editingId", 1L))
                 .andExpect(model().attribute(
-                        "promotionForm",
-                        invalidRequest));
+                        "promotionForm", invalidRequest));
 
         verify(promotionService).updatePromotion(1L, invalidRequest);
-
-        // ไม่โหลดข้อมูลเดิมมาทับค่าที่ผู้ใช้เพิ่งกรอก
         verify(promotionService, never()).getPromotionById(anyLong());
-        verify(promotionService, never())
-                .createPromotion(any(CreatePromotionRequest.class));
+        verify(promotionService, never()).createPromotion(
+                any(CreatePromotionRequest.class));
     }
 
     @Test
@@ -257,8 +349,7 @@ class AdminPromotionPageControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/promotions"))
                 .andExpect(flash().attribute(
-                        "message",
-                        "ปิดใช้โปรโมชันสำเร็จ"));
+                        "message", "ปิดใช้โปรโมชันสำเร็จ"));
 
         verify(promotionService).deactivatePromotion(1L);
     }
@@ -266,16 +357,23 @@ class AdminPromotionPageControllerTest {
     @Test
     void redirectsWithErrorWhenPromotionIsMissing() throws Exception {
         when(promotionService.getPromotionById(99L))
-                .thenThrow(new ResourceNotFoundException("Promotion", 99L));
+                .thenThrow(
+                        new ResourceNotFoundException("Promotion", 99L));
 
         mockMvc.perform(get("/admin/promotions")
                         .param("editId", "99"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/promotions"))
                 .andExpect(flash().attribute(
-                        "error",
-                        "Promotion not found: 99"));
+                        "error", "Promotion not found: 99"));
 
         verify(promotionService).getPromotionById(99L);
+    }
+
+    private void verifyNoSave() {
+        verify(promotionService, never()).createPromotion(
+                any(CreatePromotionRequest.class));
+        verify(promotionService, never()).updatePromotion(
+                anyLong(), any(CreatePromotionRequest.class));
     }
 }

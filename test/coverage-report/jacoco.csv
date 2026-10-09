@@ -41,7 +41,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.dto.request,UpdateRoomRequest,0,18,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.request,CreateRoomRequest,0,18,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.request,UpdateStatusRequest,0,6,0,0,0,1,0,1,0,1
-,com.example.petshotel.dto.request,CreatePromotionRequest,0,21,0,0,0,1,0,1,0,1
+,com.example.petshotel.dto.request,CreatePromotionRequest,0,27,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.request,CreateBookingApiRequest,0,21,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.request,UpdateUserRequest,0,21,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.request,CreatePetRequest,0,30,0,0,0,1,0,1,0,1
@@ -56,7 +56,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.controller.web,RoomController,72,167,6,8,19,45,6,12,1,10
 ,com.example.petshotel.controller.web,BookingController,38,281,4,10,12,80,4,15,0,12
 ,com.example.petshotel.controller.web,AuthController,2,81,2,10,1,23,2,9,0,5
-,com.example.petshotel.controller.web,AdminPromotionPageController,0,156,0,12,0,41,0,11,0,5
+,com.example.petshotel.controller.web,AdminPromotionPageController,0,160,0,12,0,47,0,11,0,5
 ,com.example.petshotel.controller.web,HomeController,4,66,3,5,1,18,3,5,0,4
 ,com.example.petshotel.controller.web,DashboardController,0,36,1,5,0,11,1,4,0,2
 ,com.example.petshotel.controller.web,BookingReceiptController,17,101,1,15,5,22,1,9,0,2
@@ -72,13 +72,13 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.service.impl,AuthServiceImpl,0,66,0,2,0,17,0,3,0,2
 ,com.example.petshotel.service.impl,DashboardServiceImpl.new Comparator() {...},0,14,0,0,0,2,0,2,0,2
 ,com.example.petshotel.service.impl,PaymentServiceImpl,107,9,12,0,30,4,8,1,2,1
-,com.example.petshotel.service.impl,DashboardServiceImpl,5,547,7,59,1,119,7,38,0,12
+,com.example.petshotel.service.impl,DashboardServiceImpl,5,439,4,48,1,97,4,30,0,8
 ,com.example.petshotel.service.impl,UserServiceImpl,75,156,12,12,10,30,12,9,2,5
 ,com.example.petshotel.service.impl,LocalFileStorageService,138,130,19,13,37,33,13,9,2,4
 ,com.example.petshotel.service.impl,CurrentUserServiceImpl,0,21,0,0,0,5,0,3,0,3
 ,com.example.petshotel.service.impl,PricingServiceImpl,17,194,8,18,3,44,8,7,0,2
 ,com.example.petshotel.service.impl,RoomSearchServiceImpl,0,106,0,12,0,23,0,10,0,4
-,com.example.petshotel.service.impl,PromotionServiceImpl,52,171,7,15,10,40,13,10,6,6
+,com.example.petshotel.service.impl,PromotionServiceImpl,52,214,7,23,11,52,13,15,6,7
 ,com.example.petshotel.service.impl,DailyCareReportServiceImpl,122,413,16,26,27,101,17,25,5,16
 ,com.example.petshotel.service.impl,PetServiceImpl,51,297,2,12,9,62,3,17,2,11
 ,com.example.petshotel.config,WebConfig,3,37,1,1,1,8,1,2,0,2
@@ -92,7 +92,7 @@ GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_
 ,com.example.petshotel.dto.response,BookingPriceResponse,0,18,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,ReportBookingSummary,0,12,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,PetResponse,0,45,0,0,0,1,0,1,0,1
-,com.example.petshotel.dto.response,DashboardResponse,0,36,0,0,0,1,0,1,0,1
+,com.example.petshotel.dto.response,DashboardResponse,0,27,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,PromotionResponse,0,30,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,RecentBookingResponse,0,18,0,0,0,1,0,1,0,1
 ,com.example.petshotel.dto.response,MonthlyRevenueResponse,0,15,0,0,0,1,0,1,0,1

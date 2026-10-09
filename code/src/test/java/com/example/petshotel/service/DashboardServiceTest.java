@@ -1,7 +1,6 @@
 package com.example.petshotel.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import com.example.petshotel.domain.entity.Booking;
@@ -30,21 +28,20 @@ import com.example.petshotel.domain.entity.User;
 import com.example.petshotel.domain.enums.BookingStatus;
 import com.example.petshotel.dto.response.DashboardResponse;
 import com.example.petshotel.dto.response.MonthlyRevenueResponse;
-import com.example.petshotel.dto.response.RecentBookingResponse;
 import com.example.petshotel.mapper.RecentBookingMapper;
 import com.example.petshotel.repository.BookingRepository;
-import com.example.petshotel.repository.PetRepository;
 import com.example.petshotel.repository.ReceiptRepository;
 import com.example.petshotel.service.impl.DashboardServiceImpl;
 import com.example.petshotel.domain.enums.PaymentStatus;
 import com.example.petshotel.mapper.RevenueBookingMapper;
 import com.example.petshotel.dto.response.RevenueBookingResponse;
+import org.springframework.data.domain.PageImpl;
+import com.example.petshotel.dto.response.RecentBookingResponse;
 
 public class DashboardServiceTest {
     private ReceiptRepository receiptRepository;
     private BookingRepository bookingRepository;
     private DashboardServiceImpl dashboardService;
-    private PetRepository petRepository;
     private AvailabilityService availabilityService;
     private RecentBookingMapper recentBookingMapper;
 
@@ -52,14 +49,12 @@ public class DashboardServiceTest {
     void setUp(){
         receiptRepository = mock(ReceiptRepository.class);
         bookingRepository = mock(BookingRepository.class);
-        petRepository = mock(PetRepository.class);
         availabilityService = mock(AvailabilityService.class);
         recentBookingMapper = new RecentBookingMapper();
 
         dashboardService = new DashboardServiceImpl(
         receiptRepository,
         bookingRepository,
-        petRepository,
         availabilityService,
         recentBookingMapper,
         new RevenueBookingMapper());
@@ -124,6 +119,18 @@ public class DashboardServiceTest {
         return booking;
     }
 
+        private Booking bookingForStay(
+                LocalDate checkIn,
+                LocalDate checkOut,
+                BookingStatus status) {
+
+        Booking booking = booking(null, status, "A101", 0);
+        booking.setCheckInDate(checkIn);
+        booking.setCheckOutDate(checkOut);
+
+        return booking;
+        }
+
 
 
     @Test
@@ -168,108 +175,6 @@ public class DashboardServiceTest {
         long result = dashboardService.getCheckedInPets();
 
         assertEquals(3L, result);
-    }
-
-    @Test 
-    void findsTopRoomWithoutCountingCancelledBookings(){
-        when(bookingRepository.findAll()).thenReturn(List.of(
-            booking(null, BookingStatus.CONFIRMED, "A101", 0),
-            booking(null, BookingStatus.CHECKED_OUT, "A101", 0),
-            booking(null, BookingStatus.CONFIRMED, "B201", 0),
-            booking(null, BookingStatus.CANCELLED, "B201", 0),
-            booking(null, BookingStatus.CANCELLED, "B201", 0)
-        ));
-
-        String result = dashboardService.getTopRoom();
-
-        assertEquals("A101", result);
-    }
-
-    @Test 
-    void choosesAlphabeticallyFirstRoomWhenCountsAreEqual(){
-        when(bookingRepository.findAll()).thenReturn(List.of(
-            booking(null, BookingStatus.CONFIRMED, "B201", 0),
-            booking(null, BookingStatus.CONFIRMED, "A101", 0)
-        ));
-
-        String result = dashboardService.getTopRoom();
-
-        assertEquals("A101", result);
-    }
-
-    @Test 
-    void returnsEmptyDashboardWhenThereIsNoData(){
-        when(receiptRepository.findAll()).thenReturn(List.of());
-        when(bookingRepository.findAll()).thenReturn(List.of());
-        when(bookingRepository.count()).thenReturn(0L);
-        when(petRepository.count()).thenReturn(0L);
-        when(availabilityService.findAvailableRooms(
-            any(LocalDate.class), any(LocalDate.class), eq(1)))
-            .thenReturn(List.of());
-        when(bookingRepository.findAll(any(Pageable.class)))
-            .thenReturn(Page.<Booking>empty());
-
-        DashboardResponse result = dashboardService.getDashboard();
-
-        assertEquals(BigDecimal.ZERO, result.revenueThisMonth());
-        assertEquals(0L, result.bookingsThisMonth());
-        assertEquals(0L, result.checkedInPets());
-        assertNull(result.topRoom());
-
-        assertEquals(LocalDate.now().getYear(), result.selectedYear());
-        assertEquals(12, result.monthlyRevenue().size());
-        assertEquals(BigDecimal.ZERO, result.yearlyRevenue());
-
-        assertEquals(0L, result.totalBookings());
-        assertEquals(0L, result.availableRoomCountToday());
-        assertEquals(0L, result.totalPets());
-        assertTrue(result.recentBookings().isEmpty());
-    }
-
-    @Test 
-    void combinesResultsIntoDashboardResponse(){
-        LocalDate today = LocalDate.now();
-        Booking latestBooking = recentBooking(today);
-
-        when(receiptRepository.findAll())
-        .thenReturn(List.of(
-                receipt("1500.00", today, PaymentStatus.PAID)));
-        when(bookingRepository.findAll())
-                .thenReturn(List.of(latestBooking));
-        when(bookingRepository.count()).thenReturn(1L);
-        when(petRepository.count()).thenReturn(8L);
-
-        when(availabilityService.findAvailableRooms(
-                any(LocalDate.class), any(LocalDate.class), eq(1)))
-                .thenReturn(List.of(new Room(), new Room()));
-
-        when(bookingRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(latestBooking)));
-
-        DashboardResponse result = dashboardService.getDashboard();
-
-        assertEquals(new BigDecimal("1500.00"), result.revenueThisMonth());
-        assertEquals(1L, result.bookingsThisMonth());
-        assertEquals(2L, result.checkedInPets());
-        assertEquals("A101", result.topRoom());
-
-        assertEquals(1L, result.totalBookings());
-        assertEquals(2L, result.availableRoomCountToday());
-        assertEquals(8L, result.totalPets());
-
-        assertEquals(today.getYear(), result.selectedYear());
-        assertEquals(12, result.monthlyRevenue().size());
-        assertEquals(new BigDecimal("1500.00"), result.yearlyRevenue());
-
-        assertEquals(1, result.recentBookings().size());
-
-        RecentBookingResponse recent = result.recentBookings().get(0);
-        assertEquals(Long.valueOf(25L), recent.id());
-        assertEquals("Nadia Test", recent.customerName());
-        assertEquals(List.of("Mochi", "Lily"), recent.petNames());
-        assertEquals("A101", recent.roomNumber());
-        assertEquals(BookingStatus.CHECKED_IN, recent.status());
-
     }
 
     @Test
@@ -329,24 +234,121 @@ public class DashboardServiceTest {
         assertEquals(Sort.Direction.DESC, orders.get(1).getDirection());
     }
 
-    @Test
-    void countsOnlyBookingsCreatedInCurrentMonthAndYear() {
-        LocalDate thisMonth = LocalDate.now().withDayOfMonth(1);
+        @Test
+        void countsBookingsWithStaysOverlappingCurrentMonth() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
 
         when(bookingRepository.findAll()).thenReturn(List.of(
-                booking(thisMonth, BookingStatus.CONFIRMED, "A101", 0),
-                booking(thisMonth, BookingStatus.CANCELLED, "A102", 0),
-                booking(thisMonth.minusMonths(1),
-                        BookingStatus.CONFIRMED, "A103", 0),
-                booking(thisMonth.minusYears(1),
-                        BookingStatus.CONFIRMED, "A104", 0),
-                booking(null, BookingStatus.CONFIRMED, "A105", 0)
+                // พักภายในเดือนนี้
+                bookingForStay(
+                        monthStart.plusDays(5),
+                        monthStart.plusDays(7),
+                        BookingStatus.CONFIRMED),
+
+                // เริ่มเดือนก่อน แต่พักต่อถึงเดือนนี้
+                bookingForStay(
+                        monthStart.minusDays(2),
+                        monthStart.plusDays(2),
+                        BookingStatus.CONFIRMED),
+
+                // เริ่มเดือนนี้ และพักต่อถึงเดือนหน้า
+                bookingForStay(
+                        nextMonthStart.minusDays(2),
+                        nextMonthStart.plusDays(2),
+                        BookingStatus.CONFIRMED),
+
+                // ช่วงพักครอบคลุมเดือนนี้ทั้งหมด
+                bookingForStay(
+                        monthStart.minusDays(2),
+                        nextMonthStart.plusDays(2),
+                        BookingStatus.CHECKED_IN)
         ));
 
-        long result = dashboardService.getBookingsThisMonth();
+        assertEquals(4L, dashboardService.getBookingsThisMonth());
+        }
 
-        assertEquals(1L, result);
-    }
+        @Test
+        void excludesStaysEndingAtMonthStartOrStartingNextMonth() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
+
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                // เช็กเอาต์วันแรกของเดือน ไม่มีคืนพักในเดือนนี้
+                bookingForStay(
+                        monthStart.minusDays(3),
+                        monthStart,
+                        BookingStatus.CHECKED_OUT),
+
+                // เช็กอินเดือนหน้า ไม่มีคืนพักในเดือนนี้
+                bookingForStay(
+                        nextMonthStart,
+                        nextMonthStart.plusDays(2),
+                        BookingStatus.CONFIRMED)
+        ));
+
+        assertEquals(0L, dashboardService.getBookingsThisMonth());
+        }
+
+        @Test
+        void excludesCancelledBookingsAndInvalidStayDates() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+
+        when(bookingRepository.findAll()).thenReturn(List.of(
+                // ยกเลิกแล้ว แม้ช่วงพักอยู่ในเดือนนี้
+                bookingForStay(
+                        monthStart,
+                        monthStart.plusDays(2),
+                        BookingStatus.CANCELLED),
+
+                // ไม่มีวันเช็กอิน
+                bookingForStay(
+                        null,
+                        monthStart.plusDays(2),
+                        BookingStatus.CONFIRMED),
+
+                // ไม่มีวันเช็กเอาต์
+                bookingForStay(
+                        monthStart,
+                        null,
+                        BookingStatus.CONFIRMED),
+
+                // วันเข้าและวันออกตรงกัน ไม่มีคืนพัก
+                bookingForStay(
+                        monthStart,
+                        monthStart,
+                        BookingStatus.CONFIRMED),
+
+                // วันออกอยู่ก่อนวันเข้า
+                bookingForStay(
+                        monthStart.plusDays(2),
+                        monthStart,
+                        BookingStatus.CONFIRMED)
+        ));
+
+        assertEquals(0L, dashboardService.getBookingsThisMonth());
+        }
+
+        @Test
+        void countsPendingBookingOnceRegardlessOfCreationDateAndPetCount() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+
+        // สร้างเดือนก่อน มีสัตว์ 3 ตัว และพักเดือนนี้ 5 คืน
+        Booking pendingBooking = booking(
+                monthStart.minusMonths(1),
+                BookingStatus.PENDING,
+                "A101",
+                3);
+
+        pendingBooking.setCheckInDate(monthStart.plusDays(1));
+        pendingBooking.setCheckOutDate(monthStart.plusDays(6));
+
+        when(bookingRepository.findAll())
+                .thenReturn(List.of(pendingBooking));
+
+        // นับเป็นหนึ่งรายการ ไม่ใช่จำนวนสัตว์หรือจำนวนคืน
+        assertEquals(1L, dashboardService.getBookingsThisMonth());
+        }
 
     @Test
     void groupsPaidRevenueByMonthForSelectedYear() {
@@ -542,6 +544,83 @@ public class DashboardServiceTest {
         assertEquals(
                 new BigDecimal("1500.00"),
                 october.totalAmount());
+        }
+
+        @Test
+        void returnsEmptyDashboardWhenThereIsNoData() {
+        int currentYear = LocalDate.now().getYear();
+
+        when(receiptRepository.findAll()).thenReturn(List.of());
+        when(bookingRepository.findAll()).thenReturn(List.of());
+
+        when(availabilityService.findAvailableRooms(
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(1)))
+                .thenReturn(List.of());
+
+        when(bookingRepository.findAll(any(Pageable.class)))
+                .thenReturn(Page.<Booking>empty());
+
+        DashboardResponse result =
+                dashboardService.getDashboard(currentYear);
+
+        assertEquals(BigDecimal.ZERO, result.revenueThisMonth());
+        assertEquals(0L, result.bookingsThisMonth());
+        assertEquals(0L, result.checkedInPets());
+        assertEquals(0L, result.availableRoomCountToday());
+        assertTrue(result.recentBookings().isEmpty());
+
+        assertEquals(currentYear, result.selectedYear());
+        assertEquals(12, result.monthlyRevenue().size());
+        assertEquals(BigDecimal.ZERO, result.yearlyRevenue());
+        }
+
+        @Test
+        void combinesResultsIntoDashboardResponse() {
+        LocalDate today = LocalDate.now();
+        Booking latestBooking = recentBooking(today);
+
+        latestBooking.setCheckInDate(today);
+        latestBooking.setCheckOutDate(today.plusDays(1));
+
+        when(receiptRepository.findAll())
+                .thenReturn(List.of(
+                        receipt("1500.00", today, PaymentStatus.PAID)));
+
+        when(bookingRepository.findAll())
+                .thenReturn(List.of(latestBooking));
+
+        when(availabilityService.findAvailableRooms(
+                any(LocalDate.class),
+                any(LocalDate.class),
+                eq(1)))
+                .thenReturn(List.of(new Room(), new Room()));
+
+        when(bookingRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(latestBooking)));
+
+        DashboardResponse result =
+                dashboardService.getDashboard(today.getYear());
+
+        assertEquals(new BigDecimal("1500.00"), result.revenueThisMonth());
+        assertEquals(1L, result.bookingsThisMonth());
+        assertEquals(2L, result.checkedInPets());
+        assertEquals(2L, result.availableRoomCountToday());
+
+        assertEquals(today.getYear(), result.selectedYear());
+        assertEquals(12, result.monthlyRevenue().size());
+        assertEquals(new BigDecimal("1500.00"), result.yearlyRevenue());
+
+        assertEquals(1, result.recentBookings().size());
+
+        RecentBookingResponse recent = result.recentBookings().get(0);
+
+        assertEquals(Long.valueOf(25L), recent.id());
+        assertEquals("Nadia Test", recent.customerName());
+        assertEquals(List.of("Mochi", "Lily"), recent.petNames());
+        assertEquals("A101", recent.roomNumber());
+        assertEquals(BookingStatus.CHECKED_IN, recent.status());
         }
 
 }
